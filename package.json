@@ -1,0 +1,29 @@
+{
+  "name": "oicq",
+  "version": "0.0.1",
+  "description": "QQ protocol!",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/takayama-lily/oicq.git"
+  },
+  "keywords": [
+    "qq",
+    "oicq",
+    "protocol"
+  ],
+  "author": "takayama",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/takayama-lily/oicq/issues"
+  },
+  "homepage": "https://github.com/takayama-lily/oicq#readme",
+  "dependencies": {
+    "crypto-tea": "^0.2.0",
+    "jce-lexer": "^0.1.0",
+    "protobufjs": "^6.10.1"
+  }
+}
