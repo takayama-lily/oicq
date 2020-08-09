@@ -24,6 +24,8 @@
   "dependencies": {
     "crypto-tea": "^0.2.0",
     "jce-lexer": "^0.1.0",
+    "log4js": "^6.3.0",
+    "ping": "^0.2.3",
     "protobufjs": "^6.10.1"
   }
 }
