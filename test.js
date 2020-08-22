@@ -16,12 +16,12 @@ function account() {
         try {
             input = parseInt(input.toString().trim());
             bot = oicq.createClient(input, {
-                log_level: "trace"
+                log_level: "debug", ignore_self: false
             });
 
             //处理验证码事件
             bot.on("system.login.captcha", async(data)=>{
-                const file_path = path.join(process.mainModule.path, `captcha-${account}.jpg`);
+                const file_path = path.join(process.mainModule.path, `captcha-${input}.jpg`);
                 await fs.promises.writeFile(file_path, data.image);
                 bot.logger.info(`验证码已更新并保存到文件(${file_path})，请查看并输入: `);
                 process.stdin.once("data", (input)=>{
@@ -40,6 +40,8 @@ function account() {
             bot.on("system.login.error", (data)=>{
                 if (data.message.includes("密码错误"))
                     password();
+                else
+                    bot.terminate();
             });
 
             // 登陆成功
@@ -49,6 +51,20 @@ function account() {
             bot.once("system.offline", (data)=>{
                 console.log(data);
             });
+
+            bot.on("internal.timeout", (data)=>{
+                console.log(data);
+            })
+
+            bot.on("request", (data)=>{
+                console.log(data);
+            });
+            bot.on("notice", (data)=>{
+                console.log(data);
+            });
+            // bot.on("message", (data)=>{
+            //     console.log(data);
+            // });
         } catch (e) {
             console.log(e.message);
             return account();
@@ -65,7 +81,8 @@ function password() {
     })
 }
 function loop() {
-    const help = `※退出: bye
+    const help = `※发言: send target msg
+※退出: bye
 ※执行任意代码: eval code`;
     console.log(help);
     const listener = function(input) {
@@ -76,6 +93,14 @@ function loop() {
             case "bye":
                 bot.terminate();
                 process.stdin.destroy();
+                break;
+            case "send":
+                const abc = param.split(" ");
+                const target = parseInt(abc[0]);
+                if (bot.group_list.has(target))
+                    bot.sendGroupMsg(target, abc[1]);
+                else
+                    bot.sendPrivateMsg(target, abc[1]);
                 break;
             case "eval":
                 try {
