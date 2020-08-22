@@ -20,9 +20,9 @@ function account() {
             });
 
             //处理验证码事件
-            bot.on("login.notice.captcha", async(resp)=>{
+            bot.on("system.login.captcha", async(data)=>{
                 const file_path = path.join(process.mainModule.path, `captcha-${account}.jpg`);
-                await fs.promises.writeFile(file_path, resp.error.message);
+                await fs.promises.writeFile(file_path, data.image);
                 bot.logger.info(`验证码已更新并保存到文件(${file_path})，请查看并输入: `);
                 process.stdin.once("data", (input)=>{
                     bot.captchaLogin(input);
@@ -30,26 +30,25 @@ function account() {
             });
 
             //处理设备锁验证事件
-            bot.on("login.notice.device", (resp)=>{
-                bot.logger.info(`请去以下地址验证解锁: ` + resp.error.message);
+            bot.on("system.login.device", (data)=>{
                 process.stdin.once("data", ()=>{
                     bot.login();
                 });
             });
 
             //处理其他登陆失败事件
-            bot.on("login.error", (resp)=>{
-                if (resp.error.message) {
-                    bot.logger.error("["+resp.error.title+"]" + resp.error.message);
-                    if (resp.error.message.includes("密码"))
-                        password();
-                } else
-                    bot.logger.error("[登陆失败]未知错误。");
-
+            bot.on("system.login.error", (data)=>{
+                if (data.message.includes("密码错误"))
+                    password();
             });
 
             // 登陆成功
-            bot.on("online", loop);
+            bot.once("system.online", loop);
+
+            // 下线
+            bot.once("system.offline", (data)=>{
+                console.log(data);
+            });
         } catch (e) {
             console.log(e.message);
             return account();

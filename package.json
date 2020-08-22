@@ -27,6 +27,7 @@
     "jce": "^0.1.6",
     "log4js": "^6.3.0",
     "ping": "^0.2.3",
-    "protobufjs": "^6.10.1"
+    "protobufjs": "^6.10.1",
+    "terminal-image": "^1.2.1"
   }
 }
