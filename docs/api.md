@@ -17,7 +17,7 @@
 ## `oicq.createClient(uin[,config])`
 
 + `uin` \<number>
-+ `config` \<Object> [配置说明](./config.md)
++ `config` \<Object>
 
 创建一个实例：
 
