@@ -3,10 +3,10 @@
 + [oicq.createClient](#oicq.createClient(uin[,config]))
 + [Class: oicq.Client](#Class-Client)
   + [Events](#Events)
-    + [Event: system](#Event:-system)
-    + [Event: message](#Event:-message)
-    + [Event: request](#Event:-request)
-    + [Event: notice](#Event:-notice)
+    + [Event: system](#Event-system)
+    + [Event: message](#Event-message)
+    + [Event: request](#Event-request)
+    + [Event: notice](#Event-notice)
   + [APIs](#APIs)
     + [client.login(password_md5)](#client.login(password_md5))
     + [client.captchaLogin(captcha)](#client.captchaLogin(captcha))
@@ -155,7 +155,7 @@ md5后的密码，可以是字符串或Buffer
 
 值为以下格式的json对象：
 
-```json
+```js
 {
     retcode: 0,     //0成功 1异步状态未知 100参数错误 102失败
     status: "ok",   //ok或async或failed
@@ -217,16 +217,6 @@ md5后的密码，可以是字符串或Buffer
 ----
 
 ## `client.sendGroupMsg(group_id,user_id,message[,auto_escape])`
-
-+ `group_id` \<number>
-+ `user_id` \<number>
-+ `message` \<string|Array>
-+ `auto_escape` \<boolean> Default: false
-+ Returns: `message_id` \<number>
-
-----
-
-## `client.sendTempMsg(group_id,user_id,message[,auto_escape])`
 
 + `group_id` \<number>
 + `user_id` \<number>
