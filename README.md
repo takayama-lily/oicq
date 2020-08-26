@@ -1,8 +1,8 @@
 # OICQ
 
-* QQ(安卓)协议的nodejs实现，参考了[mirai](https://github.com/mamoe/mirai)和[MiraiGo](https://github.com/Mrs4s/MiraiGo)，全异步，高效、稳定、简洁。  
-* 使用[CQHTTP](https://cqhttp.cc)风格的API、事件和参数(少量差异)，并且原生支持经典的CQ码。  
-* 一切旨在学习。本项目使用AGPL-3.0许可证，请勿商业化使用。
+* QQ(安卓)协议的nodejs实现，参考了 [mirai](https://github.com/mamoe/mirai) 和 [MiraiGo](https://github.com/Mrs4s/MiraiGo) ，全异步，高效、稳定、简洁。  
+* 使用 [CQHTTP](https://cqhttp.cc) 风格的API、事件和参数(少量差异)，并且原生支持经典的CQ码。  
+* 一切旨在学习。本项目使用AGPL-3.0许可证。不推荐也不提供商业化使用的支持。
 * nodejs版本必须 >= v12.16
 
 **使用内置的控制台：**

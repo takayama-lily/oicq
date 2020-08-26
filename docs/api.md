@@ -1,16 +1,16 @@
 # API和事件
 
-+ [oicq.createClient](#oicq.createClient(uin[,config]))
++ [oicq.createClient(uin[,config])](#oicq.createClient(uin[,config]))
 + [Class: oicq.Client](#Class-Client)
   + [Events](#Events)
     + [Event: system](#Event-system)
     + [Event: message](#Event-message)
     + [Event: request](#Event-request)
     + [Event: notice](#Event-notice)
+  + [client.login(password_md5)](#client.login(password_md5))
+  + [client.captchaLogin(captcha)](#client.captchaLogin(captcha))
+  + [client.terminate()](#client.terminate())
   + [APIs](#APIs)
-    + [client.login(password_md5)](#client.login(password_md5))
-    + [client.captchaLogin(captcha)](#client.captchaLogin(captcha))
-    + [client.terminate()](#client.terminate())
 
 ----
 
@@ -40,6 +40,8 @@ const config = {
 };
 ```
 
+※ 不建议在单个工作线程中运行多个实例。如果确实有需要，建议使用 [Worker threads](https://nodejs.org/dist/latest/docs/api/worker_threads.html) 或 [Child process](https://nodejs.org/dist/latest/docs/api/child_process.html) 管理实例。
+
 ----
 
 ## Class: `Client`
@@ -58,7 +60,7 @@ client.on("system.login", (data)=>{
 });
 ```
 
-事件为冒泡传递，例如 `request.group.add` 事件，若未监听会沿着 `request.group `传递到 `request`  
+事件为冒泡传递，例如 `request.group.add` 事件，若未监听会沿着 `request.group` 传递到 `request`  
 事件使用cqhttp风格命名和参数，所有事件数据都为json对象，并包含以下共通字段：
 
 + `self_id`
@@ -69,61 +71,66 @@ client.on("system.login", (data)=>{
 
 ----
 
-## Event: system
+## Event: `system`
 
-+ system.login
-  + system.login.captcha `image` 字段为图像Buffer
-  + system.login.device `url` 字段为设备锁验证地址
-  + system.login.error `message` 字段为失败原因
-+ system.online 上线事件，可以开始处理消息
-+ system.offline 下线事件
-  + system.offline.network 网络断开
-  + system.offline.frozen 被冻结(未测试)
-  + system.offline.kickoff 另一处登陆
-  + system.offline.unknown 未知
-+ system.reconn 断线重连时触发，重连后会触发online事件
-
-----
-
-## Event: message
-
-+ message.private
-  + message.private.friend
-  + message.private.single 单向好友(对方未加你)
-  + message.private.group 群临时会话
-  + message.private.other 其他途径临时会话
-+ message.group
-  + message.group.normal
-  + message.group.anonymous
-  + message.group.notice
++ `system.login`
+  + `system.login.captcha` 收到验证码 `image` 字段为图像Buffer
+  + `system.login.device` 需要解设备锁 `url` 字段为设备锁验证地址
+  + `system.login.error` 其他原因如密码错误 `message` 字段为失败原因
++ `system.online` 上线事件，可以开始处理消息
++ `system.offline` 下线事件
+  + `system.offline.network` 网络断开
+  + `system.offline.frozen` 被冻结
+  + `system.offline.kickoff` 另一处登陆
+  + `system.offline.unknown` 未知
++ `system.reconn` 断线重连时触发，重连后会触发 `online` 事件
+  + 长时间未发消息会被服务器断开，触发这个事件
 
 ----
 
-## Event: request
+## Event: `message`
 
-+ request.friend
-  + message.friend.add
-+ request.group
-  + message.group.add
-  + message.group.invite
++ `message.private`
+  + `message.private.friend`
+  + `message.private.single` 单向好友(对方未加你)
+  + `message.private.group` 群临时会话
+    + 现在 `sender` 字段中会有完整的该群员数据
+  + `message.private.other`
++ `message.group`
+  + `message.group.normal`
+  + `message.group.anonymous`
 
 ----
 
-## Event: notice
+## Event: `request`
+
++ `request.friend`
+  + `message.friend.add`
++ `request.group`
+  + `message.group.add`
+  + `message.group.invite`
+
+----
+
+## Event: `notice`
 
 为了统一风格，notice事件的命名和原版cqhttp有一定出入
 
-+ notice.friend
-  + notice.friend.increase
-  + notice.friend.recall
-+ notice.group
-  + notice.group.increase
-  + notice.group.decrease
-  + notice.group.recall
-  + notice.group.admin
-  + notice.group.transfer 群转让
-  + notice.group.ban
-  + notice.group.kick
++ `notice.friend`
+  + `notice.friend.increase`
+  + `notice.friend.recall`
++ `notice.group`
+  + `notice.group.increase`
+  + `notice.group.decrease`
+    + 新增字段 `dismiss` 表示是否是解散
+  + `notice.group.recall`
+  + `notice.group.admin`
+    + 新增Boolean型字段 `set`
+  + `notice.group.ban`
+  + `notice.group.transfer` 群转让
+    + 有 `old_owner_id` 和 `new_owner_id` 字段
+
+~~还有一些细微差异，比如新增了一些字段，可以作为彩蛋~~
 
 ----
 
@@ -157,71 +164,51 @@ md5后的密码，可以是字符串或Buffer
 
 ```js
 {
-    retcode: 0,     //0成功 1异步状态未知 100参数错误 102失败
+    retcode: 0,     //0成功 1异步状态未知 100参数错误 102失败 103超时
     status: "ok",   //ok或async或failed
     data: null,     //数据
     error: "",      //失败的时候偶尔会有这个字段
 }
 ```
 
-之后列出的返回值都在data内，其它字段不再列出
+请参考 [CQHTTP](https://cqhttp.cc) 的API部分，这里会列出有差异的地方
 
 ----
 
-## `client.getFriendList([cache])`
+### 获取列表和info
 
-+ `cache` \<boolean> Default: true
-+ Returns: \<Map>
-  + \<number, Object>
++ `client.getFriendList([no_cache])`
+  + 获取列表返回的是EC6的Map类型，不是数组(下同)
++ `client.getGroupList([no_cache])`
++ `client.getGroupMemberList(group_id[, no_cache])`
 
-这里返回的不是数组，是一个ES6的Map对象，键是uin，值是json对象。  
-对象内的字段可以参考[cqhttp](https://cqhttp.cc)文档。以下相同。  
-另cqhttp是no_cache，这里是cache。
-
-----
-
-## `client.getGroupList([cache])`
-
-+ `cache` \<boolean> Default: true
-+ Returns: \<Map>
-  + \<number, Object>
++ `client.getGroupInfo(group_id[, no_cache])`
++ `client.getGroupMemberInfo(group_id, user_id[, no_cache])`
++ `client.getStrangerInfo(user_id)`
 
 ----
 
-## `client.getGroupMemberList(group_id[,cache])`
+### 消息类
 
-+ `group_id` \<number>
-+ `cache` \<boolean> Default: true
-+ Returns: \<Map>
-  + \<number, Object>
+message可以使用 `Array` 格式或 `String` 格式，支持CQ码
 
-----
-
-## `client.getGroupMemberInfo(group_id,user_id[,cache])`
-
-+ `group_id` \<number>
-+ `user_id` \<number>
-+ `cache` \<boolean> Default: true
-+ Returns: \<Map>
-  + \<number, Object>
++ `client.sendPrivateMsg(user_id, message[, auto_escape])`
++ `client.sendTempMsg(group_id, user_id, message[, auto_escape])`
+  + 新增API，如果确定是群临时会话请使用这个，效率高于sendPrivateMsg
++ `client.sendGroupMsg(group_id, user_id, message[, auto_escape])`
++ `clent.deleteMsg(message_id)`
+  + message_id从整数变为了字符串，保存了所有撤回时需要用到的数据
 
 ----
 
-## `client.sendPrivateMsg(user_id,message[,auto_escape])`
+### 处理申请
 
-+ `user_id` \<number>
-+ `message` \<string|Array> 消息同样支持两种格式
-+ `auto_escape` \<boolean> Default: false
-+ Returns: `message_id` \<number>
-
-----
-
-## `client.sendGroupMsg(group_id,user_id,message[,auto_escape])`
-
-+ `group_id` \<number>
-+ `user_id` \<number>
-+ `message` \<string|Array>
-+ `auto_escape` \<boolean> Default: false
-+ Returns: `message_id` \<number>
++ `client.setFriendAddRequest(flag[, approve, block])`
+  + 新增block字段，是否不再接收申请，默认false(下同)
++ `client.setGroupAddRequest(flag[, approve, block, reason])`
 
 ----
+
++ `client.setGroupKick(group_id, user_id[, reject_add_request])`
++ `client.setGroupBan(group_id, user_id[, duration])`
++ `client.setGroupLeave(group_id)`
