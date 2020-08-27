@@ -50,7 +50,7 @@ const config = {
 
 ----
 
-## Events (与 [CQHTTP](https://github.com/howmanybots/onebot/blob/master/v11/specs/event/README.md) 大同小异)
+## Events
 
 使用 `client.on()` 来监听一个事件：
 
@@ -88,13 +88,14 @@ client.on("system.login", (data)=>{
 
 ----
 
+以下事件与 [CQHTTP](https://github.com/howmanybots/onebot/blob/master/v11/specs/event/README.md) 大同小异
+
 ## Event: `message`
 
 + `message.private`
   + `message.private.friend`
   + `message.private.single` 单向好友(对方未加你)
   + `message.private.group` 群临时会话
-    + 现在 `sender` 字段中会有完整的该群员数据
   + `message.private.other`
 + `message.group`
   + `message.group.normal`
@@ -105,10 +106,11 @@ client.on("system.login", (data)=>{
 ## Event: `request`
 
 + `request.friend`
-  + `message.friend.add`
+  + `request.friend.add`
 + `request.group`
-  + `message.group.add`
-  + `message.group.invite`
+  + `request.group.add`
+  + `request.group.invite`
+    + 字段 `role` 表示邀请者权限
 
 ----
 
@@ -125,10 +127,9 @@ client.on("system.login", (data)=>{
     + 字段 `dismiss` 表示是否是解散
   + `notice.group.recall`
   + `notice.group.admin`
-    + Boolean型字段 `set` 表示设置或取消
+    + boolean型字段 `set` 表示设置或取消
   + `notice.group.ban`
   + `notice.group.transfer` 群转让
-    + 有 `old_owner_id` 和 `new_owner_id` 字段
 
 ~~还有一些细微差异，比如新增了一些字段，可以作为彩蛋~~
 
@@ -152,11 +153,11 @@ client.on("system.login", (data)=>{
 
 ----
 
-## APIs (与 [CQHTTP](https://github.com/howmanybots/onebot/blob/master/v11/specs/api/public.md) 大同小异)
+## APIs
 
-同步函数会直接返回。
+(与 [CQHTTP](https://github.com/howmanybots/onebot/blob/master/v11/specs/api/public.md) 大同小异)
 
-异步函数标注为 `async` ，返回的是 `Promise` ，返回值为以下格式的json对象：
+同步函数会直接返回。异步函数标注为 `async` ，返回的是 `Promise` ，返回值为以下格式的json对象：
 
 ```js
 {
@@ -216,5 +217,5 @@ message可以使用 `Array` 格式或 `String` 格式，支持CQ码
 
 ## 增强API
 
-+ `client.changeOnlineStatus(status)`
++ async `client.changeOnlineStatus(status)`
   + `status` 允许的值：11我在线上 31离开 41隐身 50忙碌 60Q我吧 70请勿打扰

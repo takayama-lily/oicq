@@ -62,9 +62,9 @@ function account() {
             bot.on("notice", (data)=>{
                 console.log(data);
             });
-            // bot.on("message", (data)=>{
-            //     console.log(data);
-            // });
+            bot.on("message", (data)=>{
+                // console.log(data.message_id);
+            });
         } catch (e) {
             console.log(e.message);
             return account();
