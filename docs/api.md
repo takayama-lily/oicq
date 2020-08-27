@@ -83,8 +83,6 @@ client.on("system.login", (data)=>{
   + `system.offline.frozen` 被冻结
   + `system.offline.kickoff` 另一处登陆
   + `system.offline.unknown` 未知
-+ `system.reconn` 断线重连时触发，重连后会触发 `online` 事件
-  + 长时间未发消息会被服务器断开，触发这个事件
 
 ----
 
