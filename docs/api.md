@@ -88,13 +88,14 @@ client.on("system.login", (data)=>{
 
 ----
 
+以下事件与 [CQHTTP](https://github.com/howmanybots/onebot/blob/master/v11/specs/event/README.md) 大同小异
+
 ## Event: `message`
 
 + `message.private`
   + `message.private.friend`
   + `message.private.single` 单向好友(对方未加你)
   + `message.private.group` 群临时会话
-    + 现在 `sender` 字段中会有完整的该群员数据
   + `message.private.other`
 + `message.group`
   + `message.group.normal`
@@ -105,10 +106,11 @@ client.on("system.login", (data)=>{
 ## Event: `request`
 
 + `request.friend`
-  + `message.friend.add`
+  + `request.friend.add`
 + `request.group`
-  + `message.group.add`
-  + `message.group.invite`
+  + `request.group.add`
+  + `request.group.invite`
+    + 字段 `role` 表示邀请者权限
 
 ----
 
@@ -122,69 +124,61 @@ client.on("system.login", (data)=>{
 + `notice.group`
   + `notice.group.increase`
   + `notice.group.decrease`
-    + 新增字段 `dismiss` 表示是否是解散
+    + 字段 `dismiss` 表示是否是解散
   + `notice.group.recall`
   + `notice.group.admin`
-    + 新增Boolean型字段 `set`
+    + boolean型字段 `set` 表示设置或取消
   + `notice.group.ban`
   + `notice.group.transfer` 群转让
-    + 有 `old_owner_id` 和 `new_owner_id` 字段
 
 ~~还有一些细微差异，比如新增了一些字段，可以作为彩蛋~~
 
 ----
 
-## `client.login(password_md5)`
+## 系统类API
 
-+ `password_md5` \<string|Buffer>
+## `client.login(password_md5)` 密码登陆
 
-md5后的密码，可以是字符串或Buffer
-
-----
-
-## `client.captchaLogin(captcha)`
-
-+ `captcha` \<string>
-
-验证码登陆
++ `password_md5` \<string|Buffer> md5后的密码，可以是字符串或Buffer
 
 ----
 
-## `client.terminate()`
+## `client.captchaLogin(captcha)` 验证码登陆
 
-关闭连接
++ `captcha` \<string> 4个字母
+
+----
+
+## `client.terminate()` 关闭连接
 
 ----
 
 ## APIs
 
-从这里开始所有的api都为async函数，返回的是 `Promise`
+(与 [CQHTTP](https://github.com/howmanybots/onebot/blob/master/v11/specs/api/public.md) 大同小异)
 
-值为以下格式的json对象：
+同步函数会直接返回。异步函数标注为 `async` ，返回的是 `Promise` ，返回值为以下格式的json对象：
 
 ```js
 {
-    retcode: 0,     //0成功 1异步状态未知 100参数错误 102失败 103超时
+    retcode: 0,     //0成功 1状态未知 100参数错误 102失败 103超时
     status: "ok",   //ok或async或failed
     data: null,     //数据
     error: "",      //失败的时候偶尔会有这个字段
 }
 ```
 
-请参考 [CQHTTP](https://cqhttp.cc) 的API部分，这里会列出有差异的地方
-
 ----
 
 ### 获取列表和info
 
-+ `client.getFriendList([no_cache])`
-  + 获取列表返回的是EC6的Map类型，不是数组(下同)
-+ `client.getGroupList([no_cache])`
-+ `client.getGroupMemberList(group_id[, no_cache])`
-
-+ `client.getGroupInfo(group_id[, no_cache])`
-+ `client.getGroupMemberInfo(group_id, user_id[, no_cache])`
-+ `client.getStrangerInfo(user_id)`
++ async `client.getFriendList([no_cache])`
++ async `client.getGroupList([no_cache])`
++ async `client.getGroupMemberList(group_id[, no_cache])`
+  + 获取列表返回的是ES6的Map类型，不是数组
++ async `client.getGroupInfo(group_id[, no_cache])`
++ async `client.getGroupMemberInfo(group_id, user_id[, no_cache])`
++ async `client.getStrangerInfo(user_id)`
 
 ----
 
@@ -192,23 +186,36 @@ md5后的密码，可以是字符串或Buffer
 
 message可以使用 `Array` 格式或 `String` 格式，支持CQ码
 
-+ `client.sendPrivateMsg(user_id, message[, auto_escape])`
-+ `client.sendTempMsg(group_id, user_id, message[, auto_escape])`
-  + 新增API，如果确定是群临时会话请使用这个，效率高于sendPrivateMsg
-+ `client.sendGroupMsg(group_id, user_id, message[, auto_escape])`
-+ `clent.deleteMsg(message_id)`
-  + message_id从整数变为了字符串，保存了所有撤回时需要用到的数据
++ async `client.sendPrivateMsg(user_id, message[, auto_escape])`
++ async `client.sendGroupMsg(group_id, user_id, message[, auto_escape])`
++ async `client.deleteMsg(message_id)`
+  + `message_id` 现在是字符串，保存了所有撤回时需要用到的数据
 
 ----
 
 ### 处理申请
 
-+ `client.setFriendAddRequest(flag[, approve, block])`
-  + 新增block字段，是否不再接收申请，默认false(下同)
-+ `client.setGroupAddRequest(flag[, approve, block, reason])`
++ async `client.setFriendAddRequest(flag[, approve, block])`
++ async `client.setGroupAddRequest(flag[, approve, block, reason])`
+  + block字段表示是否拉黑，默认false
 
 ----
 
-+ `client.setGroupKick(group_id, user_id[, reject_add_request])`
-+ `client.setGroupBan(group_id, user_id[, duration])`
-+ `client.setGroupLeave(group_id)`
++ async `client.setGroupKick(group_id, user_id[, reject_add_request])`
++ async `client.setGroupBan(group_id, user_id[, duration])`
++ async `client.setGroupLeave(group_id)`
+
+----
+
++ `client.canSendImage()`
++ `client.canSendRecord()`
++ `client.getStatus()`
++ `client.getVersionInfo()`
++ `client.getLoginInfo()`
+
+----
+
+## 增强API
+
++ async `client.changeOnlineStatus(status)`
+  + `status` 允许的值：11我在线上 31离开 41隐身 50忙碌 60Q我吧 70请勿打扰
