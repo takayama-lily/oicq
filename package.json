@@ -6,6 +6,9 @@
   "scripts": {
     "test": "node ./test.js"
   },
+  "engines": {
+    "node": ">= v12.16"
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/takayama-lily/oicq.git"
