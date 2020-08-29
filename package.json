@@ -1,10 +1,13 @@
 {
   "name": "oicq",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "description": "QQ protocol!",
   "main": "oicq.js",
   "scripts": {
     "test": "node ./test.js"
+  },
+  "engines": {
+    "node": ">= v12.16"
   },
   "repository": {
     "type": "git",
