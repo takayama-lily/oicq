@@ -64,7 +64,7 @@ client.on("system.login", (data)=>{
 事件使用cqhttp风格命名和参数，所有事件数据都为json对象，并包含以下共通字段：
 
 + `self_id`
-+ `time` 毫秒级
++ `time`
 + `post_type` 一级分类 system, message, request, notice
 + `{post_type}_type` 二级分类如 system.login, request.group
 + `sub_type` 三级分类，有时会没有
