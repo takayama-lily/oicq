@@ -1,15 +1,15 @@
 "use strict";
-const version = require("../package.json");
+const version = require("./package.json");
 const net = require("net");
 const fs = require("fs");
 const path = require("path");
 const crypto = require("crypto");
 const log4js = require("log4js");
-const device = require("./device");
-const {md5, rand, buildApiRet, checkUin, timestamp} = require("./packet/common");
-const outgoing = require("./packet/outgoing");
-const imcoming = require("./packet/incoming");
-const event = require("./event");
+const device = require("./lib/device");
+const {md5, rand, buildApiRet, checkUin, timestamp} = require("./lib/common");
+const outgoing = require("./lib/outgoing");
+const imcoming = require("./lib/incoming");
+const event = require("./lib/event");
 const BUF0 = Buffer.alloc(0);
 
 class OICQError extends Error {};
@@ -669,7 +669,7 @@ class AndroidClient extends Client {
                 const buf = Buffer.alloc(4);
                 buf.writeUInt32BE(resp.sendTime);
                 message_id += buf.toString("hex");
-                this.logger.info(`send: [Private: ${user_id}, MessageID: ${message_id}] ` + message);
+                this.logger.info(`send to: [Private: ${user_id}] ` + message);
                 return buildApiRet(0, {message_id});
             }
             this.logger.error(`send failed: [Private: ${user_id}] ` + resp.errmsg)
@@ -719,7 +719,7 @@ class AndroidClient extends Client {
                 });
             };
 
-            this.logger.info(`send: [Group: ${group_id}, MessageID: ${message_id}] ` + message);
+            this.logger.info(`send to: [Group: ${group_id}] ` + message);
             return buildApiRet(0, {message_id});
         } catch (e) {
             this.removeAllListeners(event_id);
