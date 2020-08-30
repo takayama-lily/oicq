@@ -2,7 +2,7 @@
 const fs = require("fs");
 const path = require("path");
 const crypto = require("crypto");
-const oicq = require("./lib/client");
+const oicq = require("./client");
 
 /**
  * 一个简单的控制台，仅用来调试

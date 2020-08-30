@@ -1,15 +1,15 @@
 "use strict";
-const version = require("../package.json");
+const version = require("./package.json");
 const net = require("net");
 const fs = require("fs");
 const path = require("path");
 const crypto = require("crypto");
 const log4js = require("log4js");
-const device = require("./device");
-const {md5, rand, buildApiRet, checkUin, timestamp} = require("./packet/common");
-const outgoing = require("./packet/outgoing");
-const imcoming = require("./packet/incoming");
-const event = require("./event");
+const device = require("./lib/device");
+const {md5, rand, buildApiRet, checkUin, timestamp} = require("./lib/common");
+const outgoing = require("./lib/outgoing");
+const imcoming = require("./lib/incoming");
+const event = require("./lib/event");
 const BUF0 = Buffer.alloc(0);
 
 class OICQError extends Error {};
@@ -258,7 +258,7 @@ class AndroidClient extends Client {
 
         // 在这里拆分包
         this.on("readable", ()=>{
-            while (this.readableLength >= 4) {
+            while (this.readableLength > 4) {
                 let len_buf = this.read(4);
                 let len = len_buf.readInt32BE();
                 if (this.readableLength >= len - 4) {
@@ -669,7 +669,7 @@ class AndroidClient extends Client {
                 const buf = Buffer.alloc(4);
                 buf.writeUInt32BE(resp.sendTime);
                 message_id += buf.toString("hex");
-                this.logger.info(`send: [Private: ${user_id}, MessageID: ${message_id}] ` + message);
+                this.logger.info(`send to: [Private: ${user_id}] ` + message);
                 return buildApiRet(0, {message_id});
             }
             this.logger.error(`send failed: [Private: ${user_id}] ` + resp.errmsg)
@@ -719,7 +719,7 @@ class AndroidClient extends Client {
                 });
             };
 
-            this.logger.info(`send: [Group: ${group_id}, MessageID: ${message_id}] ` + message);
+            this.logger.info(`send to: [Group: ${group_id}] ` + message);
             return buildApiRet(0, {message_id});
         } catch (e) {
             this.removeAllListeners(event_id);
@@ -745,27 +745,41 @@ class AndroidClient extends Client {
     ///////////////////////////////////////////////////
 
     //todo
-    async setGroupAnonymousBan(group_id, anonymous_flag,  duration = 600) {}
-    async setGroupWholeBan(group_id, enable = true) {}
-    async setGroupAnonymous(group_id, enable = true) {}
-    async setGroupName(group_id, group_name) {}
-    async setGroupAdmin(group_id, user_id, enable = true) {}
-    async setGroupSpecialTitle(group_id, user_id, special_title = "", duration = -1) {}
+    // async setGroupAnonymous(group_id, enable = true) {}
+    // async setGroupAnonymousBan(group_id, anonymous_flag,  duration = 600) {}
+    // async setGroupWholeBan(group_id, enable = true) {}
+    async setGroupName(group_id, group_name) {
+        this.write(outgoing.buildGroupSettingRequestPacket(group_id, "ingGroupName", Buffer.from(String(group_name)), this));
+        return buildApiRet(1);
+    }
+    async sendGroupNotice(group_id, content) {
+        this.write(outgoing.buildGroupSettingRequestPacket(group_id, "ingGroupMemo", Buffer.from(String(content)), this));
+        return buildApiRet(1);
+    }
+    // async setGroup(group_id, k, v) {
+    //     this.write(outgoing.buildGroupSettingRequestPacket(group_id, k, v, this));
+    //     return buildApiRet(1);
+    // }
+    // async setGroupAdmin(group_id, user_id, enable = true) {}
+    // async setGroupSpecialTitle(group_id, user_id, special_title = "", duration = -1) {}
 
     ///////////////////////////////////////////////////
 
     /**
-     * @todo
      * @param {Number} group_id 
      * @param {Number} user_id 
      * @param {String} card 为空还原
      */
     async setGroupCard(group_id, user_id, card = "") {
-        // group_id = parseInt(group_id), user_id = parseInt(user_id);
-        // if (!checkUin(group_id) || !checkUin(user_id))
-        //     return buildApiRet(100);
-        // this.write(outgoing.buildEditGroupCardRequestPacket(group_id, user_id, card, this));
-        // return buildApiRet(1);
+        group_id = parseInt(group_id), user_id = parseInt(user_id);
+        if (!checkUin(group_id) || !checkUin(user_id))
+            return buildApiRet(100);
+        try {
+            const res = await this.send(outgoing.buildEditGroupCardRequestPacket(group_id, user_id, card, this));
+            return buildApiRet(res?0:102);
+        } catch (e) {
+            return buildApiRet(103);
+        }
     }
 
     /**

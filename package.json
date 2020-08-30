@@ -1,8 +1,8 @@
 {
   "name": "oicq",
-  "version": "0.1.5",
+  "version": "1.0.0",
   "description": "QQ protocol!",
-  "main": "oicq.js",
+  "main": "client.js",
   "scripts": {
     "test": "node ./test.js"
   },
