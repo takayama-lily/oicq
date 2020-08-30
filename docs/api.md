@@ -1,6 +1,7 @@
 # API和事件
 
 + [oicq.createClient(uin[,config])](#oicq.createClient(uin[,config]))
++ [oicq.setGlobalConfig(config)](#oicq.setGlobalConfig(config))
 + [Class: oicq.Client](#Class-Client)
   + [Events](#Events)
     + [Event: system](#Event-system)
@@ -30,7 +31,7 @@ const client = oicq.createClient(uin, config);
 config说明：
 
 ```js
-//默认配置
+//要使用默认配置请勿传递该字段
 const config = {
     platform:       2,      //登陆类型 1手机 2平板
     log_level:      "info", //日志级别，有trace,debug,info,warn,error,fatal,off
@@ -41,6 +42,25 @@ const config = {
 ```
 
 ※ 不建议在单个工作线程中运行多个实例。如果确实有需要，建议使用 [Worker threads](https://nodejs.org/dist/latest/docs/api/worker_threads.html) 或 [Child process](https://nodejs.org/dist/latest/docs/api/child_process.html) 管理实例。
+
+----
+
+## oicq.setGlobalConfig(config)
+
++ `config` \<Object>
+
+全局设置
+
+```js
+//要使用默认配置请勿传递该字段
+oicq.setGlobalConfig({
+    web_image_timeout:  0,  //下载网络图片的超时时间(0表示系统自己判断)
+    web_image_maxsize:  0,  //下载网络图片最大尺寸(KB)
+    web_record_timeout: 0,  //下载网络语音的超时时间
+    web_record_maxsize: 0,  //下载网络语音最大尺寸(KB)
+    cache_root:         "", //缓存文件夹根目录，需要可写权限
+});
+```
 
 ----
 
