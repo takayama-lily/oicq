@@ -216,11 +216,11 @@ class AndroidClient extends Client {
         this.uin = uin;
 
         config = {
-            platform:       2,      //1手机 2平板
-            log_level:      "info", //trace,debug,info,warn,error,fatal,off
-            kickoff:        false,  //被挤下线是否在3秒后反挤对方
-            ignore_self:    true,   //群聊是否无视自己的发言
-            device_path:    path.join(process.mainModule.path, "data"),    //设备文件保存路径，默认为启动文件同目录下的data文件夹
+            platform:    2,      //1手机 2平板
+            log_level:   "info", //trace,debug,info,warn,error,fatal,off
+            kickoff:     false,  //被挤下线是否在3秒后反挤对方
+            ignore_self: true,   //群聊是否无视自己的发言
+            device_path: path.join(process.mainModule.path, "data"),    //设备文件保存路径，默认为启动文件同目录下的data文件夹
             ...config
         };
         this.config = config;
@@ -653,7 +653,7 @@ class AndroidClient extends Client {
      * @returns {Ojbect} data
      *  @field {Number} message_id
      */
-    async sendPrivateMsg(user_id, message, auto_escape = false) {
+    async sendPrivateMsg(user_id, message = "", auto_escape = false) {
         user_id = parseInt(user_id);
         if (!checkUin(user_id))
             return buildApiRet(100);
@@ -686,7 +686,7 @@ class AndroidClient extends Client {
      * @returns {Ojbect} data
      *  @field {Number} message_id
      */
-    async sendGroupMsg(group_id, message, auto_escape = false) {
+    async sendGroupMsg(group_id, message = "", auto_escape = false) {
         group_id = parseInt(group_id);
         if (!checkUin(group_id))
             return buildApiRet(100);
@@ -748,11 +748,11 @@ class AndroidClient extends Client {
     // async setGroupAnonymous(group_id, enable = true) {}
     // async setGroupAnonymousBan(group_id, anonymous_flag,  duration = 600) {}
     // async setGroupWholeBan(group_id, enable = true) {}
-    async setGroupName(group_id, group_name) {
+    async setGroupName(group_id, group_name = "") {
         this.write(outgoing.buildGroupSettingRequestPacket(group_id, "ingGroupName", Buffer.from(String(group_name)), this));
         return buildApiRet(1);
     }
-    async sendGroupNotice(group_id, content) {
+    async sendGroupNotice(group_id, content = "") {
         this.write(outgoing.buildGroupSettingRequestPacket(group_id, "ingGroupMemo", Buffer.from(String(content)), this));
         return buildApiRet(1);
     }
@@ -888,17 +888,44 @@ class AndroidClient extends Client {
 
 //----------------------------------------------------------------------------------------------------
 
+const logger = log4js.getLogger("[SYSTEM]");
+logger.level = "info";
+
+const config = {
+    web_image_timeout:  0,  //下载网络图片的超时时间
+    web_image_maxsize:  0,  //下载网络图片最大尺寸(KB)
+    web_record_timeout: 0,  //下载网络语音的超时时间
+    web_record_maxsize: 0,  //下载网络语音最大尺寸(KB)
+    cache_root:         path.join(process.mainModule.path, "data"), //缓存文件夹根目录，需要可写权限
+};
+
+process.OICQ = {
+    logger, config
+};
+
+function createRootDir() {
+    try {
+        if (!fs.existsSync(config.cache_root))
+            fs.mkdirSync(config.cache_root);
+        const img_path = path.join(config.cache_root, "image");
+        const ptt_path = path.join(config.cache_root, "record");
+        if (!fs.existsSync(img_path))
+            fs.mkdirSync(img_path);
+        if (!fs.existsSync(ptt_path))
+            fs.mkdirSync(ptt_path);
+    } catch (e) {
+        logger.error("创建数据文件夹失败，请确认权限。" + config.cache_root);
+    }
+}
+
+createRootDir();
+
 /**
  * 全局设置
  */
 function setGlobalConfig(config = {}) {
-    config = {
-        web_image_timeout:  15,  //下载网络图片的超时时间
-        web_image_maxsize:  30,  //下载网络图片最大尺寸(MB)
-        enable_sqlite:      false,  //启用内置的sqlite数据库保存缓存、消息和事件(需要自行安装https://www.npmjs.com/package/sqlite3)
-        sqlite_file_path:   path.join(process.mainModule.path, "data"), //db文件保存路径，
-        ...config
-    };
+    Object.assign(process.OICQ.config, config);
+    createRootDir();
 }
 
 /**
