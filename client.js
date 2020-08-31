@@ -842,10 +842,11 @@ class AndroidClient extends Client {
     /**
      * @param {String} flag 
      * @param {Boolean} approve 
+     * @param {String} remark
      * @param {Boolean} block 是否加入黑名单
      * @async 暂时为立即返回，无法知晓是否成功
      */
-    async setFriendAddRequest(flag, approve = true, block = false) {
+    async setFriendAddRequest(flag, approve = true, remark = "", block = false) {
         try {
             this.write(outgoing.buildFriendRequestRequestPacket(flag, approve, block, this));
             return buildApiRet(1);
@@ -856,33 +857,39 @@ class AndroidClient extends Client {
     /**
      * @param {String} flag 
      * @param {Boolean} approve 
-     * @param {Boolean} block 是否加入黑名单
      * @param {String} reason 拒绝理由，仅在拒绝他人加群时有效
+     * @param {Boolean} block 是否加入黑名单
      * @async 暂时为立即返回，无法知晓是否成功
      */
-    async setGroupAddRequest(flag, approve = true, block = false, reason = undefined) {
+    async setGroupAddRequest(flag, approve = true, reason = "", block = false) {
         try {
-            this.write(outgoing.buildGroupRequestRequestPacket(flag, approve, block, reason, this));
+            this.write(outgoing.buildGroupRequestRequestPacket(flag, approve, reason, block, this));
             return buildApiRet(1);
         } catch (e) {}
         return buildApiRet(100);
     }
 
-    canSendImage() { return true; }
-    canSendRecord() { return false; }
-    getVersionInfo() { return version; }
+    canSendImage() {
+        return buildApiRet(0, {yes: true});
+    }
+    canSendRecord() {
+        return buildApiRet(0, {yes: false});
+    }
+    getVersionInfo() {
+        return buildApiRet(0, version);
+    }
     getStatus() {
-        return {
+        return buildApiRet(0, {
             online: this.isOnline(),
             status: this.online_status,
-        };
+        })
     }
     getLoginInfo() {
-        return {
+        return buildApiRet(0, {
             user_id: this.uin,
             nickname: this.nickname,
             age: this.age, sex: this.gender
-        };
+        })
     }
 }
 

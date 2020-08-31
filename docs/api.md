@@ -186,6 +186,8 @@ client.on("system.login", (data)=>{
 }
 ```
 
+函数为驼峰命名，转换成下划线就是cqhttp的api，参数完全相同
+
 ----
 
 ### 获取列表和info
@@ -213,8 +215,8 @@ message可以使用 `Array` 格式或 `String` 格式，支持CQ码
 
 ### 处理申请
 
-+ async `client.setFriendAddRequest(flag[, approve, block])`
-+ async `client.setGroupAddRequest(flag[, approve, block, reason])`
++ async `client.setFriendAddRequest(flag[, approve, remark, block])`
++ async `client.setGroupAddRequest(flag[, approve, reason, block])`
   + block字段表示是否拉黑，默认false
 
 ----
