@@ -288,10 +288,10 @@ class AndroidClient extends Client {
                 this.getFriendList(true), this.getGroupList(true)
             ]);
             this.logger.info(`加载了${this.friend_list.size}个好友，${this.group_list.size}个群。`);
-            this.group_list.forEach((v, k)=>{
-                this.getGroupMemberList(k, true);
-            });
             event.emit(this, "system.online");
+            for (let k of this.group_list.keys()) {
+                await this.getGroupMemberList(k, true);
+            }
         });
     }
 
