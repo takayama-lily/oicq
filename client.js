@@ -164,7 +164,6 @@ class AndroidClient extends Client {
     seq_id = 0;
     handlers = new Map();
     seq_cache = {
-        "MessageSvc": new Set(),
         "PbPush": new Set(),
         "ReqPush": new Set(),
     };
