@@ -714,9 +714,12 @@ class AndroidClient extends Client {
                 this.removeAllListeners(event_id);
                 message_id = await new Promise((resolve)=>{
                     const id = setTimeout(()=>{
-                        this.logger.info(`可能被风控了，这条消息将尝试作为长消息发送。`);
+                        this.logger.info(`可能被风控了，将尝试作为长消息再发送一次。`);
                         this.removeAllListeners(event_id);
-                        resolve(false);
+                        if (!as_long)
+                            resolve(false);
+                        else
+                            resolve(group_id.toString(16) + "0".repeat(16));
                     }, 1000);
                     this.once(event_id, (a)=>{
                         clearTimeout(id);
