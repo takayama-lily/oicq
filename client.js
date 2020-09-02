@@ -264,7 +264,10 @@ class AndroidClient extends Client {
                     try {
                         this.reconn_flag = true;
                         this.recv_timestamp = Date.now();
-                        imcoming(this.read(len - 4), this);
+                        const packet = this.read(len - 4);
+                        (async()=>{
+                            imcoming(packet, this);
+                        })();
                     } catch (e) {
                         this.logger.debug(e.stack);
                         this.emit("internal.exception", e);
@@ -697,43 +700,35 @@ class AndroidClient extends Client {
                 return buildApiRet(100);
             }
 
-            // 注册监听器，监听这条自己的发言
-            var event_id = `interval.${group_id}.${this.curr_msg_rand}`;
-            let message_id;
-            this.once(event_id, (id)=>message_id=id);
-
+            // 注册监听器，监听这条自己的发言，用来获取message_id
+            const event_id = `interval.${group_id}.${this.curr_msg_rand}`;
             const resp = await this.send(packet);
 
             if (resp.result !== 0) {
-                this.removeAllListeners(event_id);
                 this.logger.error(`send failed: [Group: ${group_id}] ` + resp.errmsg);
                 return buildApiRet(102, null, {info: resp.errmsg});
             }
 
-            if (this.listenerCount(event_id) > 0) {
-                this.removeAllListeners(event_id);
-                message_id = await new Promise((resolve)=>{
-                    const id = setTimeout(()=>{
-                        this.logger.info(`可能被风控了，将尝试作为长消息再发送一次。`);
-                        this.removeAllListeners(event_id);
-                        if (!as_long)
-                            resolve(false);
-                        else
-                            resolve(group_id.toString(16) + "0".repeat(16));
-                    }, 1000);
-                    this.once(event_id, (a)=>{
-                        clearTimeout(id);
-                        resolve(a);
-                    });
+            const message_id = await new Promise((resolve)=>{
+                const id = setTimeout(()=>{
+                    this.logger.info(`可能被风控了，将尝试作为长消息再发送一次。`);
+                    this.removeAllListeners(event_id);
+                    if (!as_long)
+                        resolve(false);
+                    else
+                        resolve(group_id.toString(16) + "0".repeat(16));
+                }, 1000);
+                this.once(event_id, (msgid)=>{
+                    clearTimeout(id);
+                    resolve(msgid);
                 });
-                if (!message_id)
-                    return await this.sendGroupMsg(group_id, message, auto_escape, true)
-            };
+            });
+            if (!message_id)
+                return await this.sendGroupMsg(group_id, message, auto_escape, true)
 
             this.logger.info(`send to: [Group: ${group_id}] ` + message);
             return buildApiRet(0, {message_id});
         } catch (e) {
-            this.removeAllListeners(event_id);
             return buildApiRet(103);
         }
     }
