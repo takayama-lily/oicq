@@ -227,7 +227,7 @@ class AndroidClient extends Client {
         this.logger = log4js.getLogger(`[BOT:${uin}]`);
         this.logger.level = config.log_level;
 
-        this.sub_appid = config.platform === 1 ? 537062845 : 537062409;
+        this.sub_appid = config.platform === 1 ? 537062845 : (config.platform === 3 ? 537061176 : 537062409);
         this.ignore_self = config.ignore_self;
         this.kickoff_reconn = config.kickoff;
 
