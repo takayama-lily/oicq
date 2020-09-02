@@ -1,6 +1,6 @@
 {
   "name": "oicq",
-  "version": "1.0.10",
+  "version": "1.0.11",
   "description": "QQ protocol!",
   "main": "client.js",
   "scripts": {
