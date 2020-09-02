@@ -503,10 +503,8 @@ class AndroidClient extends Client {
      * 使用此函数关闭连接，不要使用end和destroy
      */
     terminate() {
-        if (this.status === Client.OFFLINE)
-            return;
         this.reconn_flag = false;
-        this.end();
+        this.destroy();
     }
 
     isOnline() {
@@ -682,10 +680,11 @@ class AndroidClient extends Client {
      * @param {Number} group_id 
      * @param {String|Array} message 
      * @param {Boolean} auto_escape Default: false
+     * @param {Boolean} as_long 作为长消息发送(可以避免被风控)
      * @returns {Ojbect} data
      *  @field {Number} message_id
      */
-    async sendGroupMsg(group_id, message = "", auto_escape = false) {
+    async sendGroupMsg(group_id, message = "", auto_escape = false, as_long = false) {
         group_id = parseInt(group_id);
         if (!checkUin(group_id))
             return buildApiRet(100);
@@ -693,7 +692,7 @@ class AndroidClient extends Client {
             return buildApiRet(102);
         try {
             try {
-                var packet = await outgoing.buildSendGroupMessageRequestPacket(group_id, message, auto_escape, this);
+                var packet = await outgoing.buildSendGroupMessageRequestPacket(group_id, message, auto_escape, as_long, this);
             } catch (e) {
                 return buildApiRet(100);
             }
@@ -714,8 +713,18 @@ class AndroidClient extends Client {
             if (this.listenerCount(event_id) > 0) {
                 this.removeAllListeners(event_id);
                 message_id = await new Promise((resolve)=>{
-                    this.once(event_id, resolve);
+                    const id = setTimeout(()=>{
+                        this.logger.info(`可能被风控了，这条消息将尝试作为长消息发送。`);
+                        this.removeAllListeners(event_id);
+                        resolve(false);
+                    }, 1000);
+                    this.once(event_id, (a)=>{
+                        clearTimeout(id);
+                        resolve(a);
+                    });
                 });
+                if (!message_id)
+                    return await this.sendGroupMsg(group_id, message, auto_escape, true)
             };
 
             this.logger.info(`send to: [Group: ${group_id}] ` + message);
