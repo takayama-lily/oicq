@@ -8,7 +8,7 @@
 |[消息]|文字和表情|长消息|图片|语音|合并转发|其他富文本|
 |-|-|-|-|-|-|-|
 |好友|◯|◯|◯|✕|✕|✕|
-|群聊|◯|◯|◯|✕|✕|✕|
+|群聊|◯|◯|◯|◯|✕|✕|
 |临时会话|◯|◯|◯|✕|✕|✕|
 
 ----
@@ -53,8 +53,8 @@
 |at|◯|[CQ:at,qq=123456,text=@ABC] text用来定义@不到时的输出|
 |face|◯|[CQ:face,id=104]
 |bface|仅解析|
-|image|◯|[CQ:image,file=202cb962ac59075b964b07152d234b70123456] 收到的图片<br>[CQ:image,file=C:/123.jpg] 本地图片<br>[CQ:image,cache=0,file=http://abc.com] 网络图片
-|record|✕|
+|image|◯|[CQ:image,file=202cb962ac59075b964b07152d234b70123456] 收到的图片<br>[CQ:image,file=C:/123.jpg] 本地图片<br>[CQ:image,cache=0,file=http://abc.com] 网络图片|
+|record|◯|仅amr,slk(和图片一样支持网络文件)|
 |music|✕|
 |video|✕|
 |location|✕|
