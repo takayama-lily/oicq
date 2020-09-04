@@ -54,7 +54,7 @@
 |face|◯|表情，[CQ:face,id=104]
 |bface|仅解析|
 |image|◯|[CQ:image,file=202cb962ac59075b964b07152d234b70123456] 收到的图片<br>[CQ:image,file=C:/123.jpg] 本地图片<br>[CQ:image,cache=0,file=http://abc.com] 网络图片|
-|record|◯|发送语音，写法和image一样<br>支持任何格式的音频自动转amr(必须将ffmpeg加入环境变量path)<br>linux下的ffmpeg不自带amr解码器，可能需要自行编译ffmpeg|
+|record|◯|发送语音，写法和image一样<br>支持任何格式的音频自动转amr(必须将 [ffmpeg](http://ffmpeg.org/download.html) 加入环境变量path)<br>linux下的ffmpeg不自带amr解码器，可能需要自行编译ffmpeg|
 |music|✕|
 |video|✕|
 |location|✕|
