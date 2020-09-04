@@ -215,7 +215,7 @@ class AndroidClient extends Client {
         this.uin = uin;
 
         config = {
-            platform:    2,      //1手机 2平板
+            platform:    2,      //1手机 2平板 3手表(不支持部分群事件)
             log_level:   "info", //trace,debug,info,warn,error,fatal,off
             kickoff:     false,  //被挤下线是否在3秒后反挤对方
             ignore_self: true,   //群聊是否无视自己的发言
@@ -693,8 +693,6 @@ class AndroidClient extends Client {
         group_id = parseInt(group_id);
         if (!checkUin(group_id))
             return buildApiRet(100);
-        if (!await this.hasGroup(group_id))
-            return buildApiRet(102);
         try {
             try {
                 var packet = await outgoing.buildSendGroupMessageRequestPacket(group_id, message, auto_escape, as_long, this);
