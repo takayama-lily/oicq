@@ -251,7 +251,9 @@ class AndroidClient extends Client {
             if (this.reconn_flag) {
                 if (e_flag)
                     this.reconn_flag = false;
-                this._connect(this.changeOnlineStatus.bind(this));
+                this._connect(()=>{
+                    this.changeOnlineStatus(this.online_status?this.online_status:11);
+                });
             }
         });
 
@@ -887,7 +889,7 @@ class AndroidClient extends Client {
         return buildApiRet(0, {yes: true});
     }
     canSendRecord() {
-        return buildApiRet(0, {yes: false});
+        return buildApiRet(0, {yes: true});
     }
     getVersionInfo() {
         return buildApiRet(0, version);
