@@ -55,10 +55,9 @@ const config = {
 //要使用默认配置请勿传递该字段
 oicq.setGlobalConfig({
     web_image_timeout:  0,  //下载网络图片的超时时间(0表示系统自己判断)
-    web_image_maxsize:  0,  //下载网络图片最大尺寸(KB)
     web_record_timeout: 0,  //下载网络语音的超时时间
-    web_record_maxsize: 0,  //下载网络语音最大尺寸(KB)
     cache_root:         "", //缓存文件夹根目录，需要可写权限
+    debug: false,
 });
 ```
 

@@ -51,10 +51,10 @@
 |[CQ码]|支持|说明|
 |-|-|-|
 |at|◯|[CQ:at,qq=123456,text=@ABC] text用来定义@不到时的输出|
-|face|◯|[CQ:face,id=104]
+|face|◯|表情，[CQ:face,id=104]
 |bface|仅解析|
 |image|◯|[CQ:image,file=202cb962ac59075b964b07152d234b70123456] 收到的图片<br>[CQ:image,file=C:/123.jpg] 本地图片<br>[CQ:image,cache=0,file=http://abc.com] 网络图片|
-|record|◯|仅amr,slk(和图片一样支持网络文件)|
+|record|◯|发送语音，写法和image一样<br>支持任何格式的音频自动转amr(必须将ffmpeg加入环境变量path)<br>linux下的ffmpeg不自带amr解码器，可能需要自行编译ffmpeg|
 |music|✕|
 |video|✕|
 |location|✕|

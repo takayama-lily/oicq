@@ -916,10 +916,9 @@ logger.level = "info";
 
 const config = {
     web_image_timeout:  0,  //下载网络图片的超时时间
-    web_image_maxsize:  0,  //下载网络图片最大尺寸(KB)
     web_record_timeout: 0,  //下载网络语音的超时时间
-    web_record_maxsize: 0,  //下载网络语音最大尺寸(KB)
     cache_root:         path.join(process.mainModule.path, "data"), //缓存文件夹根目录，需要可写权限
+    debug: false,
 };
 
 process.OICQ = {
@@ -948,6 +947,8 @@ createRootDir();
  */
 function setGlobalConfig(config = {}) {
     Object.assign(process.OICQ.config, config);
+    if (config.debug)
+        logger.level = "debug";
     createRootDir();
 }
 
