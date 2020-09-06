@@ -16,7 +16,7 @@ function account() {
         try {
             input = parseInt(input.toString().trim());
             bot = oicq.createClient(input, {
-                log_level: "debug", ignore_self: false
+                log_level: "trace", ignore_self: false
             });
 
             //处理验证码事件

@@ -33,7 +33,7 @@ config说明：
 ```js
 //要使用默认配置请勿传递该字段
 const config = {
-    platform:       2,      //登陆类型 1手机 2平板
+    platform:       2,      //登陆类型 1手机 2平板 3手表(不支持部分群事件)
     log_level:      "info", //日志级别，有trace,debug,info,warn,error,fatal,off
     kickoff:        false,  //被挤下线是否在3秒后反挤对方
     ignore_self:    true,   //群聊是否无视自己的发言
