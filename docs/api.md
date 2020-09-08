@@ -147,6 +147,8 @@ client.on("system.login", (data)=>{
     + boolean型字段 `set` 表示设置或取消
   + `notice.group.ban`
   + `notice.group.transfer` 群转让
+  + `notice.group.file` 收到群文件
+    + 有url,size,name,duration,md5 (可以通过url直接下载)
 
 ~~还有一些细微差异，比如新增了一些字段，可以作为彩蛋~~
 
