@@ -263,17 +263,17 @@ class AndroidClient extends Client {
                 let len_buf = this.read(4);
                 let len = len_buf.readInt32BE();
                 if (this.readableLength >= len - 4) {
-                    try {
-                        this.reconn_flag = true;
-                        this.recv_timestamp = Date.now();
-                        const packet = this.read(len - 4);
-                        (async()=>{
+                    this.reconn_flag = true;
+                    this.recv_timestamp = Date.now();
+                    const packet = this.read(len - 4);
+                    (async()=>{
+                        try {
                             imcoming(packet, this);
-                        })();
-                    } catch (e) {
-                        this.logger.debug(e.stack);
-                        this.emit("internal.exception", e);
-                    }
+                        } catch (e) {
+                            this.logger.debug(e.stack);
+                            this.emit("internal.exception", e);
+                        }
+                    })();
                 } else {
                     this.unshift(len_buf);
                     break;
