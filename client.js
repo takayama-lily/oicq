@@ -661,8 +661,9 @@ class AndroidClient extends Client {
             return buildApiRet(100);
         try {
             try {
-                var packet = await outgoing.buildPrivateMessageRequestPacket(user_id, message, auto_escape, this);
+                var packet = await outgoing.commonMessage(user_id, message, auto_escape, false, false, this);
             } catch (e) {
+                this.logger.debug(e);
                 return buildApiRet(100);
             }
             let message_id = this.curr_msg_id;
@@ -695,8 +696,9 @@ class AndroidClient extends Client {
             return buildApiRet(100);
         try {
             try {
-                var packet = await outgoing.buildSendGroupMessageRequestPacket(group_id, message, auto_escape, as_long, this);
+                var packet = await outgoing.commonMessage(group_id, message, auto_escape, true, as_long, this);
             } catch (e) {
+                this.logger.debug(e);
                 return buildApiRet(100);
             }
 
