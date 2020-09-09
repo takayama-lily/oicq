@@ -282,17 +282,16 @@ class AndroidClient extends Client {
         })
 
         this.on("internal.login", async()=>{
-            this.logger.info(`Welcome, ${this.nickname} !`);
+            this.logger.info(`Welcome, ${this.nickname} ! 开始初始化资源...`);
+            this.sync_finished = false;
             await this.changeOnlineStatus();
             if (!this.isOnline())
                 return;
-            this.sync_finished = false;
-            this.write(outgoing.buildGetMessageRequestPacket(0, this));
             await Promise.all([
                 this.getFriendList(true), this.getGroupList(true)
             ]);
             this.logger.info(`加载了${this.friend_list.size}个好友，${this.group_list.size}个群。`);
-            event.emit(this, "system.online");
+            this.write(outgoing.buildGetMessageRequestPacket(0, this));
             for (let k of this.group_list.keys()) {
                 await this.getGroupMemberList(k, true);
             }
