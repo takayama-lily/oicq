@@ -136,21 +136,18 @@ client.on("system.login", (data)=>{
 为了统一风格，notice事件的命名和原版cqhttp有一定出入
 
 + `notice.friend`
-  + `notice.friend.increase`
-  + `notice.friend.recall`
+  + `notice.friend.increase` 好友增加
+  + `notice.friend.recall` 消息撤回事件
 + `notice.group`
-  + `notice.group.increase`
-  + `notice.group.decrease`
+  + `notice.group.increase` 群员增加
+  + `notice.group.decrease` 群员减少
     + 字段 `dismiss` 表示是否是解散
-  + `notice.group.recall`
-  + `notice.group.admin`
-    + boolean型字段 `set` 表示设置或取消
-  + `notice.group.ban`
-  + `notice.group.transfer` 群转让
+  + `notice.group.recall` 消息撤回事件
+  + `notice.group.admin` 管理变更
+  + `notice.group.ban` 群禁言事件
+  + `notice.group.transfer` 群转让事件
+  + `notice.group.notice` 收到群公告
   + `notice.group.file` 收到群文件
-    + 有url,size,name,duration,md5 (可以通过url直接下载)
-
-~~还有一些细微差异，比如新增了一些字段，可以作为彩蛋~~
 
 ----
 
@@ -229,6 +226,8 @@ message可以使用 `Array` 格式或 `String` 格式，支持CQ码
 + async `client.setGroupCard(group_id, user_id[, card])`
 + async `client.setGroupName(group_id, group_name)`
 + async `client.sendGroupNotice(group_id, content)`
++ async `client.setGroupAdmin(group_id, user_id[, enable])`
++ async `client.setGroupSpecialTitle(group_id, user_id[, special_title, duration])`
 
 ----
 
