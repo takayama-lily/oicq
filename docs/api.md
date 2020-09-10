@@ -229,6 +229,8 @@ message可以使用 `Array` 格式或 `String` 格式，支持CQ码
 + async `client.setGroupCard(group_id, user_id[, card])`
 + async `client.setGroupName(group_id, group_name)`
 + async `client.sendGroupNotice(group_id, content)`
++ async `client.setGroupAdmin(group_id, user_id[, enable])`
++ async `client.setGroupSpecialTitle(group_id, user_id[, special_title, duration])`
 
 ----
 

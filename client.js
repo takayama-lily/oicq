@@ -775,8 +775,40 @@ class AndroidClient extends Client {
     //     this.write(outgoing.buildGroupSettingRequestPacket(group_id, k, v, this));
     //     return buildApiRet(1);
     // }
-    // async setGroupAdmin(group_id, user_id, enable = true) {}
-    // async setGroupSpecialTitle(group_id, user_id, special_title = "", duration = -1) {}
+    async setGroupAdmin(group_id, user_id, enable = true) {
+        group_id = parseInt(group_id), user_id = parseInt(user_id);
+        if (!checkUin(group_id) || !checkUin(user_id))
+            return buildApiRet(100);
+        try {
+            const res = await this.send(outgoing.buildSetGroupAdminRequestPacket(group_id, user_id, enable, this));
+            if (res) {
+                try {
+                    const old_role = this.group_member_list.get(group_id).get(user_id).role;
+                    const new_role = enable ? "admin" : "member";
+                    if (old_role !== new_role && old_role !== "owner") {
+                        this.group_member_list.get(group_id).get(user_id).role = new_role;
+                        event.emit(this, "notice.group.admin", {
+                            group_id, user_id, set: !!enable
+                        });
+                    }
+                } catch (e) {}
+            }
+            return buildApiRet(res?0:102);
+        } catch (e) {
+            return buildApiRet(103);
+        }
+    }
+    async setGroupSpecialTitle(group_id, user_id, special_title = "", duration = -1) {
+        group_id = parseInt(group_id), user_id = parseInt(user_id);
+        if (!checkUin(group_id) || !checkUin(user_id))
+            return buildApiRet(100);
+        try {
+            const res = await this.send(outgoing.buildEditSpecialTitleRequestPacket(group_id, user_id, special_title, duration, this));
+            return buildApiRet(res?0:102);
+        } catch (e) {
+            return buildApiRet(103);
+        }
+    }
 
     ///////////////////////////////////////////////////
 
