@@ -718,20 +718,21 @@ class AndroidClient extends Client {
                 this.removeAllListeners(event_id);
                 message_id = await new Promise((resolve)=>{
                     const id = setTimeout(()=>{
-                        this.logger.warn(`可能被风控了，将尝试作为长消息再发送一次。`);
                         this.removeAllListeners(event_id);
                         if (!as_long)
                             resolve(false);
                         else
                             resolve(group_id.toString(16) + "0".repeat(16));
-                    }, 100);
+                    }, 300);
                     this.once(event_id, (a)=>{
                         clearTimeout(id);
                         resolve(a);
                     });
                 });
-                if (!message_id)
-                    return await this.sendGroupMsg(group_id, message, auto_escape, true)
+                if (!message_id) {
+                    this.logger.warn(`可能被风控了，将尝试作为长消息再发送一次。`);
+                    return await this.sendGroupMsg(group_id, message, auto_escape, true);
+                }
             };
 
             this.logger.info(`send to: [Group: ${group_id}] ` + message);
