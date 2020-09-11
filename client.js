@@ -358,6 +358,7 @@ class AndroidClient extends Client {
         if (this.heartbeat)
             return;
         this.heartbeat = setInterval(async()=>{
+            this.write(outgoing.buildGetMessageRequestPacket(0, this));
             try {
                 await this.send(outgoing.buildHeartbeatRequestPacket(this), 10000);
             } catch (e) {
