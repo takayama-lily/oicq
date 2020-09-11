@@ -6,7 +6,7 @@ const path = require("path");
 const crypto = require("crypto");
 const log4js = require("log4js");
 const device = require("./lib/device");
-const {md5, rand, buildApiRet, checkUin, timestamp} = require("./lib/common");
+const {rand, buildApiRet, checkUin, timestamp} = require("./lib/common");
 const outgoing = require("./lib/outgoing");
 const imcoming = require("./lib/incoming");
 const event = require("./lib/event");
@@ -160,6 +160,7 @@ class AndroidClient extends Client {
     member_list_lock = new Set();
 
     recv_timestamp = 0;
+    send_timestamp = 0xffffffff;
     heartbeat = null;
     seq_id = 0;
     handlers = new Map();
@@ -292,8 +293,14 @@ class AndroidClient extends Client {
             ]);
             this.logger.info(`加载了${this.friend_list.size}个好友，${this.group_list.size}个群。`);
             this.write(outgoing.buildGetMessageRequestPacket(0, this));
+            let n = 0, tasks = [];
             for (let k of this.group_list.keys()) {
-                await this.getGroupMemberList(k, true);
+                ++n;
+                tasks.push(this.getGroupMemberList(k, true));
+                if (n % 10 === 0) {
+                    await Promise.all(tasks);
+                    tasks = [];
+                }
             }
         });
     }
@@ -358,7 +365,8 @@ class AndroidClient extends Client {
         if (this.heartbeat)
             return;
         this.heartbeat = setInterval(async()=>{
-            this.write(outgoing.buildGetMessageRequestPacket(0, this));
+            if (Date.now() - this.send_timestamp > 300000)
+                this.write(outgoing.buildGetMessageRequestPacket(0, this));
             try {
                 await this.send(outgoing.buildHeartbeatRequestPacket(this), 10000);
             } catch (e) {
