@@ -110,24 +110,23 @@ client.on("system.login", (data)=>{
 ## Event: `message`
 
 + `message.private`
-  + `message.private.friend`
-  + `message.private.single` 单向好友(对方未加你)
+  + `message.private.friend` 好友消息
+  + `message.private.single` 单向好友消息(对方未加你)
   + `message.private.group` 群临时会话
-  + `message.private.other`
+  + `message.private.other` 其他临时会话
 + `message.group`
-  + `message.group.normal`
-  + `message.group.anonymous`
+  + `message.group.normal` 群消息
+  + `message.group.anonymous` 群匿名消息
 
 ----
 
 ## Event: `request`
 
 + `request.friend`
-  + `request.friend.add`
+  + `request.friend.add` 好友请求
 + `request.group`
-  + `request.group.add`
-  + `request.group.invite`
-    + 字段 `role` 表示邀请者权限
+  + `request.group.add` 加群请求
+  + `request.group.invite` 加群邀请
 
 ----
 
@@ -137,17 +136,19 @@ client.on("system.login", (data)=>{
 
 + `notice.friend`
   + `notice.friend.increase` 好友增加
+  + `notice.friend.decrease` 好友减少
   + `notice.friend.recall` 消息撤回事件
 + `notice.group`
   + `notice.group.increase` 群员增加
   + `notice.group.decrease` 群员减少
-    + 字段 `dismiss` 表示是否是解散
   + `notice.group.recall` 消息撤回事件
-  + `notice.group.admin` 管理变更
+  + `notice.group.admin` 管理变更事件
   + `notice.group.ban` 群禁言事件
   + `notice.group.transfer` 群转让事件
   + `notice.group.notice` 收到群公告
   + `notice.group.file` 收到群文件
+  + `notice.group.name` 群名变更事件
+  + `notice.group.title` 群头衔变更事件
 
 ----
 
