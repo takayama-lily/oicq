@@ -368,13 +368,13 @@ class AndroidClient extends Client {
             if (Date.now() - this.send_timestamp > 300000)
                 this.write(outgoing.buildGetMessageRequestPacket(0, this));
             try {
-                await this.send(outgoing.buildHeartbeatRequestPacket(this), 10000);
+                await this.send(outgoing.buildHeartbeatRequestPacket(this));
             } catch (e) {
                 this.logger.warn("Heartbeat timeout!");
                 if (Date.now() - this.recv_timestamp > 10000)
                     this.destroy();
             }
-        }, 60000);
+        }, 30000);
         this.write(outgoing.buildHeartbeatRequestPacket(this));
     }
     /**
@@ -544,7 +544,7 @@ class AndroidClient extends Client {
             try {
                 this.friend_list_lock = true;
                 this.friend_list = new Map();
-                let start = 0, limit = 100;
+                let start = 0, limit = 250;
                 while (1) {
                     const total = await this.send(outgoing.buildFriendListRequestPacket(start, limit, this));
                     start += limit;
