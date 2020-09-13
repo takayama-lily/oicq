@@ -148,7 +148,6 @@ client.on("system.login", (data)=>{
   + `notice.group.notice` 收到群公告
   + `notice.group.file` 收到群文件
   + `notice.group.name` 群名变更事件
-  + `notice.group.title` 群头衔变更事件
   + `notice.group.poke` 群戳一戳事件
 
 ----
