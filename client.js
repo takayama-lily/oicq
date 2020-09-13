@@ -894,6 +894,18 @@ class AndroidClient extends Client {
         }
     }
 
+    /**
+     * @param {Number} group_id 
+     * @param {Number} user_id
+     */
+    async sendGroupPoke(group_id, user_id) {
+        group_id = parseInt(group_id), user_id = parseInt(user_id);
+        if (!checkUin(group_id) || !checkUin(user_id))
+            return buildApiRet(100);
+        this.write(outgoing.buildGroupPokeRequestPacket(group_id, user_id, this));
+        return buildApiRet(1);
+    }
+
     ///////////////////////////////////////////////////
 
     /**

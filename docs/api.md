@@ -220,15 +220,18 @@ message可以使用 `Array` 格式或 `String` 格式，支持CQ码
 
 ----
 
+### 群操作
+
 + async `client.setGroupKick(group_id, user_id[, reject_add_request])`
 + async `client.setGroupBan(group_id, user_id[, duration])`
 + async `client.setGroupLeave(group_id)`
 
 + async `client.setGroupCard(group_id, user_id[, card])`
 + async `client.setGroupName(group_id, group_name)`
-+ async `client.sendGroupNotice(group_id, content)`
 + async `client.setGroupAdmin(group_id, user_id[, enable])`
 + async `client.setGroupSpecialTitle(group_id, user_id[, special_title, duration])`
++ async `client.sendGroupNotice(group_id, content)`
++ async `client.sendGroupPoke(group_id, user_id)` 戳一戳
 
 ----
 
@@ -240,7 +243,7 @@ message可以使用 `Array` 格式或 `String` 格式，支持CQ码
 
 ----
 
-## 增强API
+## 其他
 
 + async `client.changeOnlineStatus(status)`
   + `status` 允许的值：11我在线上 31离开 41隐身 50忙碌 60Q我吧 70请勿打扰
