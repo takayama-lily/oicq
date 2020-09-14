@@ -206,6 +206,8 @@ class AndroidClient extends Client {
     curr_msg_id;
     curr_msg_rand;
 
+    dir;
+
     /**
      * @constructor
      * @param {Number} uin
@@ -214,13 +216,13 @@ class AndroidClient extends Client {
     constructor(uin, config = {}) {
         super();
         this.uin = uin;
+        this.dir = createCacheDir(uin);
 
         config = {
             platform:    2,      //1手机 2平板 3手表(不支持部分群事件)
             log_level:   "info", //trace,debug,info,warn,error,fatal,off
             kickoff:     false,  //被挤下线是否在3秒后反挤对方
             ignore_self: true,   //群聊是否无视自己的发言
-            device_path: path.join(process.mainModule.path, "data"),    //设备文件保存路径，默认为启动文件同目录下的data文件夹
             ...config
         };
         this.config = config;
@@ -232,7 +234,7 @@ class AndroidClient extends Client {
         this.ignore_self = config.ignore_self;
         this.kickoff_reconn = config.kickoff;
 
-        const filepath = path.join(config.device_path, `device-${uin}.json`);
+        const filepath = path.join(this.dir, `device-${uin}.json`);
         if (!fs.existsSync(filepath))
             this.logger.info("创建了新的设备文件：" + filepath);
         this.device_info = device(filepath);
@@ -358,6 +360,12 @@ class AndroidClient extends Client {
         });
     }
 
+    writeSyncCookieCache() {
+        const filepath = path.join(this.dir, "sync-cookie");
+        if (this.sync_cookie)
+            fs.writeFile(filepath, this.sync_cookie, ()=>{});
+    }
+
     /**
      * @private
      */
@@ -365,6 +373,7 @@ class AndroidClient extends Client {
         if (this.heartbeat)
             return;
         this.heartbeat = setInterval(async()=>{
+            this.writeSyncCookieCache();
             if (Date.now() - this.send_timestamp > 300000)
                 this.write(outgoing.buildGetMessageRequestPacket(0, this));
             try {
@@ -976,22 +985,20 @@ process.OICQ = {
     logger, config
 };
 
-function createRootDir() {
-    try {
-        if (!fs.existsSync(config.cache_root))
-            fs.mkdirSync(config.cache_root);
-        const img_path = path.join(config.cache_root, "image");
-        const ptt_path = path.join(config.cache_root, "record");
-        if (!fs.existsSync(img_path))
-            fs.mkdirSync(img_path);
-        if (!fs.existsSync(ptt_path))
-            fs.mkdirSync(ptt_path);
-    } catch (e) {
-        logger.error("创建数据文件夹失败，请确认权限。" + config.cache_root);
-    }
+function createCacheDir(uin) {
+    if (!fs.existsSync(config.cache_root))
+        fs.mkdirSync(config.cache_root, {mode: 0o755, recursive: true});
+    const img_path = path.join(config.cache_root, "image");
+    const ptt_path = path.join(config.cache_root, "record");
+    const uin_path = path.join(config.cache_root, uin.toString());
+    if (!fs.existsSync(img_path))
+        fs.mkdirSync(img_path);
+    if (!fs.existsSync(ptt_path))
+        fs.mkdirSync(ptt_path);
+    if (!fs.existsSync(uin_path))
+        fs.mkdirSync(uin_path, {mode: 0o755});
+    return uin_path;
 }
-
-createRootDir();
 
 /**
  * 全局设置
@@ -1000,7 +1007,6 @@ function setGlobalConfig(config = {}) {
     Object.assign(process.OICQ.config, config);
     if (config.debug)
         logger.level = "debug";
-    createRootDir();
 }
 
 /**

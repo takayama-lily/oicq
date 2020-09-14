@@ -37,7 +37,6 @@ const config = {
     log_level:      "info", //日志级别，有trace,debug,info,warn,error,fatal,off
     kickoff:        false,  //被挤下线是否在3秒后反挤对方
     ignore_self:    true,   //群聊是否无视自己的发言
-    device_path:            //设备文件保存路径，默认为启动文件同目录下的data文件夹
 };
 ```
 
@@ -56,7 +55,7 @@ const config = {
 oicq.setGlobalConfig({
     web_image_timeout:  0,  //下载网络图片的超时时间(0表示系统自己判断)
     web_record_timeout: 0,  //下载网络语音的超时时间
-    cache_root:         "", //缓存文件夹根目录，需要可写权限
+    cache_root:         "", //缓存文件夹根目录，需要可写权限,默认主目录下的data文件夹
     debug: false,
 });
 ```

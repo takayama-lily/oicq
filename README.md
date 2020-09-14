@@ -23,9 +23,9 @@
 
 ```js
 const oicq = require("oicq");
-const uin = 123456789, config = {};
+const uin = 123456789;
 const password_md5 = "202cb962ac59075b964b07152d234b70";
-const bot = oicq.createClient(uin, config);
+const bot = oicq.createClient(uin);
 bot.login(password_md5);
 ```
 
