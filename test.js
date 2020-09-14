@@ -20,10 +20,7 @@ function account() {
             });
 
             //处理验证码事件
-            bot.on("system.login.captcha", async(data)=>{
-                const file_path = path.join(process.mainModule.path, `captcha-${input}.jpg`);
-                await fs.promises.writeFile(file_path, data.image);
-                bot.logger.info(`验证码已更新并保存到文件(${file_path})，请查看并输入: `);
+            bot.on("system.login.captcha", async()=>{
                 process.stdin.once("data", (input)=>{
                     bot.captchaLogin(input);
                 });
