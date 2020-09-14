@@ -368,13 +368,13 @@ class AndroidClient extends Client {
             if (Date.now() - this.send_timestamp > 300000)
                 this.write(outgoing.buildGetMessageRequestPacket(0, this));
             try {
-                await this.send(outgoing.buildHeartbeatRequestPacket(this), 10000);
+                await this.send(outgoing.buildHeartbeatRequestPacket(this));
             } catch (e) {
                 this.logger.warn("Heartbeat timeout!");
                 if (Date.now() - this.recv_timestamp > 10000)
                     this.destroy();
             }
-        }, 60000);
+        }, 30000);
         this.write(outgoing.buildHeartbeatRequestPacket(this));
     }
     /**
@@ -544,7 +544,7 @@ class AndroidClient extends Client {
             try {
                 this.friend_list_lock = true;
                 this.friend_list = new Map();
-                let start = 0, limit = 100;
+                let start = 0, limit = 250;
                 while (1) {
                     const total = await this.send(outgoing.buildFriendListRequestPacket(start, limit, this));
                     start += limit;
@@ -677,9 +677,7 @@ class AndroidClient extends Client {
             let message_id = this.curr_msg_id;
             const resp = await this.send(packet);
             if (resp.result === 0) {
-                const buf = Buffer.alloc(4);
-                buf.writeUInt32BE(resp.sendTime);
-                message_id += buf.toString("hex");
+                message_id += resp.sendTime.toString(16);
                 this.logger.info(`send to: [Private: ${user_id}] ` + message);
                 return buildApiRet(0, {message_id});
             }
@@ -744,7 +742,7 @@ class AndroidClient extends Client {
                 }
             };
 
-            this.logger.info(`send to: [Group: ${group_id}] ` + message);
+            this.logger.info(`send to: [Group: ${group_id}]` + message);
             return buildApiRet(0, {message_id});
         } catch (e) {
             this.removeAllListeners(event_id);
@@ -757,7 +755,7 @@ class AndroidClient extends Client {
      */
     async deleteMsg(message_id) {
         try {
-            if (message_id.length === 24)
+            if (message_id.length < 24)
                 this.write(outgoing.buildGroupRecallRequestPacket(message_id, this));
             else
                 this.write(outgoing.buildFriendRecallRequestPacket(message_id, this));
@@ -892,6 +890,18 @@ class AndroidClient extends Client {
         } catch (e) {
             return buildApiRet(103);
         }
+    }
+
+    /**
+     * @param {Number} group_id 
+     * @param {Number} user_id
+     */
+    async sendGroupPoke(group_id, user_id) {
+        group_id = parseInt(group_id), user_id = parseInt(user_id);
+        if (!checkUin(group_id) || !checkUin(user_id))
+            return buildApiRet(100);
+        this.write(outgoing.buildGroupPokeRequestPacket(group_id, user_id, this));
+        return buildApiRet(1);
     }
 
     ///////////////////////////////////////////////////
