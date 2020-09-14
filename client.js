@@ -74,6 +74,7 @@ class Client extends net.Socket {
  *      @event system.offline.network 拔线
  *      @event system.offline.frozen 账号冻结
  *      @event system.offline.kickoff 被挤下线
+ *      @event system.offline.device 由于开启设备锁，需要重新验证
  *      @event system.offline.unknown 未知领域
  * 
  * 内部事件(一般无需监听)
@@ -510,6 +511,9 @@ class AndroidClient extends Client {
                     }
                 } else if (data.info.includes("冻结")) {
                     sub_type = "frozen";
+                    this.terminate();
+                } else if (data.info.includes("设备锁")) {
+                    sub_type = "device";
                     this.terminate();
                 } else {
                     sub_type = "unknown";

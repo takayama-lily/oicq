@@ -100,6 +100,7 @@ client.on("system.login", (data)=>{
   + `system.offline.network` 网络断开
   + `system.offline.frozen` 被冻结
   + `system.offline.kickoff` 另一处登陆
+  + `system.offline.device` 由于开启设备锁，需要重新验证
   + `system.offline.unknown` 未知
 
 ----
