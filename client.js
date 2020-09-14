@@ -677,9 +677,7 @@ class AndroidClient extends Client {
             let message_id = this.curr_msg_id;
             const resp = await this.send(packet);
             if (resp.result === 0) {
-                const buf = Buffer.alloc(4);
-                buf.writeUInt32BE(resp.sendTime);
-                message_id += buf.toString("hex");
+                message_id += resp.sendTime.toString(16);
                 this.logger.info(`send to: [Private: ${user_id}] ` + message);
                 return buildApiRet(0, {message_id});
             }
@@ -744,7 +742,7 @@ class AndroidClient extends Client {
                 }
             };
 
-            this.logger.info(`send to: [Group: ${group_id}] ` + message);
+            this.logger.info(`send to: [Group: ${group_id}]` + message);
             return buildApiRet(0, {message_id});
         } catch (e) {
             this.removeAllListeners(event_id);
