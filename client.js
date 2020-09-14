@@ -757,7 +757,7 @@ class AndroidClient extends Client {
      */
     async deleteMsg(message_id) {
         try {
-            if (message_id.length === 24)
+            if (message_id.length < 24)
                 this.write(outgoing.buildGroupRecallRequestPacket(message_id, this));
             else
                 this.write(outgoing.buildFriendRecallRequestPacket(message_id, this));
