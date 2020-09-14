@@ -949,6 +949,45 @@ class AndroidClient extends Client {
         return buildApiRet(100);
     }
 
+    async addFriend(group_id, user_id, comment = "") {
+        group_id = parseInt(group_id), user_id = parseInt(user_id);
+        if (!checkUin(group_id) || !checkUin(user_id))
+            return buildApiRet(100);
+        try {
+            const type = await this.send(outgoing.buildAddSettingRequestPacket(user_id, this));
+            switch (type) {
+                case 0:
+                case 1:
+                // case 3:
+                case 4:
+                    var res = await this.send(outgoing.buildAddFriendRequestPacket(type, group_id, user_id, String(comment), this));
+                    return buildApiRet(res ? 0 : 102);
+                default:
+                    return buildApiRet(102);
+            }
+        } catch (e) {
+            return buildApiRet(103);
+        }
+    }
+
+    async deleteFriend(user_id, block = true) {
+        user_id = parseInt(user_id);
+        if (!checkUin(user_id))
+            return buildApiRet(100);
+        this.write(outgoing.buildDelFriendRequestPacket(user_id, block, this));
+        return buildApiRet(1);
+    }
+
+    async inviteFriend(group_id, user_id) {
+        group_id = parseInt(group_id), user_id = parseInt(user_id);
+        if (!checkUin(group_id) || !checkUin(user_id))
+            return buildApiRet(100);
+        this.write(outgoing.buildInviteRequestPacket(group_id, user_id, this));
+        return buildApiRet(1);
+    }
+
+    ///////////////////////////////////////////////////
+
     canSendImage() {
         return buildApiRet(0, {yes: true});
     }

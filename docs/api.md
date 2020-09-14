@@ -189,7 +189,7 @@ client.on("system.login", (data)=>{
 
 ----
 
-### 获取列表和info
+### 获取好友、群、群员列表和info
 
 + async `client.getFriendList([no_cache])`
 + async `client.getGroupList([no_cache])`
@@ -201,7 +201,7 @@ client.on("system.login", (data)=>{
 
 ----
 
-### 消息类
+### 发私聊消息、群消息
 
 message可以使用 `Array` 格式或 `String` 格式，支持CQ码
 
@@ -212,7 +212,7 @@ message可以使用 `Array` 格式或 `String` 格式，支持CQ码
 
 ----
 
-### 处理申请
+### 处理申请和邀请
 
 + async `client.setFriendAddRequest(flag[, approve, remark, block])`
 + async `client.setGroupAddRequest(flag[, approve, reason, block])`
@@ -220,7 +220,7 @@ message可以使用 `Array` 格式或 `String` 格式，支持CQ码
 
 ----
 
-### 群操作
+### 群操作(踢人、禁言、退群、设置等)
 
 + async `client.setGroupKick(group_id, user_id[, reject_add_request])`
 + async `client.setGroupBan(group_id, user_id[, duration])`
@@ -235,6 +235,18 @@ message可以使用 `Array` 格式或 `String` 格式，支持CQ码
 
 ----
 
+## 改状态、加好友删好友、邀请好友入群
+
++ async `client.changeOnlineStatus(status)`
+  + `status` 允许的值：11我在线上 31离开 41隐身 50忙碌 60Q我吧 70请勿打扰
++ async `client.addFriend(group_id, user_id[, comment])`
++ async `client.deleteFriend(user_id[, block])` block(屏蔽)默认是true
++ async `client.inviteFriend(group_id, user_id)`
+
+----
+
+## 其他
+
 + `client.canSendImage()`
 + `client.canSendRecord()`
 + `client.getStatus()`
@@ -242,8 +254,3 @@ message可以使用 `Array` 格式或 `String` 格式，支持CQ码
 + `client.getLoginInfo()`
 
 ----
-
-## 其他
-
-+ async `client.changeOnlineStatus(status)`
-  + `status` 允许的值：11我在线上 31离开 41隐身 50忙碌 60Q我吧 70请勿打扰
