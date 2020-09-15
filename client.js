@@ -832,6 +832,13 @@ class AndroidClient extends Client {
             return buildApiRet(103);
         }
     }
+
+    /**
+     * @param {Number} group_id 
+     * @param {Number} user_id 
+     * @param {String} special_title 为空收回
+     * @param {Number} duration 
+     */
     async setGroupSpecialTitle(group_id, user_id, special_title = "", duration = -1) {
         group_id = parseInt(group_id), user_id = parseInt(user_id);
         if (!checkUin(group_id) || !checkUin(user_id))
@@ -890,6 +897,7 @@ class AndroidClient extends Client {
     }
 
     /**
+     * 暂时为立即返回，无法立即知晓是否成功
      * @param {Number} group_id 
      * @param {Number} user_id 
      * @param {Number} duration 秒数
@@ -903,6 +911,7 @@ class AndroidClient extends Client {
     }
 
     /**
+     * 即使你本来就不在此群，也会返回成功
      * @param {Number} group_id 
      * @param {Boolean} is_dismiss 不设置is_dismiss只要是群主貌似也可以解散(可能和规模有关?)
      */
@@ -912,13 +921,14 @@ class AndroidClient extends Client {
             if (!checkUin(group_id))
                 return buildApiRet(100);
             const res = await this.send(outgoing.buildGroupLeaveRequestPacket(group_id, is_dismiss, this));
-            return buildApiRet(res === 0 ? 0 : 102);
+            return buildApiRet(res ? 0 : 102);
         } catch (e) {
             return buildApiRet(103);
         }
     }
 
     /**
+     * 暂时为立即返回，无法立即知晓是否成功
      * @param {Number} group_id 
      * @param {Number} user_id
      */
@@ -933,11 +943,11 @@ class AndroidClient extends Client {
     ///////////////////////////////////////////////////
 
     /**
+     * 暂时为立即返回，无法立即知晓是否成功
      * @param {String} flag 
      * @param {Boolean} approve 
      * @param {String} remark
      * @param {Boolean} block 是否加入黑名单
-     * @async 暂时为立即返回，无法知晓是否成功
      */
     async setFriendAddRequest(flag, approve = true, remark = "", block = false) {
         try {
@@ -948,11 +958,11 @@ class AndroidClient extends Client {
     }
 
     /**
+     * 暂时为立即返回，无法立即知晓是否成功
      * @param {String} flag 
      * @param {Boolean} approve 
      * @param {String} reason 拒绝理由，仅在拒绝他人加群时有效
      * @param {Boolean} block 是否加入黑名单
-     * @async 暂时为立即返回，无法知晓是否成功
      */
     async setGroupAddRequest(flag, approve = true, reason = "", block = false) {
         try {
@@ -962,6 +972,13 @@ class AndroidClient extends Client {
         return buildApiRet(100);
     }
 
+    /**
+     * 重复添加或者对方设置为拒绝添加会返回失败
+     * 对方设置要正确回答问题，暂时也返回失败
+     * @param {Number} group_id 
+     * @param {Number} user_id 
+     * @param {String} comment 
+     */
     async addFriend(group_id, user_id, comment = "") {
         group_id = parseInt(group_id), user_id = parseInt(user_id);
         if (!checkUin(group_id) || !checkUin(user_id))
@@ -983,20 +1000,39 @@ class AndroidClient extends Client {
         }
     }
 
+    /**
+     * 即使对方不是你的好友，也会返回成功
+     * @param {Number} user_id 
+     * @param {Boolean} block 
+     */
     async deleteFriend(user_id, block = true) {
         user_id = parseInt(user_id);
         if (!checkUin(user_id))
             return buildApiRet(100);
-        this.write(outgoing.buildDelFriendRequestPacket(user_id, block, this));
-        return buildApiRet(1);
+        try {
+            const res = await this.send(outgoing.buildDelFriendRequestPacket(user_id, block, this));
+            return buildApiRet(res ? 0 : 102);
+        } catch (e) {
+            return buildApiRet(103);
+        }
     }
 
+    /**
+     * 对方必须是BOT的好友，否则返回失败
+     * 如果BOT不是对方的好友(单向)，对方又设置了拒绝陌生人邀请，此时会返回成功但是对方实际收不到邀请
+     * @param {Number} group_id 
+     * @param {Number} user_id 
+     */
     async inviteFriend(group_id, user_id) {
         group_id = parseInt(group_id), user_id = parseInt(user_id);
         if (!checkUin(group_id) || !checkUin(user_id))
             return buildApiRet(100);
-        this.write(outgoing.buildInviteRequestPacket(group_id, user_id, this));
-        return buildApiRet(1);
+        try {
+            const res = await this.send(outgoing.buildInviteRequestPacket(group_id, user_id, this));
+            return buildApiRet(res ? 0 : 102);
+        } catch (e) {
+            return buildApiRet(103);
+        }
     }
 
     ///////////////////////////////////////////////////
