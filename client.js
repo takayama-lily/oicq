@@ -1035,6 +1035,23 @@ class AndroidClient extends Client {
         }
     }
 
+    /**
+     * 请勿频繁调用，否则有冻结风险
+     * @param {Number} user_id 
+     * @param {Number} times 
+     */
+    async sendLike(user_id, times = 1) {
+        times = parseInt(times), user_id = parseInt(user_id);
+        if (!checkUin(user_id) || !(times > 0 && times <= 20))
+            return buildApiRet(100);
+        try {
+            const res = await this.send(outgoing.buildSendLikeRequestPacket(user_id, times, this));
+            return buildApiRet(res ? 0 : 102);
+        } catch (e) {
+            return buildApiRet(103);
+        }
+    }
+
     ///////////////////////////////////////////////////
 
     canSendImage() {
