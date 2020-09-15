@@ -224,7 +224,7 @@ message可以使用 `Array` 格式或 `String` 格式，支持CQ码
 
 + async `client.setGroupKick(group_id, user_id[, reject_add_request])`
 + async `client.setGroupBan(group_id, user_id[, duration])`
-+ async `client.setGroupLeave(group_id)`
++ async `client.setGroupLeave(group_id[, is_dismiss])`
 
 + async `client.setGroupCard(group_id, user_id[, card])`
 + async `client.setGroupName(group_id, group_name)`

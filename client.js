@@ -904,14 +904,14 @@ class AndroidClient extends Client {
 
     /**
      * @param {Number} group_id 
-     * @param {Boolean} is_dismiss 暂未实现解散
+     * @param {Boolean} is_dismiss 不设置is_dismiss只要是群主貌似也可以解散(可能和规模有关?)
      */
     async setGroupLeave(group_id, is_dismiss = false) {
         try {
             group_id = parseInt(group_id);
             if (!checkUin(group_id))
                 return buildApiRet(100);
-            const res = await this.send(outgoing.buildGroupLeaveRequestPacket(group_id, this));
+            const res = await this.send(outgoing.buildGroupLeaveRequestPacket(group_id, is_dismiss, this));
             return buildApiRet(res === 0 ? 0 : 102);
         } catch (e) {
             return buildApiRet(103);
