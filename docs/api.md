@@ -237,7 +237,7 @@ message可以使用 `Array` 格式或 `String` 格式，支持CQ码
 
 ## 改状态、加好友删好友、邀请好友入群
 
-+ async `client.changeOnlineStatus(status)`
++ async `client.changeOnlineStatus(status)` 仅支持手机协议
   + `status` 允许的值：11我在线上 31离开 41隐身 50忙碌 60Q我吧 70请勿打扰
 + async `client.addFriend(group_id, user_id[, comment])`
 + async `client.deleteFriend(user_id[, block])` block(屏蔽)默认是true

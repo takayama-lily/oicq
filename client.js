@@ -256,7 +256,7 @@ class AndroidClient extends Client {
                 if (e_flag)
                     this.reconn_flag = false;
                 this._connect(()=>{
-                    this.changeOnlineStatus(this.online_status?this.online_status:11);
+                    this.register();
                 });
             }
         });
@@ -288,7 +288,7 @@ class AndroidClient extends Client {
         this.on("internal.login", async()=>{
             this.logger.info(`Welcome, ${this.nickname} ! 开始初始化资源...`);
             this.sync_finished = false;
-            await this.changeOnlineStatus();
+            await this.register();
             if (!this.isOnline())
                 return;
             await Promise.all([
@@ -429,6 +429,52 @@ class AndroidClient extends Client {
         }
     }
 
+    async register() {
+        try {
+            if (!await this.send(outgoing.buildClientRegisterRequestPacket(this)))
+                throw new Error();
+        } catch (e) {
+            this.logger.error("上线失败，未知情况。");
+            this.terminate();
+            event.emit(this, "system.offline.unknown");
+            return;
+        }
+        this.status = Client.ONLINE;
+        if (this.online_status > 11)
+            this.changeOnlineStatus(this.online_status);
+        else
+            this.online_status = 11;
+        this.startHeartbeat();
+        if (!this.listenerCount("internal.kickoff")) {
+            this.once("internal.kickoff", (data)=>{
+                this.status = Client.INIT;
+                this.online_status = 0;
+                this.stopHeartbeat();
+                this.logger.warn(data.info);
+                let sub_type;
+                if (data.info.includes("另一")) {
+                    sub_type = "kickoff";
+                    if (this.kickoff_reconn) {
+                        this.logger.info("3秒后重新连接..");
+                        setTimeout(this.login.bind(this), 3000);
+                    } else {
+                        this.terminate();
+                    }
+                } else if (data.info.includes("冻结")) {
+                    sub_type = "frozen";
+                    this.terminate();
+                } else if (data.info.includes("设备锁")) {
+                    sub_type = "device";
+                    this.terminate();
+                } else {
+                    sub_type = "unknown";
+                    this.terminate();
+                }
+                event.emit(this, "system.offline." + sub_type);
+            })
+        }
+    }
+
     // 以下是public方法 ----------------------------------------------------------------------------------------------------
 
     /**
@@ -474,58 +520,6 @@ class AndroidClient extends Client {
     }
 
     /**
-     * @param {Number} status 11我在线上 31离开 41隐身 50忙碌 60Q我吧 70请勿打扰
-     */
-    async changeOnlineStatus(status = 11) {
-        status = parseInt(status);
-        if (![11, 31, 41, 50, 60, 70].includes(status))
-            return buildApiRet(100);
-        try {
-            if (!await this.send(outgoing.buildClientRegisterRequestPacket(status, this)))
-                throw new Error();
-        } catch (e) {
-            if (!this.isOnline()) {
-                this.logger.error("上线失败，未知情况。");
-                this.terminate();
-                event.emit(this, "system.offline.unknown");
-            }
-            return buildApiRet(102);
-        }
-        this.status = Client.ONLINE;
-        this.online_status = status;
-        this.startHeartbeat();
-        if (!this.listenerCount("internal.kickoff")) {
-            this.once("internal.kickoff", (data)=>{
-                this.status = Client.INIT;
-                this.online_status = 0;
-                this.stopHeartbeat();
-                this.logger.warn(data.info);
-                let sub_type;
-                if (data.info.includes("另一")) {
-                    sub_type = "kickoff";
-                    if (this.kickoff_reconn) {
-                        this.logger.info("3秒后重新连接..");
-                        setTimeout(this.login.bind(this), 3000);
-                    } else {
-                        this.terminate();
-                    }
-                } else if (data.info.includes("冻结")) {
-                    sub_type = "frozen";
-                    this.terminate();
-                } else if (data.info.includes("设备锁")) {
-                    sub_type = "device";
-                    this.terminate();
-                } else {
-                    sub_type = "unknown";
-                    this.terminate();
-                }
-                event.emit(this, "system.offline." + sub_type);
-            })
-        }
-        return buildApiRet(0);
-    }
-
-    /**
      * 使用此函数关闭连接，不要使用end和destroy
      */
     terminate() {
@@ -535,6 +529,25 @@ class AndroidClient extends Client {
 
     isOnline() {
         return this.status === Client.ONLINE;
+    }
+
+    /**
+     * 修改在线状态 仅支持手机协议
+     * @param {Number} status 11我在线上 31离开 41隐身 50忙碌 60Q我吧 70请勿打扰
+     */
+    async changeOnlineStatus(status) {
+        if (this.config.platform !== 1)
+            return buildApiRet(102);
+        status = parseInt(status);
+        if (![11, 31, 41, 50, 60, 70].includes(status))
+            return buildApiRet(100);
+        try {
+            await this.send(outgoing.buildChangeStatusRequestPacket(status, this));
+        } catch (e) {
+            return buildApiRet(103);
+        }
+        this.online_status = status;
+        return buildApiRet(0);
     }
 
     ///////////////////////////////////////////////////
