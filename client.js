@@ -532,10 +532,10 @@ class AndroidClient extends Client {
     }
 
     /**
-     * 修改在线状态 仅支持手机协议
+     * 设置在线状态 仅支持手机协议
      * @param {Number} status 11我在线上 31离开 41隐身 50忙碌 60Q我吧 70请勿打扰
      */
-    async changeOnlineStatus(status) {
+    async setOnlineStatus(status) {
         if (this.config.platform !== 1)
             return buildApiRet(102);
         status = parseInt(status);
@@ -1046,6 +1046,82 @@ class AndroidClient extends Client {
             return buildApiRet(100);
         try {
             const res = await this.send(outgoing.buildSendLikeRequestPacket(user_id, times, this));
+            return buildApiRet(res ? 0 : 102);
+        } catch (e) {
+            return buildApiRet(103);
+        }
+    }
+
+    /**
+     * @param {String} nickname 允许设为空，别人看到的昵称会变为你的QQ号
+     */
+    async setNickname(nickname) {
+        try {
+            const res = await this.send(outgoing.buildSetProfileRequestPacket(0x14E22, String(nickname), this));
+            if (res) {
+                this.nickname = nickname;
+                return buildApiRet(0);
+            }
+            return buildApiRet(102);
+        } catch (e) {
+            return buildApiRet(103);
+        }
+    }
+
+    /**
+     * @param {String} description 
+     */
+    async setDescription(description = "") {
+        try {
+            const res = await this.send(outgoing.buildSetProfileRequestPacket(0x14E33, String(description), this));
+            return buildApiRet(res ? 0 : 102);
+        } catch (e) {
+            return buildApiRet(103);
+        }
+    }
+
+    /**
+     * @param {Number} gender 0未知 1男 2女
+     */
+    async setGender(gender) {
+        gender = parseInt(gender);
+        if (![0,1,2].includes(gender))
+            return buildApiRet(100);
+        try {
+            const res = await this.send(outgoing.buildSetProfileRequestPacket(0x14E29, Buffer.from([gender]), this));
+            if (res) {
+                this.gender = gender;
+                return buildApiRet(0);
+            }
+            return buildApiRet(102);
+        } catch (e) {
+            return buildApiRet(103);
+        }
+    }
+
+    /**
+     * @param {String} birthday 必须是20110202这样的形式
+     */
+    async setBirthday(birthday) {
+        try {
+            birthday = String(birthday).replace(/[^\d]/g, "");
+            const buf = Buffer.alloc(4);
+            buf.writeUInt16BE(parseInt(birthday.substr(0, 4)));
+            buf.writeUInt8(parseInt(birthday.substr(4, 2)), 2);
+            buf.writeUInt8(parseInt(birthday.substr(6, 2)), 3);
+            const res = await this.send(outgoing.buildSetProfileRequestPacket(0x16593, buf, this));
+            return buildApiRet(res ? 0 : 102);
+        } catch (e) {
+            return buildApiRet(103);
+        }
+    }
+
+    /**
+     * @param {String} signature 大于254字节会被截断
+     */
+    async setSignature(signature = "") {
+        try {
+            const res = await this.send(outgoing.buildSetSignRequestPacket(String(signature), this));
             return buildApiRet(res ? 0 : 102);
         } catch (e) {
             return buildApiRet(103);
