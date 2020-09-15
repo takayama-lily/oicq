@@ -256,7 +256,7 @@ class AndroidClient extends Client {
                 if (e_flag)
                     this.reconn_flag = false;
                 this._connect(()=>{
-                    this.changeOnlineStatus(this.online_status?this.online_status:11);
+                    this.register();
                 });
             }
         });
@@ -288,7 +288,7 @@ class AndroidClient extends Client {
         this.on("internal.login", async()=>{
             this.logger.info(`Welcome, ${this.nickname} ! 开始初始化资源...`);
             this.sync_finished = false;
-            await this.changeOnlineStatus();
+            await this.register();
             if (!this.isOnline())
                 return;
             await Promise.all([
@@ -429,6 +429,52 @@ class AndroidClient extends Client {
         }
     }
 
+    async register() {
+        try {
+            if (!await this.send(outgoing.buildClientRegisterRequestPacket(this)))
+                throw new Error();
+        } catch (e) {
+            this.logger.error("上线失败，未知情况。");
+            this.terminate();
+            event.emit(this, "system.offline.unknown");
+            return;
+        }
+        this.status = Client.ONLINE;
+        if (this.online_status > 11)
+            this.changeOnlineStatus(this.online_status);
+        else
+            this.online_status = 11;
+        this.startHeartbeat();
+        if (!this.listenerCount("internal.kickoff")) {
+            this.once("internal.kickoff", (data)=>{
+                this.status = Client.INIT;
+                this.online_status = 0;
+                this.stopHeartbeat();
+                this.logger.warn(data.info);
+                let sub_type;
+                if (data.info.includes("另一")) {
+                    sub_type = "kickoff";
+                    if (this.kickoff_reconn) {
+                        this.logger.info("3秒后重新连接..");
+                        setTimeout(this.login.bind(this), 3000);
+                    } else {
+                        this.terminate();
+                    }
+                } else if (data.info.includes("冻结")) {
+                    sub_type = "frozen";
+                    this.terminate();
+                } else if (data.info.includes("设备锁")) {
+                    sub_type = "device";
+                    this.terminate();
+                } else {
+                    sub_type = "unknown";
+                    this.terminate();
+                }
+                event.emit(this, "system.offline." + sub_type);
+            })
+        }
+    }
+
     // 以下是public方法 ----------------------------------------------------------------------------------------------------
 
     /**
@@ -474,58 +520,6 @@ class AndroidClient extends Client {
     }
 
     /**
-     * @param {Number} status 11我在线上 31离开 41隐身 50忙碌 60Q我吧 70请勿打扰
-     */
-    async changeOnlineStatus(status = 11) {
-        status = parseInt(status);
-        if (![11, 31, 41, 50, 60, 70].includes(status))
-            return buildApiRet(100);
-        try {
-            if (!await this.send(outgoing.buildClientRegisterRequestPacket(status, this)))
-                throw new Error();
-        } catch (e) {
-            if (!this.isOnline()) {
-                this.logger.error("上线失败，未知情况。");
-                this.terminate();
-                event.emit(this, "system.offline.unknown");
-            }
-            return buildApiRet(102);
-        }
-        this.status = Client.ONLINE;
-        this.online_status = status;
-        this.startHeartbeat();
-        if (!this.listenerCount("internal.kickoff")) {
-            this.once("internal.kickoff", (data)=>{
-                this.status = Client.INIT;
-                this.online_status = 0;
-                this.stopHeartbeat();
-                this.logger.warn(data.info);
-                let sub_type;
-                if (data.info.includes("另一")) {
-                    sub_type = "kickoff";
-                    if (this.kickoff_reconn) {
-                        this.logger.info("3秒后重新连接..");
-                        setTimeout(this.login.bind(this), 3000);
-                    } else {
-                        this.terminate();
-                    }
-                } else if (data.info.includes("冻结")) {
-                    sub_type = "frozen";
-                    this.terminate();
-                } else if (data.info.includes("设备锁")) {
-                    sub_type = "device";
-                    this.terminate();
-                } else {
-                    sub_type = "unknown";
-                    this.terminate();
-                }
-                event.emit(this, "system.offline." + sub_type);
-            })
-        }
-        return buildApiRet(0);
-    }
-
-    /**
      * 使用此函数关闭连接，不要使用end和destroy
      */
     terminate() {
@@ -535,6 +529,25 @@ class AndroidClient extends Client {
 
     isOnline() {
         return this.status === Client.ONLINE;
+    }
+
+    /**
+     * 修改在线状态 仅支持手机协议
+     * @param {Number} status 11我在线上 31离开 41隐身 50忙碌 60Q我吧 70请勿打扰
+     */
+    async changeOnlineStatus(status) {
+        if (this.config.platform !== 1)
+            return buildApiRet(102);
+        status = parseInt(status);
+        if (![11, 31, 41, 50, 60, 70].includes(status))
+            return buildApiRet(100);
+        try {
+            await this.send(outgoing.buildChangeStatusRequestPacket(status, this));
+        } catch (e) {
+            return buildApiRet(103);
+        }
+        this.online_status = status;
+        return buildApiRet(0);
     }
 
     ///////////////////////////////////////////////////
@@ -819,6 +832,13 @@ class AndroidClient extends Client {
             return buildApiRet(103);
         }
     }
+
+    /**
+     * @param {Number} group_id 
+     * @param {Number} user_id 
+     * @param {String} special_title 为空收回
+     * @param {Number} duration 
+     */
     async setGroupSpecialTitle(group_id, user_id, special_title = "", duration = -1) {
         group_id = parseInt(group_id), user_id = parseInt(user_id);
         if (!checkUin(group_id) || !checkUin(user_id))
@@ -877,6 +897,7 @@ class AndroidClient extends Client {
     }
 
     /**
+     * 暂时为立即返回，无法立即知晓是否成功
      * @param {Number} group_id 
      * @param {Number} user_id 
      * @param {Number} duration 秒数
@@ -890,22 +911,24 @@ class AndroidClient extends Client {
     }
 
     /**
+     * 即使你本来就不在此群，也会返回成功
      * @param {Number} group_id 
-     * @param {Boolean} is_dismiss 暂未实现解散
+     * @param {Boolean} is_dismiss 不设置is_dismiss只要是群主貌似也可以解散(可能和规模有关?)
      */
     async setGroupLeave(group_id, is_dismiss = false) {
         try {
             group_id = parseInt(group_id);
             if (!checkUin(group_id))
                 return buildApiRet(100);
-            const res = await this.send(outgoing.buildGroupLeaveRequestPacket(group_id, this));
-            return buildApiRet(res === 0 ? 0 : 102);
+            const res = await this.send(outgoing.buildGroupLeaveRequestPacket(group_id, is_dismiss, this));
+            return buildApiRet(res ? 0 : 102);
         } catch (e) {
             return buildApiRet(103);
         }
     }
 
     /**
+     * 暂时为立即返回，无法立即知晓是否成功
      * @param {Number} group_id 
      * @param {Number} user_id
      */
@@ -920,11 +943,11 @@ class AndroidClient extends Client {
     ///////////////////////////////////////////////////
 
     /**
+     * 暂时为立即返回，无法立即知晓是否成功
      * @param {String} flag 
      * @param {Boolean} approve 
      * @param {String} remark
      * @param {Boolean} block 是否加入黑名单
-     * @async 暂时为立即返回，无法知晓是否成功
      */
     async setFriendAddRequest(flag, approve = true, remark = "", block = false) {
         try {
@@ -935,11 +958,11 @@ class AndroidClient extends Client {
     }
 
     /**
+     * 暂时为立即返回，无法立即知晓是否成功
      * @param {String} flag 
      * @param {Boolean} approve 
      * @param {String} reason 拒绝理由，仅在拒绝他人加群时有效
      * @param {Boolean} block 是否加入黑名单
-     * @async 暂时为立即返回，无法知晓是否成功
      */
     async setGroupAddRequest(flag, approve = true, reason = "", block = false) {
         try {
@@ -949,6 +972,13 @@ class AndroidClient extends Client {
         return buildApiRet(100);
     }
 
+    /**
+     * 重复添加或者对方设置为拒绝添加会返回失败
+     * 对方设置要正确回答问题，暂时也返回失败
+     * @param {Number} group_id 
+     * @param {Number} user_id 
+     * @param {String} comment 
+     */
     async addFriend(group_id, user_id, comment = "") {
         group_id = parseInt(group_id), user_id = parseInt(user_id);
         if (!checkUin(group_id) || !checkUin(user_id))
@@ -970,20 +1000,56 @@ class AndroidClient extends Client {
         }
     }
 
+    /**
+     * 即使对方不是你的好友，也会返回成功
+     * @param {Number} user_id 
+     * @param {Boolean} block 
+     */
     async deleteFriend(user_id, block = true) {
         user_id = parseInt(user_id);
         if (!checkUin(user_id))
             return buildApiRet(100);
-        this.write(outgoing.buildDelFriendRequestPacket(user_id, block, this));
-        return buildApiRet(1);
+        try {
+            const res = await this.send(outgoing.buildDelFriendRequestPacket(user_id, block, this));
+            return buildApiRet(res ? 0 : 102);
+        } catch (e) {
+            return buildApiRet(103);
+        }
     }
 
+    /**
+     * 对方必须是BOT的好友，否则返回失败
+     * 如果BOT不是对方的好友(单向)，对方又设置了拒绝陌生人邀请，此时会返回成功但是对方实际收不到邀请
+     * @param {Number} group_id 
+     * @param {Number} user_id 
+     */
     async inviteFriend(group_id, user_id) {
         group_id = parseInt(group_id), user_id = parseInt(user_id);
         if (!checkUin(group_id) || !checkUin(user_id))
             return buildApiRet(100);
-        this.write(outgoing.buildInviteRequestPacket(group_id, user_id, this));
-        return buildApiRet(1);
+        try {
+            const res = await this.send(outgoing.buildInviteRequestPacket(group_id, user_id, this));
+            return buildApiRet(res ? 0 : 102);
+        } catch (e) {
+            return buildApiRet(103);
+        }
+    }
+
+    /**
+     * 请勿频繁调用，否则有冻结风险
+     * @param {Number} user_id 
+     * @param {Number} times 
+     */
+    async sendLike(user_id, times = 1) {
+        times = parseInt(times), user_id = parseInt(user_id);
+        if (!checkUin(user_id) || !(times > 0 && times <= 20))
+            return buildApiRet(100);
+        try {
+            const res = await this.send(outgoing.buildSendLikeRequestPacket(user_id, times, this));
+            return buildApiRet(res ? 0 : 102);
+        } catch (e) {
+            return buildApiRet(103);
+        }
     }
 
     ///////////////////////////////////////////////////
