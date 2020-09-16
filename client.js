@@ -570,7 +570,7 @@ class AndroidClient extends Client {
             try {
                 this.friend_list_lock = true;
                 this.friend_list = new Map();
-                let start = 0, limit = 250;
+                let start = 0, limit = 5000;
                 while (1) {
                     const total = await this.send(outgoing.buildFriendListRequestPacket(start, limit, this));
                     start += limit;
