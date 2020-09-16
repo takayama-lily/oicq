@@ -187,6 +187,10 @@ client.on("system.login.captcha", (data)=>{
     + *`user_id`*
     + *`message_id`*
 
+  + `notice.friend.nickname` 好友更新昵称
+    + *`user_id`*
+    + *`nickname`*
+
 + **notice.group**
 
   + `notice.group.increase` 群员增加
@@ -311,9 +315,9 @@ client.on("system.login.captcha", (data)=>{
 
 ### 获取好友、群、群员列表和info
 
-+ async `client.getFriendList([no_cache])`
-+ async `client.getGroupList([no_cache])`
-+ async `client.getGroupMemberList(group_id[, no_cache])`
++ `client.getFriendList()`
++ `client.getGroupList()`
++ async `client.getGroupMemberList(group_id)`
   + 获取列表返回的是ES6的Map类型，不是数组
 + async `client.getGroupInfo(group_id[, no_cache])`
 + async `client.getGroupMemberInfo(group_id, user_id[, no_cache])`
