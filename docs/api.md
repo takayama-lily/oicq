@@ -11,6 +11,11 @@
   + [client.captchaLogin(captcha)](#client.captchaLogin(captcha))
   + [client.terminate()](#client.terminate())
   + [APIs](#APIs)
+    + [获取列表](#获取好友群群员列表和info)
+    + [发消息和撤回](#发私聊消息群消息)
+    + [群操作](#群操作踢人禁言退群设置等)
+    + [加好友](#加好友删好友邀请好友入群点赞)
+    + [设置状态和资料](#设置状态和资料)
 + [oicq.setGlobalConfig(config)](#oicq.setGlobalConfig(config))
 
 ----
@@ -359,7 +364,7 @@ message可以使用 `Array` 格式或 `String` 格式，支持CQ码
 
 ----
 
-## 加好友、删好友、邀请好友入群、点赞
+### 加好友、删好友、邀请好友入群、点赞
 
 + async `client.addFriend(group_id, user_id[, comment])`
 + async `client.deleteFriend(user_id[, block])` block(屏蔽)默认是true
@@ -368,7 +373,7 @@ message可以使用 `Array` 格式或 `String` 格式，支持CQ码
 
 ----
 
-## 设置状态和资料
+### 设置状态和资料
 
 + async `client.setOnlineStatus(status)` 仅支持手机协议
   + `status` 允许的值：11我在线上 31离开 41隐身 50忙碌 60Q我吧 70请勿打扰
@@ -380,7 +385,7 @@ message可以使用 `Array` 格式或 `String` 格式，支持CQ码
 
 ----
 
-## 其他
+### 其他
 
 + `client.canSendImage()`
 + `client.canSendRecord()`
