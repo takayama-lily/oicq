@@ -94,7 +94,7 @@ function loop() {
             case "send":
                 const abc = param.split(" ");
                 const target = parseInt(abc[0]);
-                if (bot.group_list.has(target))
+                if (bot.gl.has(target))
                     bot.sendGroupMsg(target, abc[1]);
                 else
                     bot.sendPrivateMsg(target, abc[1]);

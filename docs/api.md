@@ -198,7 +198,7 @@ client.on("system.login.captcha", (data)=>{
     + *`user_id`*
     + *`nickname`*
 
-  + `notice.group.decrease` 群员减少(bot在其他客户端自己退群，事件不会触发)
+  + `notice.group.decrease` 群员减少
     + *`group_id`*
     + *`operator_id`* 操作者，自己退群的时候和user_id相同
     + *`user_id`*
@@ -210,7 +210,7 @@ client.on("system.login.captcha", (data)=>{
     + *`user_id`*
     + *`message_id`*
 
-  + `notice.group.admin` 管理变更事件(bot是群主，在其他客户端设置管理，事件不会触发)
+  + `notice.group.admin` 管理变更事件
     + *`group_id`*
     + *`user_id`*
     + *`set`* boolean型

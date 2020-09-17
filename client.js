@@ -12,8 +12,6 @@ const imcoming = require("./lib/incoming");
 const event = require("./lib/event");
 const BUF0 = Buffer.alloc(0);
 
-class OICQError extends Error {};
-
 const server_list = [
     {ip:"msfwifi.3g.qq.com",port:8080,ping:null},
 ];
@@ -151,9 +149,9 @@ class AndroidClient extends Client {
     age = 0;
     gender = 0;
     online_status = 0;
-    friend_list = new Map();
-    group_list = new Map();
-    group_member_list = new Map();
+    fl = new Map();
+    gl = new Map();
+    gml = new Map();
 
     recv_timestamp = 0;
     send_timestamp = 0xffffffff;
@@ -290,17 +288,8 @@ class AndroidClient extends Client {
                 this.send(outgoing.buildFriendListRequestPacket(this)),
                 this.send(outgoing.buildGroupListRequestPacket(this))
             ]);
-            this.logger.info(`加载了${this.friend_list.size}个好友，${this.group_list.size}个群。`);
+            this.logger.info(`加载了${this.fl.size}个好友，${this.gl.size}个群。`);
             this.write(outgoing.buildGetMessageRequestPacket(0, this));
-            let n = 0, tasks = [];
-            for (let k of this.group_list.keys()) {
-                ++n;
-                tasks.push(this.getGroupMemberList(k));
-                if (n % 10 === 0) {
-                    await Promise.all(tasks);
-                    tasks = [];
-                }
-            }
         });
     }
 
@@ -397,9 +386,9 @@ class AndroidClient extends Client {
      * @returns {Map|void}
      */
     findStranger(user_id) {
-        if (this.friend_list.has(user_id))
-            return this.friend_list.get(user_id);
-        for (const [k, v] of this.group_member_list) {
+        if (this.fl.has(user_id))
+            return this.fl.get(user_id);
+        for (const [k, v] of this.gml) {
             if (v.has(user_id))
                 return v.get(user_id);
         }
@@ -451,6 +440,24 @@ class AndroidClient extends Client {
         }
     }
 
+    /**
+     * @private
+     * @param {Number} group_id
+     */
+    async _getGroupMemberList(group_id) {
+        if (!this.gml.has(group_id))
+            this.gml.set(group_id, new Map());
+        try {
+            let next = 0;
+            while (1) {
+                next = await this.send(outgoing.buildGroupMemberListRequestPacket(group_id, next, this));
+                if (!next) break;
+            }
+        } catch (e) {}
+        if (!this.gml.get(group_id).size)
+            this.gml.delete(group_id);
+    }
+
     // 以下是public方法 ----------------------------------------------------------------------------------------------------
 
     /**
@@ -469,7 +476,7 @@ class AndroidClient extends Client {
                 else
                     throw new Error("error");
             } catch (e) {
-                throw new OICQError("Argument password_md5 is illegal.");
+                throw new Error("Argument password_md5 is illegal.");
             }
         }
         this._connect(()=>{
@@ -487,7 +494,7 @@ class AndroidClient extends Client {
         try {
             captcha = captcha.toString().trim();
         } catch (e) {
-            throw new OICQError("Illegal argument type.");
+            throw new Error("Illegal argument type.");
         }
         const packet = outgoing.buildCaptchaLoginRequestPacket(
             Buffer.byteLength(captcha) === 4 ? captcha : "abcd", this.captcha_sign, this
@@ -538,42 +545,32 @@ class AndroidClient extends Client {
      *  }
      * 之后的 @returns 指的都是成功时的data字段
      * 
-     * @returns {Map} data <this.friend_list>
+     * @returns {Map} data <this.fl>
      */
     getFriendList() {
-        return buildApiRet(0, this.friend_list);
+        return buildApiRet(0, this.fl);
     }
 
     /**
-     * @returns {Map} data <this.group_list>
+     * @returns {Map} data <this.gl>
      */
     getGroupList() {
-        return buildApiRet(0, this.group_list);
+        return buildApiRet(0, this.gl);
     }
 
     /**
      * @param {Number} group_id
-     * @returns {Map} data <this.group_member_list.get(group_id)>
+     * @returns {Map} data <this.gml.get(group_id)>
      */
     async getGroupMemberList(group_id) {
         group_id = parseInt(group_id);
         if (!checkUin(group_id))
             return buildApiRet(100);
-        if (!this.group_member_list.has(group_id)) {
-            this.group_member_list.set(group_id, new Map());
-            try {
-                let next = 0;
-                while (1) {
-                    next = await this.send(outgoing.buildGroupMemberListRequestPacket(group_id, next, this));
-                    if (!next) break;
-                }
-                if (!this.group_member_list.get(group_id).size)
-                    this.group_member_list.delete(group_id);
-            } catch (e) {}
-        }
-        if (!this.group_member_list.has(group_id))
+        if (!this.gml.has(group_id))
+            await this._getGroupMemberList(group_id);
+        if (!this.gml.has(group_id))
             return buildApiRet(102);
-        return buildApiRet(0, this.group_member_list.get(group_id));
+        return buildApiRet(0, this.gml.get(group_id));
     }
 
     /**
@@ -604,9 +601,9 @@ class AndroidClient extends Client {
         if (!checkUin(group_id))
             return buildApiRet(100);
         try {
-            if (no_cache || !this.group_list.has(group_id))
+            if (no_cache || !this.gl.has(group_id))
                 await this.send(outgoing.buildGroupInfoRequestPacket(group_id, this));
-            const group = this.group_list.get(group_id);
+            const group = this.gl.get(group_id);
             if (group)
                 return buildApiRet(0, group);
         } catch (e) {}
@@ -624,9 +621,9 @@ class AndroidClient extends Client {
         if (!checkUin(group_id) || !checkUin(user_id))
             return buildApiRet(100);
         try {
-            if (no_cache || !this.group_member_list.has(group_id) || !this.group_member_list.get(group_id).has(user_id))
+            if (no_cache || !this.gml.has(group_id) || !this.gml.get(group_id).has(user_id))
                 await this.send(outgoing.buildGroupMemberInfoRequestPacket(group_id, user_id, this));
-            const member = this.group_member_list.get(group_id).get(user_id);
+            const member = this.gml.get(group_id).get(user_id);
             if (member) 
                 return buildApiRet(0, member);
         } catch (e) {}
@@ -770,10 +767,10 @@ class AndroidClient extends Client {
             const res = await this.send(outgoing.buildSetGroupAdminRequestPacket(group_id, user_id, enable, this));
             if (res) {
                 try {
-                    const old_role = this.group_member_list.get(group_id).get(user_id).role;
+                    const old_role = this.gml.get(group_id).get(user_id).role;
                     const new_role = enable ? "admin" : "member";
                     if (old_role !== new_role && old_role !== "owner") {
-                        this.group_member_list.get(group_id).get(user_id).role = new_role;
+                        this.gml.get(group_id).get(user_id).role = new_role;
                         event.emit(this, "notice.group.admin", {
                             group_id, user_id, set: !!enable
                         });
@@ -793,11 +790,11 @@ class AndroidClient extends Client {
      * @param {Number} duration 
      */
     async setGroupSpecialTitle(group_id, user_id, special_title = "", duration = -1) {
-        group_id = parseInt(group_id), user_id = parseInt(user_id);
+        group_id = parseInt(group_id), user_id = parseInt(user_id), duration = parseInt(duration);
         if (!checkUin(group_id) || !checkUin(user_id))
             return buildApiRet(100);
         try {
-            const res = await this.send(outgoing.buildEditSpecialTitleRequestPacket(group_id, user_id, special_title, duration, this));
+            const res = await this.send(outgoing.buildEditSpecialTitleRequestPacket(group_id, user_id, String(special_title), duration?duration:-1, this));
             return buildApiRet(res?0:102);
         } catch (e) {
             return buildApiRet(103);
@@ -816,7 +813,7 @@ class AndroidClient extends Client {
         if (!checkUin(group_id) || !checkUin(user_id))
             return buildApiRet(100);
         try {
-            const res = await this.send(outgoing.buildEditGroupCardRequestPacket(group_id, user_id, card, this));
+            const res = await this.send(outgoing.buildEditGroupCardRequestPacket(group_id, user_id, String(card), this));
             return buildApiRet(res?0:102);
         } catch (e) {
             return buildApiRet(103);
@@ -834,7 +831,7 @@ class AndroidClient extends Client {
             return buildApiRet(100);
         try {
             if (await this.send(outgoing.buildGroupKickRequestPacket(group_id, user_id, reject_add_request, this))) {
-                if (this.group_member_list.get(group_id).delete(user_id)) {
+                if (this.gml.has(group_id) && this.gml.get(group_id).delete(user_id)) {
                     event.emit(this, "notice.group.decrease", {
                         group_id, user_id,
                         operator_id: this.uin,
@@ -919,7 +916,7 @@ class AndroidClient extends Client {
      */
     async setGroupAddRequest(flag, approve = true, reason = "", block = false) {
         try {
-            this.write(outgoing.buildGroupRequestRequestPacket(flag, approve, reason, block, this));
+            this.write(outgoing.buildGroupRequestRequestPacket(flag, approve, String(reason), block, this));
             return buildApiRet(1);
         } catch (e) {}
         return buildApiRet(100);
@@ -1159,9 +1156,9 @@ function setGlobalConfig(config = {}) {
 function createClient(uin, config = {}) {
     uin = parseInt(uin);
     if (!checkUin(uin))
-        throw new OICQError("Argument uin is not an OICQ account.");
+        throw new Error("Argument uin is not an OICQ account.");
     if (typeof config !== "object" || config === null)
-        throw new OICQError("Argument config is illegal.");
+        throw new Error("Argument config is illegal.");
     return new AndroidClient(uin, config);
 }
 
