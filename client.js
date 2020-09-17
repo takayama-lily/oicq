@@ -6,7 +6,7 @@ const path = require("path");
 const crypto = require("crypto");
 const log4js = require("log4js");
 const device = require("./lib/device");
-const {rand, buildApiRet, checkUin, timestamp} = require("./lib/common");
+const {buildApiRet, checkUin} = require("./lib/common");
 const outgoing = require("./lib/outgoing");
 const imcoming = require("./lib/incoming");
 const event = require("./lib/event");
@@ -158,10 +158,7 @@ class AndroidClient extends Client {
     heartbeat = null;
     seq_id = 0;
     handlers = new Map();
-    seq_cache = {
-        "PbPush": new Set(),
-        "ReqPush": new Set(),
-    };
+    seq_cache = new Map();
 
     session_id = Buffer.from([0x02, 0xB0, 0x5B, 0x8B]);
     random_key = crypto.randomBytes(16);
@@ -195,8 +192,8 @@ class AndroidClient extends Client {
     sync_cookie;
     sync_lock = false;
 
-    const1 = rand(9);
-    const2 = rand(9);
+    const1 = crypto.randomBytes(4).readUInt32BE();
+    const2 = crypto.randomBytes(4).readUInt32BE();
     curr_msg_id;
     curr_msg_rand;
 
@@ -346,12 +343,6 @@ class AndroidClient extends Client {
         });
     }
 
-    writeSyncCookieCache() {
-        const filepath = path.join(this.dir, "sync-cookie");
-        if (this.sync_cookie)
-            fs.writeFile(filepath, this.sync_cookie, ()=>{});
-    }
-
     /**
      * @private
      */
@@ -359,7 +350,6 @@ class AndroidClient extends Client {
         if (this.heartbeat)
             return;
         this.heartbeat = setInterval(async()=>{
-            this.writeSyncCookieCache();
             if (Date.now() - this.send_timestamp > 300000)
                 this.write(outgoing.buildGetMessageRequestPacket(0, this));
             try {
