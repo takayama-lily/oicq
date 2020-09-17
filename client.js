@@ -1094,7 +1094,7 @@ class AndroidClient extends Client {
     }
 
     test(a) {
-        this.write(outgoing.buildFriendInfoRequestPacket(a, this));
+        // this.write(outgoing.(a, this));
     }
 }
 
