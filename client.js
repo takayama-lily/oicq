@@ -6,7 +6,7 @@ const path = require("path");
 const crypto = require("crypto");
 const log4js = require("log4js");
 const device = require("./lib/device");
-const {buildApiRet, checkUin} = require("./lib/common");
+const {buildApiRet, checkUin, timestamp} = require("./lib/common");
 const outgoing = require("./lib/outgoing");
 const imcoming = require("./lib/incoming");
 const event = require("./lib/event");
@@ -152,6 +152,7 @@ class AndroidClient extends Client {
     fl = new Map();
     gl = new Map();
     gml = new Map();
+    strangers = new Map();
 
     recv_timestamp = 0;
     send_timestamp = 0xffffffff;
@@ -371,20 +372,6 @@ class AndroidClient extends Client {
         this.heartbeat = null;
     }
 
-    /**
-     * @private
-     * @param {Number} user_id 
-     * @returns {Map|void}
-     */
-    findStranger(user_id) {
-        if (this.fl.has(user_id))
-            return this.fl.get(user_id);
-        for (const [k, v] of this.gml) {
-            if (v.has(user_id))
-                return v.get(user_id);
-        }
-    }
-
     async register() {
         try {
             if (!await this.send(outgoing.buildClientRegisterRequestPacket(this)))
@@ -568,22 +555,29 @@ class AndroidClient extends Client {
     }
 
     /**
-     * 获取陌生人资料暂不支持缓存
+     * 获取陌生人资料
      * @param {Number} user_id 
+     * @param {Boolean} no_cache Default: false
      * @returns {Ojbect} data
      */
-    async getStrangerInfo(user_id) {
+    async getStrangerInfo(user_id, no_cache = false) {
         user_id = parseInt(user_id);
         if (!checkUin(user_id))
             return buildApiRet(100);
         try {
-            const stranger = await this.send(outgoing.buildStrangerInfoRequestPacket(user_id, this));
+            if (no_cache || !this.strangers.has(user_id) || timestamp() - this.strangers.get(user_id).update_time > 3600) {
+                var stranger = await this.send(outgoing.buildStrangerInfoRequestPacket(user_id, this));
+                if (stranger && !this.fl.has(user_id)) {
+                    if (this.strangers.has(user_id))
+                        stranger = Object.assign(this.strangers.get(user_id), stranger);
+                    this.strangers.set(user_id, stranger);
+                }
+            }
+            stranger = this.strangers.get(user_id);
             if (stranger)
                 return buildApiRet(0, stranger);
-            return buildApiRet(102);
-        } catch (e) {
-            return buildApiRet(103);
-        }
+        } catch (e) {}
+        return buildApiRet(102);
     }
 
     /**
