@@ -98,7 +98,7 @@ client.on("system.login.captcha", (data)=>{
 + **message.private**
 
   + `message.private.friend` 好友消息
-  + `message.private.single` 单向好友消息(对方未加你)
+  + `message.private.single` 单向好友消息
   + `message.private.group` 群临时会话
   + `message.private.other` 其他临时会话
     + *`message_id`* string型
@@ -321,12 +321,13 @@ client.on("system.login.captcha", (data)=>{
 ### 获取好友、群、群员列表和info
 
 + `client.getFriendList()`
++ `client.getStrangerList()`
 + `client.getGroupList()`
 + async `client.getGroupMemberList(group_id)`
   + 获取列表返回的是ES6的Map类型，不是数组
 + async `client.getGroupInfo(group_id[, no_cache])`
 + async `client.getGroupMemberInfo(group_id, user_id[, no_cache])`
-+ async `client.getStrangerInfo(user_id)`
++ async `client.getStrangerInfo(user_id[, no_cache])`
 
 ----
 

@@ -6,7 +6,7 @@ const path = require("path");
 const crypto = require("crypto");
 const log4js = require("log4js");
 const device = require("./lib/device");
-const {buildApiRet, checkUin} = require("./lib/common");
+const {buildApiRet, checkUin, timestamp} = require("./lib/common");
 const outgoing = require("./lib/outgoing");
 const imcoming = require("./lib/incoming");
 const event = require("./lib/event");
@@ -149,9 +149,10 @@ class AndroidClient extends Client {
     age = 0;
     gender = 0;
     online_status = 0;
-    fl = new Map();
-    gl = new Map();
-    gml = new Map();
+    fl = new Map(); //friendList
+    sl = new Map(); //strangerList
+    gl = new Map(); //groupList
+    gml = new Map(); //groupMemberList
 
     recv_timestamp = 0;
     send_timestamp = 0xffffffff;
@@ -277,12 +278,21 @@ class AndroidClient extends Client {
 
         this.on("internal.login", async()=>{
             this.logger.info(`Welcome, ${this.nickname} ! 开始初始化资源...`);
+            this.sync_cookie = null;
             this.sync_finished = false;
             await this.register();
             if (!this.isOnline())
                 return;
+            const getFriendList = async()=>{
+                let start = 0;
+                while (1) {
+                    const total = await this.send(outgoing.buildFriendListRequestPacket(start, this));
+                    start += 150;
+                    if (start > total) break;
+                }
+            }
             await Promise.all([
-                this.send(outgoing.buildFriendListRequestPacket(this)),
+                getFriendList(),
                 this.send(outgoing.buildGroupListRequestPacket(this))
             ]);
             this.logger.info(`加载了${this.fl.size}个好友，${this.gl.size}个群。`);
@@ -370,20 +380,6 @@ class AndroidClient extends Client {
         this.heartbeat = null;
     }
 
-    /**
-     * @private
-     * @param {Number} user_id 
-     * @returns {Map|void}
-     */
-    findStranger(user_id) {
-        if (this.fl.has(user_id))
-            return this.fl.get(user_id);
-        for (const [k, v] of this.gml) {
-            if (v.has(user_id))
-                return v.get(user_id);
-        }
-    }
-
     async register() {
         try {
             if (!await this.send(outgoing.buildClientRegisterRequestPacket(this)))
@@ -395,15 +391,13 @@ class AndroidClient extends Client {
             return;
         }
         this.status = Client.ONLINE;
-        if (this.online_status > 11)
-            this.changeOnlineStatus(this.online_status);
-        else
+        if (!this.online_status)
             this.online_status = 11;
+        this.setOnlineStatus(this.online_status);
         this.startHeartbeat();
         if (!this.listenerCount("internal.kickoff")) {
             this.once("internal.kickoff", (data)=>{
                 this.status = Client.INIT;
-                this.online_status = 0;
                 this.stopHeartbeat();
                 this.logger.warn(data.info);
                 let sub_type;
@@ -426,7 +420,7 @@ class AndroidClient extends Client {
                     this.terminate();
                 }
                 event.emit(this, "system.offline." + sub_type);
-            })
+            });
         }
     }
 
@@ -435,17 +429,22 @@ class AndroidClient extends Client {
      * @param {Number} group_id
      */
     async _getGroupMemberList(group_id) {
-        if (!this.gml.has(group_id))
-            this.gml.set(group_id, new Map());
+        let mlist = new Map();
         try {
-            let next = 0;
+            var next = 0;
             while (1) {
-                next = await this.send(outgoing.buildGroupMemberListRequestPacket(group_id, next, this));
+                var {map, next} = await this.send(outgoing.buildGroupMemberListRequestPacket(group_id, next, this));
+                mlist = new Map([...mlist, ...map]);
                 if (!next) break;
             }
         } catch (e) {}
-        if (!this.gml.get(group_id).size)
+        if (!mlist.size) {
             this.gml.delete(group_id);
+            return null;
+        } else {
+            this.gml.set(group_id, mlist);
+            return mlist;
+        }
     }
 
     // 以下是public方法 ----------------------------------------------------------------------------------------------------
@@ -505,6 +504,15 @@ class AndroidClient extends Client {
     }
 
     /**
+     * 返回值的形式为
+     *  {
+     *      retcode: 0,     //0正常 1异步 100参数错误 102调用失败 103超时
+     *      status: "ok",   //ok正常 async异步 failed失败
+     *      data:null,      //数据，类型可能是Object或Map
+     *      error: ""       //错误信息，偶尔会有
+     *  }
+     * 之后的 @returns 指的都是成功时的data字段
+     * 
      * 设置在线状态 仅支持手机协议
      * @param {Number} status 11我在线上 31离开 41隐身 50忙碌 60Q我吧 70请勿打扰
      */
@@ -526,108 +534,117 @@ class AndroidClient extends Client {
     ///////////////////////////////////////////////////
 
     /**
-     * 返回值的形式为
-     *  {
-     *      retcode: 0,     //0正常 1异步 100参数错误 102调用失败 103超时
-     *      status: "ok",   //ok正常 async异步 failed失败
-     *      data:null,      //数据，类型可能是Object或Map
-     *      error: ""       //错误信息，偶尔会有
-     *  }
-     * 之后的 @returns 指的都是成功时的data字段
-     * 
-     * @returns {Map} data <this.fl>
+     * 好友列表、陌生人列表、群列表
+     * @returns {Map}
      */
     getFriendList() {
         return buildApiRet(0, this.fl);
     }
-
-    /**
-     * @returns {Map} data <this.gl>
-     */
+    getStrangerList() {
+        return buildApiRet(0, this.sl);
+    }
     getGroupList() {
         return buildApiRet(0, this.gl);
     }
 
     /**
+     * 群员列表使用懒加载，不会在启动时加载所有的群员列表
+     * 只会在系统认为需要用到的时候进行加载和更新
      * @param {Number} group_id
-     * @returns {Map} data <this.gml.get(group_id)>
+     * @returns {Map}
      */
     async getGroupMemberList(group_id) {
         group_id = parseInt(group_id);
         if (!checkUin(group_id))
             return buildApiRet(100);
         if (!this.gml.has(group_id))
-            await this._getGroupMemberList(group_id);
-        if (!this.gml.has(group_id))
-            return buildApiRet(102);
-        return buildApiRet(0, this.gml.get(group_id));
+            this.gml.set(group_id, this._getGroupMemberList(group_id));
+        let mlist = this.gml.get(group_id);
+        if (mlist instanceof Promise)
+            mlist = await mlist;
+        if (mlist)
+            return buildApiRet(0, mlist);
+        return buildApiRet(102);
     }
 
     /**
+     * 获取陌生人资料
      * @param {Number} user_id 
-     * @returns {Ojbect} data
+     * @param {Boolean} no_cache Default: false
+     * @returns {JSON} data
      */
-    async getStrangerInfo(user_id) {
+    async getStrangerInfo(user_id, no_cache = false) {
         user_id = parseInt(user_id);
         if (!checkUin(user_id))
             return buildApiRet(100);
-        try {
-            const stranger = await this.send(outgoing.buildStrangerInfoRequestPacket(user_id, this));
-            if (stranger)
-                return buildApiRet(0, stranger);
-            return buildApiRet(102);
-        } catch (e) {
-            return buildApiRet(103);
+        let user = this.sl.get(user_id);
+        if (no_cache || !user) {
+            try {
+                user = await this.send(outgoing.buildStrangerInfoRequestPacket(user_id, this));
+            } catch (e) {}
         }
+        if (user)
+            return buildApiRet(0, user);
+        return buildApiRet(102);
     }
 
     /**
+     * 群资料会自动和服务器同步，一般来说无需使用no_cache获取
      * @param {Number} group_id
      * @param {Boolean} no_cache Default: false
-     * @returns {Ojbect} data
+     * @returns {JSON} data
      */
     async getGroupInfo(group_id, no_cache = false) {
         group_id = parseInt(group_id);
         if (!checkUin(group_id))
             return buildApiRet(100);
-        try {
-            if (no_cache || !this.gl.has(group_id))
-                await this.send(outgoing.buildGroupInfoRequestPacket(group_id, this));
-            const group = this.gl.get(group_id);
-            if (group)
-                return buildApiRet(0, group);
-        } catch (e) {}
+        let ginfo = this.gl.get(group_id);
+        if (no_cache || !ginfo || timestamp() - ginfo.update_time > 3600) {
+            try {
+                ginfo = await this.send(outgoing.buildGroupInfoRequestPacket(group_id, this));
+            } catch (e) {}
+        }
+        if (ginfo)
+            return buildApiRet(0, ginfo);
         return buildApiRet(102);
     }
 
     /**
+     * 群员资料一般来说也无需使用no_cache获取(性别、年龄等可能更新不及时)
      * @param {Number} group_id
      * @param {Number} user_id
      * @param {Boolean} no_cache Default: false
-     * @returns {Ojbect} data
+     * @returns {JSON}
      */
     async getGroupMemberInfo(group_id, user_id, no_cache = false) {
         group_id = parseInt(group_id), user_id = parseInt(user_id);
         if (!checkUin(group_id) || !checkUin(user_id))
             return buildApiRet(100);
+        let minfo;
         try {
-            if (no_cache || !this.gml.has(group_id) || !this.gml.get(group_id).has(user_id))
-                await this.send(outgoing.buildGroupMemberInfoRequestPacket(group_id, user_id, this));
-            const member = this.gml.get(group_id).get(user_id);
-            if (member) 
-                return buildApiRet(0, member);
+            minfo = this.gml.get(group_id).get(user_id);
         } catch (e) {}
+        if (no_cache || !minfo || timestamp() - minfo.update_time > 3600) {
+            try {
+                minfo = await this.send(outgoing.buildGroupMemberInfoRequestPacket(group_id, user_id, this));
+                if (minfo)
+                    this.gml.get(group_id).set(user_id, minfo);
+            } catch (e) {}
+        }
+        if (minfo) 
+            return buildApiRet(0, minfo);
         return buildApiRet(102);
     }
 
     ///////////////////////////////////////////////////
 
     /**
+     * 发送私聊
      * @param {Number} user_id 
      * @param {String|Array} message 
      * @param {Boolean} auto_escape Default: false
-     * @returns {Ojbect} data
-     *  @field {Number} message_id
+     * @returns {JSON}
+     *  @field {String} message_id
      */
     async sendPrivateMsg(user_id, message = "", auto_escape = false) {
         user_id = parseInt(user_id);
@@ -655,12 +672,13 @@ class AndroidClient extends Client {
     }
 
     /**
+     * 发送群聊，被风控会自动转为长消息发送
      * @param {Number} group_id 
      * @param {String|Array} message 
      * @param {Boolean} auto_escape Default: false
-     * @param {Boolean} as_long 作为长消息发送(可以避免被风控)
-     * @returns {Ojbect} data
-     *  @field {Number} message_id
+     * @param {Boolean} as_long
+     * @returns {JSON}
+     *  @field {String} message_id
      */
     async sendGroupMsg(group_id, message = "", auto_escape = false, as_long = false) {
         group_id = parseInt(group_id);
@@ -717,6 +735,7 @@ class AndroidClient extends Client {
     }
 
     /**
+     * 撤回消息
      * @param {String} message_id hex字符串
      */
     async deleteMsg(message_id) {
@@ -774,6 +793,7 @@ class AndroidClient extends Client {
     }
 
     /**
+     * 设置群头衔，最大长度未测试
      * @param {Number} group_id 
      * @param {Number} user_id 
      * @param {String} special_title 为空收回
@@ -794,6 +814,7 @@ class AndroidClient extends Client {
     ///////////////////////////////////////////////////
 
     /**
+     * 设置群名片，超过60字节会被截断
      * @param {Number} group_id 
      * @param {Number} user_id 
      * @param {String} card 为空还原
@@ -811,6 +832,7 @@ class AndroidClient extends Client {
     }
 
     /**
+     * 踢人，即使原来就无此人也会返回成功
      * @param {Number} group_id 
      * @param {Number} user_id 
      * @param {Boolean} reject_add_request 
@@ -837,7 +859,7 @@ class AndroidClient extends Client {
     }
 
     /**
-     * 暂时为立即返回，无法立即知晓是否成功
+     * 禁言，暂时为立即返回，无法立即知晓是否成功
      * @param {Number} group_id 
      * @param {Number} user_id 
      * @param {Number} duration 秒数
@@ -851,7 +873,7 @@ class AndroidClient extends Client {
     }
 
     /**
-     * 即使你本来就不在此群，也会返回成功
+     * 退群，即使你本来就不在此群，也会返回成功
      * @param {Number} group_id 
      * @param {Boolean} is_dismiss 不设置is_dismiss只要是群主貌似也可以解散(可能和规模有关?)
      */
@@ -868,7 +890,7 @@ class AndroidClient extends Client {
     }
 
     /**
-     * 暂时为立即返回，无法立即知晓是否成功
+     * 戳一戳，暂时为立即返回，无法立即知晓是否成功
      * @param {Number} group_id 
      * @param {Number} user_id
      */
@@ -883,7 +905,7 @@ class AndroidClient extends Client {
     ///////////////////////////////////////////////////
 
     /**
-     * 暂时为立即返回，无法立即知晓是否成功
+     * 处理好友申请，暂时为立即返回，无法立即知晓是否成功
      * @param {String} flag 
      * @param {Boolean} approve 
      * @param {String} remark
@@ -891,14 +913,14 @@ class AndroidClient extends Client {
      */
     async setFriendAddRequest(flag, approve = true, remark = "", block = false) {
         try {
-            this.write(outgoing.buildFriendRequestRequestPacket(flag, approve, block, this));
+            this.write(outgoing.buildNewFriendActionRequestPacket(flag, approve, block, this));
             return buildApiRet(1);
         } catch (e) {}
         return buildApiRet(100);
     }
 
     /**
-     * 暂时为立即返回，无法立即知晓是否成功
+     * 处理群申请和邀请，暂时为立即返回，无法立即知晓是否成功
      * @param {String} flag 
      * @param {Boolean} approve 
      * @param {String} reason 拒绝理由，仅在拒绝他人加群时有效
@@ -906,15 +928,16 @@ class AndroidClient extends Client {
      */
     async setGroupAddRequest(flag, approve = true, reason = "", block = false) {
         try {
-            this.write(outgoing.buildGroupRequestRequestPacket(flag, approve, String(reason), block, this));
+            this.write(outgoing.buildNewGroupActionRequestPacket(flag, approve, String(reason), block, this));
             return buildApiRet(1);
         } catch (e) {}
         return buildApiRet(100);
     }
 
     /**
-     * 重复添加或者对方设置为拒绝添加会返回失败
-     * 对方设置要正确回答问题，暂时也返回失败
+     * 加群员为好友，暂不支持非群员
+     * ※重复添加或者对方设置为拒绝添加会返回失败
+     * ※对方设置要正确回答问题，暂时也返回失败
      * @param {Number} group_id 
      * @param {Number} user_id 
      * @param {String} comment 
@@ -941,7 +964,7 @@ class AndroidClient extends Client {
     }
 
     /**
-     * 即使对方不是你的好友，也会返回成功
+     * 删除好友，即使对方本来就不是你的好友，也会返回成功
      * @param {Number} user_id 
      * @param {Boolean} block 
      */
@@ -958,8 +981,9 @@ class AndroidClient extends Client {
     }
 
     /**
-     * 对方必须是BOT的好友，否则返回失败
-     * 如果BOT不是对方的好友(单向)，对方又设置了拒绝陌生人邀请，此时会返回成功但是对方实际收不到邀请
+     * 邀请好友入群，暂不支持邀请陌生人
+     * ※对方必须是BOT的好友，否则返回失败
+     * ※如果BOT不是对方的好友(单向)，对方又设置了拒绝陌生人邀请，此时会返回成功但是对方实际收不到邀请
      * @param {Number} group_id 
      * @param {Number} user_id 
      */
@@ -976,7 +1000,7 @@ class AndroidClient extends Client {
     }
 
     /**
-     * 请勿频繁调用，否则有冻结风险
+     * 点赞，请勿频繁调用，否则有冻结风险
      * @param {Number} user_id 
      * @param {Number} times 
      */
@@ -992,8 +1016,10 @@ class AndroidClient extends Client {
         }
     }
 
+    /////////////////////////////////////////////// 个人设置
+
     /**
-     * @param {String} nickname 允许设为空，别人看到的昵称会变为你的QQ号
+     * @param {String} nickname 昵称最长48字节，允许设为空，别人看到的昵称会变为你的QQ号
      */
     async setNickname(nickname) {
         try {
@@ -1009,7 +1035,7 @@ class AndroidClient extends Client {
     }
 
     /**
-     * @param {String} description 
+     * @param {String} description 个人说明
      */
     async setDescription(description = "") {
         try {
@@ -1021,7 +1047,7 @@ class AndroidClient extends Client {
     }
 
     /**
-     * @param {Number} gender 0未知 1男 2女
+     * @param {Number} gender 性别 0未知 1男 2女
      */
     async setGender(gender) {
         gender = parseInt(gender);
@@ -1040,7 +1066,7 @@ class AndroidClient extends Client {
     }
 
     /**
-     * @param {String} birthday 必须是20110202这样的形式
+     * @param {String} birthday 生日必须是20110202这样的形式
      */
     async setBirthday(birthday) {
         try {
@@ -1050,6 +1076,8 @@ class AndroidClient extends Client {
             buf.writeUInt8(parseInt(birthday.substr(4, 2)), 2);
             buf.writeUInt8(parseInt(birthday.substr(6, 2)), 3);
             const res = await this.send(outgoing.buildSetProfileRequestPacket(0x16593, buf, this));
+            if (res)
+                this.age = new Date().getFullYear() - birthday.substr(0, 4);
             return buildApiRet(res ? 0 : 102);
         } catch (e) {
             return buildApiRet(103);
@@ -1057,7 +1085,7 @@ class AndroidClient extends Client {
     }
 
     /**
-     * @param {String} signature 大于254字节会被截断
+     * @param {String} signature 个人签名超过254字节会被截断
      */
     async setSignature(signature = "") {
         try {
@@ -1094,7 +1122,7 @@ class AndroidClient extends Client {
     }
 
     test(a) {
-        this.write(outgoing.buildFriendInfoRequestPacket(a, this));
+        // this.write(outgoing.(a, this));
     }
 }
 
@@ -1102,6 +1130,7 @@ class AndroidClient extends Client {
 
 const logger = log4js.getLogger("[SYSTEM]");
 logger.level = "info";
+logger.info("OICQ程序启动。当前内核版本：v" + version.version);
 
 const config = {
     web_image_timeout:  0,  //下载网络图片的超时时间
