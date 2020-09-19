@@ -283,8 +283,16 @@ class AndroidClient extends Client {
             await this.register();
             if (!this.isOnline())
                 return;
+            const getFriendList = async()=>{
+                let start = 0;
+                while (1) {
+                    const total = await this.send(outgoing.buildFriendListRequestPacket(start, this));
+                    start += 150;
+                    if (start > total) break;
+                }
+            }
             await Promise.all([
-                this.send(outgoing.buildFriendListRequestPacket(this)),
+                getFriendList(),
                 this.send(outgoing.buildGroupListRequestPacket(this))
             ]);
             this.logger.info(`加载了${this.fl.size}个好友，${this.gl.size}个群。`);
