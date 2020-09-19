@@ -898,7 +898,7 @@ class AndroidClient extends Client {
      */
     async setFriendAddRequest(flag, approve = true, remark = "", block = false) {
         try {
-            this.write(outgoing.buildFriendRequestRequestPacket(flag, approve, block, this));
+            this.write(outgoing.buildNewFriendActionRequestPacket(flag, approve, block, this));
             return buildApiRet(1);
         } catch (e) {}
         return buildApiRet(100);
@@ -913,7 +913,7 @@ class AndroidClient extends Client {
      */
     async setGroupAddRequest(flag, approve = true, reason = "", block = false) {
         try {
-            this.write(outgoing.buildGroupRequestRequestPacket(flag, approve, String(reason), block, this));
+            this.write(outgoing.buildNewGroupActionRequestPacket(flag, approve, String(reason), block, this));
             return buildApiRet(1);
         } catch (e) {}
         return buildApiRet(100);
