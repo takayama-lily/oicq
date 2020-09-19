@@ -321,6 +321,7 @@ client.on("system.login.captcha", (data)=>{
 ### 获取好友、群、群员列表和info
 
 + `client.getFriendList()`
++ `client.getStrangerList()`
 + `client.getGroupList()`
 + async `client.getGroupMemberList(group_id)`
   + 获取列表返回的是ES6的Map类型，不是数组

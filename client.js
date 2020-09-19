@@ -149,10 +149,10 @@ class AndroidClient extends Client {
     age = 0;
     gender = 0;
     online_status = 0;
-    fl = new Map();
-    gl = new Map();
-    gml = new Map();
-    strangers = new Map();
+    fl = new Map(); //friendList
+    sl = new Map(); //strangerList
+    gl = new Map(); //groupList
+    gml = new Map(); //groupMemberList
 
     recv_timestamp = 0;
     send_timestamp = 0xffffffff;
@@ -383,10 +383,9 @@ class AndroidClient extends Client {
             return;
         }
         this.status = Client.ONLINE;
-        if (this.online_status > 11)
-            this.setOnlineStatus(this.online_status);
-        else
+        if (!this.online_status)
             this.online_status = 11;
+        this.setOnlineStatus(this.online_status);
         this.startHeartbeat();
         if (!this.listenerCount("internal.kickoff")) {
             this.once("internal.kickoff", (data)=>{
@@ -413,7 +412,7 @@ class AndroidClient extends Client {
                     this.terminate();
                 }
                 event.emit(this, "system.offline." + sub_type);
-            })
+            });
         }
     }
 
@@ -422,17 +421,22 @@ class AndroidClient extends Client {
      * @param {Number} group_id
      */
     async _getGroupMemberList(group_id) {
-        if (!this.gml.has(group_id))
-            this.gml.set(group_id, new Map());
+        let mlist = new Map();
         try {
-            let next = 0;
+            var next = 0;
             while (1) {
-                next = await this.send(outgoing.buildGroupMemberListRequestPacket(group_id, next, this));
+                var {map, next} = await this.send(outgoing.buildGroupMemberListRequestPacket(group_id, next, this));
+                mlist = new Map([...mlist, ...map]);
                 if (!next) break;
             }
         } catch (e) {}
-        if (!this.gml.get(group_id).size)
+        if (!mlist.size) {
             this.gml.delete(group_id);
+            return null;
+        } else {
+            this.gml.set(group_id, mlist);
+            return mlist;
+        }
     }
 
     // 以下是public方法 ----------------------------------------------------------------------------------------------------
@@ -522,17 +526,15 @@ class AndroidClient extends Client {
     ///////////////////////////////////////////////////
 
     /**
-     * 好友列表，只能从缓存中获取，数据更新和同步由系统控制
-     * @returns {Map} data <this.fl>
+     * 好友列表、陌生人列表、群列表
+     * @returns {Map}
      */
     getFriendList() {
         return buildApiRet(0, this.fl);
     }
-
-    /**
-     * 群列表，只能从缓存中获取，数据更新和同步由系统控制
-     * @returns {Map} data <this.gl>
-     */
+    getStrangerList() {
+        return buildApiRet(0, this.sl);
+    }
     getGroupList() {
         return buildApiRet(0, this.gl);
     }
@@ -541,42 +543,40 @@ class AndroidClient extends Client {
      * 群员列表使用懒加载，不会在启动时加载所有的群员列表
      * 只会在系统认为需要用到的时候进行加载和更新
      * @param {Number} group_id
-     * @returns {Map} data <this.gml.get(group_id)>
+     * @returns {Map}
      */
     async getGroupMemberList(group_id) {
         group_id = parseInt(group_id);
         if (!checkUin(group_id))
             return buildApiRet(100);
         if (!this.gml.has(group_id))
-            await this._getGroupMemberList(group_id);
-        if (!this.gml.has(group_id))
-            return buildApiRet(102);
-        return buildApiRet(0, this.gml.get(group_id));
+            this.gml.set(group_id, this._getGroupMemberList(group_id));
+        let mlist = this.gml.get(group_id);
+        if (mlist instanceof Promise)
+            mlist = await mlist;
+        if (mlist)
+            return buildApiRet(0, mlist);
+        return buildApiRet(102);
     }
 
     /**
      * 获取陌生人资料
      * @param {Number} user_id 
      * @param {Boolean} no_cache Default: false
-     * @returns {Ojbect} data
+     * @returns {JSON} data
      */
     async getStrangerInfo(user_id, no_cache = false) {
         user_id = parseInt(user_id);
         if (!checkUin(user_id))
             return buildApiRet(100);
-        try {
-            if (no_cache || !this.strangers.has(user_id) || timestamp() - this.strangers.get(user_id).update_time > 3600) {
-                var stranger = await this.send(outgoing.buildStrangerInfoRequestPacket(user_id, this));
-                if (stranger && !this.fl.has(user_id)) {
-                    if (this.strangers.has(user_id))
-                        stranger = Object.assign(this.strangers.get(user_id), stranger);
-                    this.strangers.set(user_id, stranger);
-                }
-            }
-            stranger = this.strangers.get(user_id);
-            if (stranger)
-                return buildApiRet(0, stranger);
-        } catch (e) {}
+        let user = this.sl.get(user_id);
+        if (no_cache || !user) {
+            try {
+                user = await this.send(outgoing.buildStrangerInfoRequestPacket(user_id, this));
+            } catch (e) {}
+        }
+        if (user)
+            return buildApiRet(0, user);
         return buildApiRet(102);
     }
 
@@ -584,40 +584,47 @@ class AndroidClient extends Client {
      * 群资料会自动和服务器同步，一般来说无需使用no_cache获取
      * @param {Number} group_id
      * @param {Boolean} no_cache Default: false
-     * @returns {Ojbect} data
+     * @returns {JSON} data
      */
     async getGroupInfo(group_id, no_cache = false) {
         group_id = parseInt(group_id);
         if (!checkUin(group_id))
             return buildApiRet(100);
-        try {
-            if (no_cache || !this.gl.has(group_id))
-                await this.send(outgoing.buildGroupInfoRequestPacket(group_id, this));
-            const group = this.gl.get(group_id);
-            if (group)
-                return buildApiRet(0, group);
-        } catch (e) {}
+        let ginfo = this.gl.get(group_id);
+        if (no_cache || !ginfo || timestamp() - ginfo.update_time > 3600) {
+            try {
+                ginfo = await this.send(outgoing.buildGroupInfoRequestPacket(group_id, this));
+            } catch (e) {}
+        }
+        if (ginfo)
+            return buildApiRet(0, ginfo);
         return buildApiRet(102);
     }
 
     /**
-     * 群员资料一般来说也无需使用no_cache获取(昵称、性别、年龄等可能更新不及时)
+     * 群员资料一般来说也无需使用no_cache获取(性别、年龄等可能更新不及时)
      * @param {Number} group_id
      * @param {Number} user_id
      * @param {Boolean} no_cache Default: false
-     * @returns {Ojbect} data
+     * @returns {JSON}
      */
     async getGroupMemberInfo(group_id, user_id, no_cache = false) {
         group_id = parseInt(group_id), user_id = parseInt(user_id);
         if (!checkUin(group_id) || !checkUin(user_id))
             return buildApiRet(100);
+        let minfo;
         try {
-            if (no_cache || !this.gml.has(group_id) || !this.gml.get(group_id).has(user_id))
-                await this.send(outgoing.buildGroupMemberInfoRequestPacket(group_id, user_id, this));
-            const member = this.gml.get(group_id).get(user_id);
-            if (member) 
-                return buildApiRet(0, member);
+            minfo = this.gml.get(group_id).get(user_id);
         } catch (e) {}
+        if (no_cache || !minfo || timestamp() - minfo.update_time > 3600) {
+            try {
+                minfo = await this.send(outgoing.buildGroupMemberInfoRequestPacket(group_id, user_id, this));
+                if (minfo)
+                    this.gml.get(group_id).set(user_id, minfo);
+            } catch (e) {}
+        }
+        if (minfo) 
+            return buildApiRet(0, minfo);
         return buildApiRet(102);
     }
 
@@ -628,8 +635,8 @@ class AndroidClient extends Client {
      * @param {Number} user_id 
      * @param {String|Array} message 
      * @param {Boolean} auto_escape Default: false
-     * @returns {Ojbect} data
-     *  @field {Number} message_id
+     * @returns {JSON}
+     *  @field {String} message_id
      */
     async sendPrivateMsg(user_id, message = "", auto_escape = false) {
         user_id = parseInt(user_id);
@@ -662,8 +669,8 @@ class AndroidClient extends Client {
      * @param {String|Array} message 
      * @param {Boolean} auto_escape Default: false
      * @param {Boolean} as_long
-     * @returns {Ojbect} data
-     *  @field {Number} message_id
+     * @returns {JSON}
+     *  @field {String} message_id
      */
     async sendGroupMsg(group_id, message = "", auto_escape = false, as_long = false) {
         group_id = parseInt(group_id);
@@ -1115,6 +1122,7 @@ class AndroidClient extends Client {
 
 const logger = log4js.getLogger("[SYSTEM]");
 logger.level = "info";
+logger.info("OICQ程序启动。当前内核版本：v" + version.version);
 
 const config = {
     web_image_timeout:  0,  //下载网络图片的超时时间
