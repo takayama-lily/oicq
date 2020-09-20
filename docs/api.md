@@ -355,7 +355,6 @@ message可以使用 `Array` 格式或 `String` 格式，支持CQ码
 + async `client.setGroupKick(group_id, user_id[, reject_add_request])`
 + async `client.setGroupBan(group_id, user_id[, duration])`
 + async `client.setGroupLeave(group_id[, is_dismiss])`
-
 + async `client.setGroupCard(group_id, user_id[, card])`
 + async `client.setGroupName(group_id, group_name)`
 + async `client.setGroupAdmin(group_id, user_id[, enable])`
@@ -365,8 +364,9 @@ message可以使用 `Array` 格式或 `String` 格式，支持CQ码
 
 ----
 
-### 加好友、删好友、邀请好友入群、点赞
+### 加群加好友、删好友、邀请好友入群、点赞
 
++ async `client.addGroup(group_id)`
 + async `client.addFriend(group_id, user_id[, comment])`
 + async `client.deleteFriend(user_id[, block])` block(屏蔽)默认是true
 + async `client.inviteFriend(group_id, user_id)`
