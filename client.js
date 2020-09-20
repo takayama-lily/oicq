@@ -191,7 +191,6 @@ class AndroidClient extends Client {
 
     sync_finished = false;
     sync_cookie;
-    sync_lock = false;
 
     const1 = crypto.randomBytes(4).readUInt32BE();
     const2 = crypto.randomBytes(4).readUInt32BE();
@@ -728,7 +727,7 @@ class AndroidClient extends Client {
                 }
             };
 
-            this.logger.info(`send to: [Group: ${group_id}]` + message);
+            this.logger.info(`send to: [Group: ${group_id}] ` + message);
             return buildApiRet(0, {message_id});
         } catch (e) {
             this.removeAllListeners(event_id);
@@ -737,7 +736,7 @@ class AndroidClient extends Client {
     }
 
     /**
-     * 撤回消息
+     * 撤回消息，暂时为立即返回，无法立即知晓是否成功
      * @param {String} message_id hex字符串
      */
     async deleteMsg(message_id) {
@@ -907,7 +906,7 @@ class AndroidClient extends Client {
     ///////////////////////////////////////////////////
 
     /**
-     * 处理好友申请，暂时为立即返回，无法立即知晓是否成功
+     * 处理好友申请
      * @param {String} flag 
      * @param {Boolean} approve 
      * @param {String} remark
@@ -915,14 +914,14 @@ class AndroidClient extends Client {
      */
     async setFriendAddRequest(flag, approve = true, remark = "", block = false) {
         try {
-            this.write(outgoing.buildNewFriendActionRequestPacket(flag, approve, block, this));
-            return buildApiRet(1);
+            const res = await this.send(outgoing.buildNewFriendActionRequestPacket(flag, approve, block, this));
+            return buildApiRet(res?0:102);
         } catch (e) {}
-        return buildApiRet(100);
+        return buildApiRet(103);
     }
 
     /**
-     * 处理群申请和邀请，暂时为立即返回，无法立即知晓是否成功
+     * 处理群申请和邀请
      * @param {String} flag 
      * @param {Boolean} approve 
      * @param {String} reason 拒绝理由，仅在拒绝他人加群时有效
@@ -930,10 +929,10 @@ class AndroidClient extends Client {
      */
     async setGroupAddRequest(flag, approve = true, reason = "", block = false) {
         try {
-            this.write(outgoing.buildNewGroupActionRequestPacket(flag, approve, String(reason), block, this));
-            return buildApiRet(1);
+            const res = await this.send(outgoing.buildNewGroupActionRequestPacket(flag, approve, String(reason), block, this));
+            return buildApiRet(res?0:102);
         } catch (e) {}
-        return buildApiRet(100);
+        return buildApiRet(103);
     }
 
     /**
