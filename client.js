@@ -653,7 +653,7 @@ class AndroidClient extends Client {
             return buildApiRet(100);
         try {
             try {
-                var packet = await outgoing.commonMessage(user_id, message, auto_escape, false, false, this);
+                var packet = await outgoing.commonMessage(user_id, message, auto_escape, 0, false, this);
             } catch (e) {
                 this.logger.debug(e);
                 return buildApiRet(100);
@@ -666,7 +666,7 @@ class AndroidClient extends Client {
                 return buildApiRet(0, {message_id});
             }
             this.logger.error(`send failed: [Private: ${user_id}] ` + resp.errmsg)
-            return buildApiRet(102, null, {info: resp.errmsg});
+            return buildApiRet(102, null, {error: resp.errmsg});
         } catch (e) {
             return buildApiRet(103);
         }
@@ -687,7 +687,7 @@ class AndroidClient extends Client {
             return buildApiRet(100);
         try {
             try {
-                var packet = await outgoing.commonMessage(group_id, message, auto_escape, true, as_long, this);
+                var packet = await outgoing.commonMessage(group_id, message, auto_escape, 1, as_long, this);
             } catch (e) {
                 this.logger.debug(e);
                 return buildApiRet(100);
@@ -703,7 +703,7 @@ class AndroidClient extends Client {
             if (resp.result !== 0) {
                 this.removeAllListeners(event_id);
                 this.logger.error(`send failed: [Group: ${group_id}] ` + resp.errmsg);
-                return buildApiRet(102, null, {info: resp.errmsg});
+                return buildApiRet(102, null, {error: resp.errmsg});
             }
 
             if (this.listenerCount(event_id) > 0) {
@@ -732,6 +732,24 @@ class AndroidClient extends Client {
         } catch (e) {
             this.removeAllListeners(event_id);
             return buildApiRet(103);
+        }
+    }
+    async sendDiscussMsg(discuss_id, message = "", auto_escape = false) {
+        discuss_id = parseInt(discuss_id);
+        if (!checkUin(discuss_id))
+            return buildApiRet(100);
+        try {
+            const packet = await outgoing.commonMessage(discuss_id, message, auto_escape, 2, false, this);
+            const resp = await this.send(packet);
+            if (resp.result !== 0) {
+                this.logger.error(`send failed: [Discuss: ${discuss_id}] ` + resp.errmsg);
+                return buildApiRet(102);
+            }
+            this.logger.info(`send to: [Discuss: ${discuss_id}] ` + message);
+            return buildApiRet(0);
+        } catch (e) {
+            this.logger.debug(e);
+            return buildApiRet(100);
         }
     }
 
