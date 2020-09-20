@@ -936,16 +936,35 @@ class AndroidClient extends Client {
     }
 
     /**
-     * 加群员为好友，暂不支持非群员
-     * ※重复添加或者对方设置为拒绝添加会返回失败
-     * ※对方设置要正确回答问题，暂时也返回失败
+     * 发送加群申请，即使你已经在群里，也会返回成功
+     * ※设置为要正确回答问题的群，暂时回返回失败
+     * ※风险接口，每日加群超过一定数量账号必被风控(甚至ip)
+     * @param {Number} group_id 
+     * @param {String} comment 该参数仅占位，暂未实现
+     */
+    async addGroup(group_id, comment = "") {
+        group_id = parseInt(group_id);
+        if (!checkUin(group_id))
+            return buildApiRet(100);
+        try {
+            const res = await this.send(outgoing.buildAddGroupRequestPacket(group_id, this));
+            return buildApiRet(res ? 0 : 102);
+        } catch (e) {
+            return buildApiRet(103);
+        }
+    }
+
+    /**
+     * 加群员为好友，暂不支持非群员(群号可以传0，但是必须有共同群，否则对方无法收到请求)
+     * ※对方设置要正确回答问题的时候，暂时会返回失败
+     * ※风险接口，每日加好友超过一定数量账号必被风控(甚至ip)
      * @param {Number} group_id 
      * @param {Number} user_id 
      * @param {String} comment 
      */
     async addFriend(group_id, user_id, comment = "") {
         group_id = parseInt(group_id), user_id = parseInt(user_id);
-        if (!checkUin(group_id) || !checkUin(user_id))
+        if ((!checkUin(group_id)&&group_id!==0) || !checkUin(user_id))
             return buildApiRet(100);
         try {
             const type = await this.send(outgoing.buildAddSettingRequestPacket(user_id, this));
@@ -1123,7 +1142,7 @@ class AndroidClient extends Client {
     }
 
     test(a) {
-        // this.write(outgoing.(a, this));
+        this.write(outgoing.buildAddGroupRequestPacket(a, "你好", this));
     }
 }
 
