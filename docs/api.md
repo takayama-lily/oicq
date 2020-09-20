@@ -138,6 +138,17 @@ client.on("system.login.captcha", (data)=>{
       + *`level`* 群等级(number)
       + *`role`* "owner"或"admin"或"member"
       + *`title`* 群头衔(string)
+  + `message.discuss` 讨论组消息
+    + *`discuss_id`*
+    + *`discuss_name`*
+    + *`user_id`*
+    + *`font`*
+    + *`message`*
+    + *`raw_message`*
+    + *`sender`*
+      + *`user_id`*
+      + *`nickname`*
+      + *`card`*
 
 ----
 
@@ -309,8 +320,8 @@ client.on("system.login.captcha", (data)=>{
 {
     retcode: 0,     //0成功 1状态未知 100参数错误 102失败 103超时
     status: "ok",   //ok或async或failed
-    data: null,     //数据
-    error: "",      //失败的时候偶尔会有这个字段
+    data: null,     //数据，只有获取列表以及发消息会返回message_id，其他API为null
+    error: "",      //错误代码和错误消息，暂未完全实现
 }
 ```
 
@@ -335,8 +346,9 @@ client.on("system.login.captcha", (data)=>{
 
 message可以使用 `Array` 格式或 `String` 格式，支持CQ码
 
-+ async `client.sendPrivateMsg(user_id, message[, auto_escape])`
-+ async `client.sendGroupMsg(group_id, user_id, message[, auto_escape])`
++ async `client.sendPrivateMsg(user_id, message[, auto_escape])` 返回message_id
++ async `client.sendGroupMsg(group_id, user_id, message[, auto_escape])` 返回message_id
++ async `client.sendDiscussMsg(discuss_id, user_id, message[, auto_escape])` 讨论组无message_id
 + async `client.deleteMsg(message_id)`
   + `message_id` 现在是字符串，保存了所有撤回时需要用到的数据
 
