@@ -620,6 +620,8 @@ class AndroidClient extends Client {
         group_id = parseInt(group_id), user_id = parseInt(user_id);
         if (!checkUin(group_id) || !checkUin(user_id))
             return buildApiRet(100);
+        if (!this.gml.has(group_id))
+            this.getGroupMemberList(group_id);
         let minfo;
         try {
             minfo = this.gml.get(group_id).get(user_id);
