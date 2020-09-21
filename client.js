@@ -147,7 +147,7 @@ class AndroidClient extends Client {
 
     nickname = "";
     age = 0;
-    gender = 0;
+    sex = 0;
     online_status = 0;
     fl = new Map(); //friendList
     sl = new Map(); //strangerList
@@ -1062,11 +1062,7 @@ class AndroidClient extends Client {
     async setNickname(nickname) {
         try {
             const res = await this.send(outgoing.buildSetProfileRequestPacket(0x14E22, String(nickname), this));
-            if (res) {
-                this.nickname = nickname;
-                return buildApiRet(0);
-            }
-            return buildApiRet(102);
+            return buildApiRet(res ? 0 : 102);
         } catch (e) {
             return buildApiRet(103);
         }
@@ -1093,11 +1089,7 @@ class AndroidClient extends Client {
             return buildApiRet(100);
         try {
             const res = await this.send(outgoing.buildSetProfileRequestPacket(0x14E29, Buffer.from([gender]), this));
-            if (res) {
-                this.gender = gender;
-                return buildApiRet(0);
-            }
-            return buildApiRet(102);
+            return buildApiRet(res ? 0 : 102);
         } catch (e) {
             return buildApiRet(103);
         }
@@ -1114,8 +1106,6 @@ class AndroidClient extends Client {
             buf.writeUInt8(parseInt(birthday.substr(4, 2)), 2);
             buf.writeUInt8(parseInt(birthday.substr(6, 2)), 3);
             const res = await this.send(outgoing.buildSetProfileRequestPacket(0x16593, buf, this));
-            if (res)
-                this.age = new Date().getFullYear() - birthday.substr(0, 4);
             return buildApiRet(res ? 0 : 102);
         } catch (e) {
             return buildApiRet(103);
@@ -1155,7 +1145,7 @@ class AndroidClient extends Client {
         return buildApiRet(0, {
             user_id: this.uin,
             nickname: this.nickname,
-            age: this.age, sex: this.gender
+            age: this.age, sex: this.sex
         })
     }
 
