@@ -103,12 +103,12 @@ client.on("system.login.captcha", (data)=>{
   + `message.private.other` 其他临时会话
     + *`message_id`* string型
     + *`user_id`* 对方QQ号(number)
-    + *`font`* 字体名称(string)，如："微软雅黑"
+    + *`font`* 字体名称，如："微软雅黑"
     + *`message`* 数组格式的消息
     + *`raw_message`* 字符串格式的消息(CQ码已转义)
     + *`sender`*
       + *`user_id`*
-      + *`nickname`* 昵称(string)
+      + *`nickname`* 昵称
       + *`remark`* 备注
       + *`sex`* "male"或"female"或"unknown"
       + *`age`* 年龄(number)
@@ -125,12 +125,12 @@ client.on("system.login.captcha", (data)=>{
       + *`id`* 暂时为0
       + *`name`* 匿名者的名字
       + *`flag`* 暂时为空
-    + *`font`* 字体名称(string)，如："微软雅黑"
+    + *`font`* 字体名称，如："微软雅黑"
     + *`message`* 数组格式的消息
     + *`raw_message`* 字符串格式的消息(CQ码已转义)
     + *`sender`*
       + *`user_id`*
-      + *`nickname`* 昵称(string)
+      + *`nickname`* 昵称
       + *`card`* 群名片
       + *`sex`* "male"或"female"或"unknown"
       + *`age`* 年龄(number)
@@ -159,7 +159,7 @@ client.on("system.login.captcha", (data)=>{
   + `request.friend.add` 好友请求
     + *`user_id`*
     + *`nickname`*
-    + *`source`* 来源(某QQ群或搜索等)(string)
+    + *`source`* 来源("QQ群-xxx"或"QQ查找"等)
     + *`comment`*
     + *`sex`*
     + *`age`*
@@ -167,7 +167,7 @@ client.on("system.login.captcha", (data)=>{
 
 + **request.group**
 
-  + `request.group.add` 加群请求
+  + `request.group.add` 收到加群请求
     + *`group_id`*
     + *`group_name`*
     + *`user_id`*
@@ -175,12 +175,12 @@ client.on("system.login.captcha", (data)=>{
     + *`comment`*
     + *`flag`*
 
-  + `request.group.invite` 加群邀请
+  + `request.group.invite` 收到加群邀请
     + *`group_id`*
     + *`group_name`*
     + *`user_id`*
     + *`nickname`*
-    + *`role`* 邀请者的权限(admin或member)
+    + *`role`* 邀请者的权限("admin"或"member")
     + *`flag`*
 
 ----
@@ -203,9 +203,10 @@ client.on("system.login.captcha", (data)=>{
     + *`user_id`*
     + *`message_id`*
 
-  + `notice.friend.nickname` 好友更新昵称
+  + `notice.friend.profile` 好友资料变更
     + *`user_id`*
-    + *`nickname`*
+    + *`nickname`* 昵称
+    + *`signature`* 签名
 
 + **notice.group**
 
@@ -245,12 +246,14 @@ client.on("system.login.captcha", (data)=>{
   + `notice.group.notice` 收到群公告
     + *`group_id`*
     + *`user_id`*
+    + *`sender`*
     + *`title`*
     + *`content`*
 
   + `notice.group.file` 收到群文件
     + *`group_id`*
     + *`user_id`*
+    + *`sender`*
     + *`file`*
       + *`name`*
       + *`url`*
@@ -258,15 +261,11 @@ client.on("system.login.captcha", (data)=>{
       + *`md5`*
       + *`duration`*
 
-  + `notice.group.name` 群名变更事件
-    + *`group_id`*
-    + *`user_id`*
-    + *`new_name`*
-
   + `notice.group.title` 群头衔变更事件
     + *`group_id`*
     + *`user_id`*
-    + *`new_title`*
+    + *`nickname`*
+    + *`title`*
 
   + `notice.group.poke` 群戳一戳事件
     + *`group_id`*
@@ -286,7 +285,7 @@ client.on("system.login.captcha", (data)=>{
     + *`enable_show_level`* 展示群等级
     + *`enable_show_title`* 展示群头衔
     + *`enable_confess`* 开启坦白说
-    + *`enable_cowrite`* 开启一起写
+    + *`group_name`* 群名也是变更对象
     + *`group_id`*
     + *`user_id`* 操作者不明的时候为 -1
 
