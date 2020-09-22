@@ -9,11 +9,21 @@
 * 本项目使用AGPL-3.0许可证，旨在学习。不推荐也不提供商业化使用的支持。
 * 使用本项目产生的一切后果与本人无关。
 
+<details>
+<summary>一些想说的话</summary>
+  如果你有一门技术，可以促进社会发展，但也可以为违法犯罪提供便利，<br>
+  在你无法完全掌控和管理的情况下，你会公之于众吗？<br>
+  之前以为开源就是正义，现在看来也并不完全如此（可参考DeepFake事件）。<br>
+  开源QQ机器人，还能走多远？
+</details>
+
+----
+
 **目前可以直接使用的SDK或应用程序**
 
 [http-api](https://github.com/takayama-lily/onebot)
 
-**作为依赖引入进行开发：**
+**作为依赖引入进行开发（简单demo）：**
 
 ```bash
 # npm i oicq
@@ -22,8 +32,19 @@
 ```js
 const oicq = require("oicq");
 const uin = 123456789;
-const password_md5 = "202cb962ac59075b964b07152d234b70";
 const bot = oicq.createClient(uin);
+
+bot.on("system.login.captcha", ()=>{
+  process.stdin.once("data", input=>{
+    bot.captchaLogin(input);
+  });
+});
+
+bot.on("message", data=>console.log(data));
+bot.on("request", data=>console.log(data));
+bot.on("notice", data=>console.log(data));
+
+const password_md5 = "202cb962ac59075b964b07152d234b70";
 bot.login(password_md5);
 ```
 
@@ -36,5 +57,5 @@ bot.login(password_md5);
 
 **文档：**
 
-[开发进度](./docs/project.md)  
+[功能实现程度](./docs/project.md)  
 [API和事件](./docs/api.md)
