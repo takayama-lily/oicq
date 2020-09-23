@@ -75,8 +75,9 @@ class Client extends net.Socket {
  *      @event system.offline.device 由于开启设备锁，需要重新验证
  *      @event system.offline.unknown 未知领域
  * 
- * 内部事件(一般无需监听)
+ * 内部事件(外部无需监听)
  * @event internal
+ *  @event internal.change-server 更换服务器
  *  @event internal.login login成功
  *  @event internal.kickoff 被强制下线
  *  @event internal.exception 内部异常情况
@@ -276,6 +277,9 @@ class AndroidClient extends Client {
         })
 
         this.on("internal.login", async()=>{
+            this.once("internal.change-server", ()=>{
+                // todo
+            });
             this.logger.info(`Welcome, ${this.nickname} ! 开始初始化资源...`);
             this.sync_cookie = null;
             this.sync_finished = false;
