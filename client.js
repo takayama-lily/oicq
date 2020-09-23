@@ -277,6 +277,9 @@ class AndroidClient extends Client {
         })
 
         this.on("internal.login", async()=>{
+            this.once("internal.change-server", ()=>{
+                // todo
+            });
             this.logger.info(`Welcome, ${this.nickname} ! 开始初始化资源...`);
             this.sync_cookie = null;
             this.sync_finished = false;
