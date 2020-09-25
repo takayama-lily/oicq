@@ -20,7 +20,7 @@
 
 ----
 
-**目前可以直接使用的SDK或应用程序**
+**目前可以直接使用的SDK或应用程序：**
 
 [http-api](https://github.com/takayama-lily/onebot)
 
@@ -59,4 +59,5 @@ bot.login(password_md5);
 **文档：**
 
 [功能实现程度](./docs/project.md)  
-[API和事件](./docs/api.md)
+[API](./docs/api.md)  
+[事件](./docs/event.md)
