@@ -299,7 +299,12 @@ class AndroidClient extends Client {
                 this.send(outgoing.buildGroupListRequestPacket(this))
             ]);
             this.logger.info(`加载了${this.fl.size}个好友，${this.gl.size}个群。`);
-            this.write(outgoing.buildGetMessageRequestPacket(0, this));
+            try {
+                await this.send(outgoing.buildGetMessageRequestPacket(0, this));
+            } catch (e) {}
+            this.sync_finished = true;
+            this.logger.info("初始化完毕，开始处理消息。")
+            event.emit(this, "system.online");
         });
     }
 
