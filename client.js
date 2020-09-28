@@ -26,123 +26,11 @@ function buildApiRet(retcode, data = null, error = null) {
     };
 }
 
-/**
- * @link https://nodejs.org/dist/latest/docs/api/net.html#net_class_net_socket
- */
 class Client extends net.Socket {
     static OFFLINE = Symbol("OFFLINE");
     static INIT = Symbol("INIT");
     static ONLINE = Symbol("ONLINE");
 }
-
-/*** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
- * @事件 事件为冒泡传递，例如request.group.add事件，若未监听会沿着request.group传递到request
- * 
- * 聊天应用事件
- * @event message 消息类(cqhttp风格命名和参数)
- *  @event message.private
- *      @event message.private.friend
- *      @event message.private.single 单向好友，对方未加你
- *      @event message.private.group
- *      @event message.private.other
- *  @event message.group
- *      @event message.group.normal
- *      @event message.group.anonymous
- *      @event message.group.notice
- * @event request 请求类(cqhttp风格命名和参数)
- *  @event request.friend
- *      @event request.friend.add
- *  @event request.group
- *      @event request.group.add
- *      @event request.group.invite
- * @event notice 通知类(命名与cqhttp略不同，统一了风格)
- *  @event notice.friend
- *      @event notice.friend.increase
- *      @event notice.friend.decrease
- *      @event notice.friend.recall
- *  @event notice.group
- *      @event notice.group.upload
- *      @event notice.group.admin       管理变动(新增布尔型字段set)
- *      @event notice.group.transfer    群主转让(有old_owner和new_owner字段)
- *      @event notice.group.recall
- *      @event notice.group.ban         禁言(通过duration判断是解禁还是禁言)
- *      @event notice.group.config      群设置变更
- *      @event notice.group.card        群名片变更
- *      @event notice.group.increase    群员增加(新增布尔型字段invite)
- *      @event notice.group.decrease    群员减少(通过operator_id判断是退群还是踢出)
- * 
- * 系统事件
- * @event system
- *  @event system.login
- *      @event system.login.captcha 验证码需要处理 {image}
- *      @event system.login.device 设备锁需要处理(暂不支持区分真假设备锁) {url}
- *      @event system.login.error 登陆失败 {message}
- *  @event system.online 上线(可以开始处理消息)
- *  @event system.offline 下线(无法自动重新登陆的时候，有下列情况)
- *      @event system.offline.network 拔线
- *      @event system.offline.frozen 账号冻结
- *      @event system.offline.kickoff 被挤下线
- *      @event system.offline.device 由于开启设备锁，需要重新验证
- *      @event system.offline.unknown 未知领域
- * 
- * 内部事件(外部无需监听)
- * @event internal
- *  @event internal.change-server 更换服务器
- *  @event internal.login login成功
- *  @event internal.kickoff 被强制下线
- *  @event internal.exception 内部异常情况
- *  @event internal.timeout 回包响应超时
- * 
- * 网络层事件(请勿随意监听，否则可能导致系统运行不正常)
- * @event pause,readable,finish,pipe,unpipe
- * @event close,connect,data,drain,end,error,lookup,ready,timeout
- * 
- * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
- * 
- * @公开API 使用CQHTTP风格的命名和参数(函数使用驼峰非下划线)
- * 
- * @method sendPrivateMsg
- * @method sendGroupMsg
- * @method sendMsg
- * @method deleteMsg
- * @method getMsg
- * @method getForwardMsg
- * @method sendLike
- * @method setGroupKick
- * @method setGroupBan
- * @method setGroupAnonymousBan
- * @method setGroupWholeBan
- * @method setGroupAdmin
- * @method setGroupAnonymous
- * @method setGroupCard
- * @method setGroupName
- * @method setGroupLeave
- * @method setGroupSpecialTitle
- * @method setFriendAddRequest
- * @method setGroupAddRequest
- * @method getLoginInfo
- * @method getStrangerInfo
- * @method getFriendList
- * @method getGroupInfo
- * @method getGroupList
- * @method getGroupMemberInfo
- * @method getGroupMemberList
- * @method getGroupHonorInfo
- * @method getCookies
- * @method getCsrfToken
- * @method getCredentials
- * @method getRecord
- * @method getImage
- * @method canSendImage
- * @method canSendRecord
- * @method getStatus
- * @method getVersionInfo
- * @method setRestart
- * @method cleanCache
- * 
- * @具体实现程度请参照README
- * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
- */
 class AndroidClient extends Client {
     reconn_flag = true;
     logger;
@@ -177,6 +65,7 @@ class AndroidClient extends Client {
     ksid = Buffer.from("|454001228437590|A8.2.7.27f6ea96");
     device_info;
     captcha_sign;
+    t104;
 
     sign_info = {
         bitmap: 0,
@@ -190,15 +79,6 @@ class AndroidClient extends Client {
         ticket_key: BUF0,
         device_token: BUF0,
     };
-
-    time_diff;
-    rollback_sig;
-    t104;
-    t149;
-    t150;
-    t528;
-    t530;
-    pwd_flag;
 
     sync_finished = false;
     sync_cookie;
@@ -269,14 +149,12 @@ class AndroidClient extends Client {
                     this.reconn_flag = true;
                     this.recv_timestamp = Date.now();
                     const packet = this.read(len - 4);
-                    (async()=>{
-                        try {
-                            core.parseIncomingPacket.call(this, packet);
-                        } catch (e) {
-                            this.logger.debug(e.stack);
-                            this.emit("internal.exception", e);
-                        }
-                    })();
+                    try {
+                        core.parseIncomingPacket.call(this, packet);
+                    } catch (e) {
+                        this.logger.debug(e.stack);
+                        this.emit("internal.exception", e);
+                    }
                 } else {
                     this.unshift(len_buf);
                     break;
@@ -379,8 +257,8 @@ class AndroidClient extends Client {
         if (this.heartbeat)
             return;
         this.heartbeat = setInterval(async()=>{
-            // if (Date.now() - this.send_timestamp > 300000)
-            //     chat.getMsg(0);
+            if (Date.now() - this.send_timestamp > 300000)
+                core.getMsg.call(this);
             try {
                 await wt.heartbeat.call(this);
             } catch (e) {
@@ -400,7 +278,7 @@ class AndroidClient extends Client {
             if (!await wt.register.call(this))
                 throw new Error();
         } catch (e) {
-            this.logger.error("上线失败，未知情况。");
+            this.logger.error("上线失败。");
             this.terminate();
             emit(this, "system.offline.unknown");
             return;
@@ -477,7 +355,6 @@ class AndroidClient extends Client {
             else
                 return buildApiRet(0, rsp.data);
         } catch (e) {
-            console.log(e)
             if (e instanceof TimeoutError)
                 return buildApiRet(103, null, {code: 103, message: "packet timeout"});
             return buildApiRet(100, null, {code: 100, message: e.message});
@@ -718,7 +595,7 @@ class AndroidClient extends Client {
      * @param {Boolean} block 是否屏蔽
      */
     async setFriendAddRequest(flag, approve = true, remark = "", block = false) {
-        return await this.callApi(core.friendAction, arguments);
+        return await this.callApi(troop.friendAction, arguments);
     }
 
     /**
@@ -729,7 +606,7 @@ class AndroidClient extends Client {
      * @param {Boolean} block 是否屏蔽
      */
     async setGroupAddRequest(flag, approve = true, reason = "", block = false) {
-        return await this.callApi(core.groupAction, arguments);
+        return await this.callApi(troop.groupAction, arguments);
     }
 
     /**
@@ -884,7 +761,7 @@ function createCacheDir(uin) {
 }
 
 /**
- * 全局设置
+ * @param {JSON} config 
  */
 function setGlobalConfig(config = {}) {
     Object.assign(process.OICQ.config, config);
@@ -894,7 +771,7 @@ function setGlobalConfig(config = {}) {
 
 /**
  * @param {Number} uin 
- * @param {Object} config 
+ * @param {JSON} config 
  * @returns {AndroidClient}
  */
 function createClient(uin, config = {}) {

@@ -82,7 +82,7 @@ function loop() {
 ※退出: bye
 ※执行任意代码: eval code`;
     console.log(help);
-    const listener = function(input) {
+    const listener = async function(input) {
         input = input.toString().trim();
         const cmd = input.split(" ")[0];
         const param = input.replace(cmd, "").trim();
@@ -94,14 +94,19 @@ function loop() {
             case "send":
                 const abc = param.split(" ");
                 const target = parseInt(abc[0]);
+                let res;
                 if (bot.gl.has(target))
-                    bot.sendGroupMsg(target, abc[1]);
+                    res = await bot.sendGroupMsg(target, abc[1]);
                 else
-                    bot.sendPrivateMsg(target, abc[1]);
+                    res = await bot.sendPrivateMsg(target, abc[1]);
+                console.log(res);
                 break;
             case "eval":
                 try {
-                    console.log(eval(param));
+                    let res = eval(param);
+                    if (res instanceof Promise)
+                        res = await res;
+                    console.log(res);
                 } catch (e) {
                     console.log(e.stack);
                 }
