@@ -346,6 +346,8 @@ class AndroidClient extends Client {
      * @param {Array} params 
      */
     async callApi(fn, params) {
+        if (!this.isOnline())
+            return buildApiRet(104);
         try {
             const rsp = await fn.apply(this, params);
             if (!rsp)
@@ -356,8 +358,8 @@ class AndroidClient extends Client {
                 return buildApiRet(0, rsp.data);
         } catch (e) {
             if (e instanceof TimeoutError)
-                return buildApiRet(103, null, {code: 103, message: "packet timeout"});
-            return buildApiRet(100, null, {code: 100, message: e.message});
+                return buildApiRet(103, null, {code: -1, message: "packet timeout"});
+            return buildApiRet(100, null, {code: -1, message: e.message});
         }
     }
 
@@ -735,9 +737,9 @@ logger.level = "info";
 logger.info("OICQ程序启动。当前内核版本：v" + version.version);
 
 const config = {
-    web_image_timeout:  0,  //下载网络图片的超时时间
-    web_record_timeout: 0,  //下载网络语音的超时时间
-    cache_root:         path.join(process.mainModule.path, "data"), //缓存文件夹根目录，需要可写权限
+    web_image_timeout: 0,
+    web_record_timeout: 0,
+    cache_root: path.join(process.mainModule.path, "data"),
     debug: false,
 };
 
