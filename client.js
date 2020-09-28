@@ -5,16 +5,26 @@ const fs = require("fs");
 const path = require("path");
 const crypto = require("crypto");
 const log4js = require("log4js");
-const device = require("./lib/device");
-const {buildApiRet, checkUin, timestamp} = require("./lib/common");
-const outgoing = require("./lib/outgoing");
-const imcoming = require("./lib/incoming");
-const event = require("./lib/event");
+const device = require("./device");
+const {checkUin, emit, TimeoutError} = require("./lib/common");
+const core = require("./lib/core");
+const wt = require("./lib/wtlogin/wt");
+const chat = require("./lib/chat");
+const troop = require("./lib/troop");
 const BUF0 = Buffer.alloc(0);
 
 const server_list = [
     {ip:"msfwifi.3g.qq.com",port:8080,ping:null},
 ];
+
+function buildApiRet(retcode, data = null, error = null) {
+    data = data ? data : null;
+    error = error ? error : null;
+    const status = retcode ? (retcode===1?"async":"failed") : "ok";
+    return {
+        retcode, data, status, error
+    };
+}
 
 /**
  * @link https://nodejs.org/dist/latest/docs/api/net.html#net_class_net_socket
@@ -195,8 +205,6 @@ class AndroidClient extends Client {
 
     const1 = crypto.randomBytes(4).readUInt32BE();
     const2 = crypto.randomBytes(4).readUInt32BE();
-    curr_msg_id;
-    curr_msg_rand;
 
     dir;
 
@@ -240,7 +248,7 @@ class AndroidClient extends Client {
             this.stopHeartbeat();
             if (this.status === Client.OFFLINE) {
                 this.logger.error("网络不通畅。");
-                return event.emit(this, "system.offline.network");
+                return emit(this, "system.offline.network");
             }
             this.status = Client.OFFLINE;
             if (this.reconn_flag) {
@@ -263,7 +271,7 @@ class AndroidClient extends Client {
                     const packet = this.read(len - 4);
                     (async()=>{
                         try {
-                            imcoming(packet, this);
+                            core.parseIncomingPacket.call(this, packet);
                         } catch (e) {
                             this.logger.debug(e.stack);
                             this.emit("internal.exception", e);
@@ -286,25 +294,23 @@ class AndroidClient extends Client {
             await this.register();
             if (!this.isOnline())
                 return;
-            const getFriendList = async()=>{
+            const initFL = async()=>{
                 let start = 0;
                 while (1) {
-                    const total = await this.send(outgoing.buildFriendListRequestPacket(start, this));
+                    const total = await core.initFL.call(this, start);
                     start += 150;
                     if (start > total) break;
                 }
             }
             await Promise.all([
-                getFriendList(),
-                this.send(outgoing.buildGroupListRequestPacket(this))
+                initFL(),
+                core.initGL.call(this)
             ]);
             this.logger.info(`加载了${this.fl.size}个好友，${this.gl.size}个群。`);
-            try {
-                await this.send(outgoing.buildGetMessageRequestPacket(0, this));
-            } catch (e) {}
+            await core.getMsg.call(this);
             this.sync_finished = true;
             this.logger.info("初始化完毕，开始处理消息。")
-            event.emit(this, "system.online");
+            emit(this, "system.online");
         });
     }
 
@@ -338,7 +344,6 @@ class AndroidClient extends Client {
 
     /**
      * @private
-     * @async reject if retcode=1
      * @param {Buffer} packet
      * @param {Number} timeout ms
      * @returns {OICQResponse}
@@ -349,8 +354,8 @@ class AndroidClient extends Client {
             this.write(packet, ()=>{
                 const id = setTimeout(()=>{
                     this.handlers.delete(seq_id);
-                    reject({message: "timeout"});
-                    event.emit(this, "internal.timeout", {seq_id});
+                    reject(new TimeoutError());
+                    emit(this, "internal.timeout", {seq_id});
                 }, timeout);
                 this.handlers.set(seq_id, (data)=>{
                     clearTimeout(id);
@@ -360,6 +365,12 @@ class AndroidClient extends Client {
             });
         });
     }
+    writeUNI(cmd, body, ext) {
+        this.write(wt.buildUNIPacket.apply(this, arguments));
+    }
+    async sendUNI(cmd, body, ext) {
+        return await this.send(wt.buildUNIPacket.apply(this, arguments));
+    }
 
     /**
      * @private
@@ -368,21 +379,17 @@ class AndroidClient extends Client {
         if (this.heartbeat)
             return;
         this.heartbeat = setInterval(async()=>{
-            if (Date.now() - this.send_timestamp > 300000)
-                this.write(outgoing.buildGetMessageRequestPacket(0, this));
+            // if (Date.now() - this.send_timestamp > 300000)
+            //     chat.getMsg(0);
             try {
-                await this.send(outgoing.buildHeartbeatRequestPacket(this));
+                await wt.heartbeat.call(this);
             } catch (e) {
                 this.logger.warn("Heartbeat timeout!");
                 if (Date.now() - this.recv_timestamp > 10000)
                     this.destroy();
             }
         }, 30000);
-        this.write(outgoing.buildHeartbeatRequestPacket(this));
     }
-    /**
-     * @private
-     */
     stopHeartbeat() {
         clearInterval(this.heartbeat);
         this.heartbeat = null;
@@ -390,18 +397,19 @@ class AndroidClient extends Client {
 
     async register() {
         try {
-            if (!await this.send(outgoing.buildClientRegisterRequestPacket(this)))
+            if (!await wt.register.call(this))
                 throw new Error();
         } catch (e) {
             this.logger.error("上线失败，未知情况。");
             this.terminate();
-            event.emit(this, "system.offline.unknown");
+            emit(this, "system.offline.unknown");
             return;
         }
         this.status = Client.ONLINE;
         if (!this.online_status)
             this.online_status = 11;
-        this.setOnlineStatus(this.online_status);
+        if (this.platform === 1)
+            this.setOnlineStatus(this.online_status);
         this.startHeartbeat();
         if (!this.listenerCount("internal.kickoff")) {
             this.once("internal.kickoff", (data)=>{
@@ -427,7 +435,7 @@ class AndroidClient extends Client {
                     sub_type = "unknown";
                     this.terminate();
                 }
-                event.emit(this, "system.offline." + sub_type);
+                emit(this, "system.offline." + sub_type);
             });
         }
     }
@@ -441,7 +449,7 @@ class AndroidClient extends Client {
         try {
             var next = 0;
             while (1) {
-                var {map, next} = await this.send(outgoing.buildGroupMemberListRequestPacket(group_id, next, this));
+                var {map, next} = await core.getGML.call(this, group_id, next);
                 mlist = new Map([...mlist, ...map]);
                 if (!next) break;
             }
@@ -455,6 +463,27 @@ class AndroidClient extends Client {
         }
     }
 
+    /**
+     * @param {Function} fn 
+     * @param {Array} params 
+     */
+    async callApi(fn, params) {
+        try {
+            const rsp = await fn.apply(this, params);
+            if (!rsp)
+                return buildApiRet(1);
+            if (rsp.result > 0)
+                return buildApiRet(102, null, {code: rsp.result});
+            else
+                return buildApiRet(0, rsp.data);
+        } catch (e) {
+            console.log(e)
+            if (e instanceof TimeoutError)
+                return buildApiRet(103, null, {code: 103, message: "packet timeout"});
+            return buildApiRet(100, null, {code: 100, message: e.message});
+        }
+    }
+
     // 以下是public方法 ----------------------------------------------------------------------------------------------------
 
     /**
@@ -464,7 +493,7 @@ class AndroidClient extends Client {
     login(password_md5) {
         if (this.isOnline())
             return;
-        if (password_md5) {
+        if (password_md5 || !this.password_md5) {
             try {
                 if (typeof password_md5 === "string")
                     password_md5 = Buffer.from(password_md5, "hex");
@@ -477,7 +506,7 @@ class AndroidClient extends Client {
             }
         }
         this._connect(()=>{
-            this.write(outgoing.buildPasswordLoginRequestPacket(this));
+            wt.passwordLogin.call(this);
         });
     }
 
@@ -485,18 +514,12 @@ class AndroidClient extends Client {
      * 验证码登陆
      * @param {String} captcha 
      */
-    captchaLogin(captcha = "abcd") {
+    captchaLogin(captcha) {
         if (this.isOnline())
             return;
-        try {
-            captcha = captcha.toString().trim();
-        } catch (e) {
-            throw new Error("Illegal argument type.");
-        }
-        const packet = outgoing.buildCaptchaLoginRequestPacket(
-            Buffer.byteLength(captcha) === 4 ? captcha : "abcd", this.captcha_sign, this
-        );
-        this.write(packet);
+        if (!this.captcha_sign)
+            throw new Error("Illegal call.");
+        wt.captchaLogin.call(this, captcha);
     }
 
     /**
@@ -525,18 +548,7 @@ class AndroidClient extends Client {
      * @param {Number} status 11我在线上 31离开 41隐身 50忙碌 60Q我吧 70请勿打扰
      */
     async setOnlineStatus(status) {
-        if (this.config.platform !== 1)
-            return buildApiRet(102);
-        status = parseInt(status);
-        if (![11, 31, 41, 50, 60, 70].includes(status))
-            return buildApiRet(100);
-        try {
-            await this.send(outgoing.buildChangeStatusRequestPacket(status, this));
-        } catch (e) {
-            return buildApiRet(103);
-        }
-        this.online_status = status;
-        return buildApiRet(0);
+        return await this.callApi(troop.setStatus, arguments);
     }
 
     ///////////////////////////////////////////////////
@@ -558,7 +570,6 @@ class AndroidClient extends Client {
     /**
      * 群员列表使用懒加载，不会在启动时加载所有的群员列表
      * 只会在系统认为需要用到的时候进行加载和更新
-     * @param {Number} group_id
      * @returns {Map}
      */
     async getGroupMemberList(group_id) {
@@ -577,205 +588,55 @@ class AndroidClient extends Client {
 
     /**
      * 获取陌生人资料
-     * @param {Number} user_id 
-     * @param {Boolean} no_cache Default: false
      * @returns {JSON} data
      */
     async getStrangerInfo(user_id, no_cache = false) {
-        user_id = parseInt(user_id);
-        if (!checkUin(user_id))
-            return buildApiRet(100);
-        let user = this.sl.get(user_id);
-        if (no_cache || !user) {
-            try {
-                user = await this.send(outgoing.buildStrangerInfoRequestPacket(user_id, this));
-            } catch (e) {}
-        }
-        if (user)
-            return buildApiRet(0, user);
-        return buildApiRet(102);
+        return await this.callApi(core.getSI, arguments);
     }
 
     /**
      * 群资料会自动和服务器同步，一般来说无需使用no_cache获取
-     * @param {Number} group_id
-     * @param {Boolean} no_cache Default: false
      * @returns {JSON} data
      */
     async getGroupInfo(group_id, no_cache = false) {
-        group_id = parseInt(group_id);
-        if (!checkUin(group_id))
-            return buildApiRet(100);
-        let ginfo = this.gl.get(group_id);
-        if (no_cache || !ginfo || timestamp() - ginfo.update_time > 3600) {
-            try {
-                ginfo = await this.send(outgoing.buildGroupInfoRequestPacket(group_id, this));
-            } catch (e) {}
-        }
-        if (ginfo)
-            return buildApiRet(0, ginfo);
-        return buildApiRet(102);
+        return await this.callApi(core.getGI, arguments);
     }
 
     /**
      * 群员资料一般来说也无需使用no_cache获取(性别、年龄等可能更新不及时)
-     * @param {Number} group_id
-     * @param {Number} user_id
-     * @param {Boolean} no_cache Default: false
      * @returns {JSON}
      */
     async getGroupMemberInfo(group_id, user_id, no_cache = false) {
-        group_id = parseInt(group_id), user_id = parseInt(user_id);
-        if (!checkUin(group_id) || !checkUin(user_id))
-            return buildApiRet(100);
-        if (!this.gml.has(group_id))
-            this.getGroupMemberList(group_id);
-        let minfo;
-        try {
-            minfo = this.gml.get(group_id).get(user_id);
-        } catch (e) {}
-        if (no_cache || !minfo || timestamp() - minfo.update_time > 3600) {
-            try {
-                minfo = await this.send(outgoing.buildGroupMemberInfoRequestPacket(group_id, user_id, this));
-                if (minfo)
-                    this.gml.get(group_id).set(user_id, minfo);
-            } catch (e) {}
-        }
-        if (minfo) 
-            return buildApiRet(0, minfo);
-        return buildApiRet(102);
+        return await this.callApi(core.getGMI, arguments);
     }
 
     ///////////////////////////////////////////////////
 
     /**
      * 发送私聊
-     * @param {Number} user_id 
-     * @param {String|Array} message 
-     * @param {Boolean} auto_escape Default: false
+     * 发送群聊，被风控会自动转为长消息发送
+     * 发送讨论组
+     * @param {String|Array} message 数组或字符串格式的消息
+     * @param {Boolean} auto_escape 是否不解析CQ码
      * @returns {JSON}
      *  @field {String} message_id
      */
     async sendPrivateMsg(user_id, message = "", auto_escape = false) {
-        user_id = parseInt(user_id);
-        if (!checkUin(user_id))
-            return buildApiRet(100);
-        try {
-            try {
-                var packet = await outgoing.commonMessage(user_id, message, auto_escape, 0, false, this);
-            } catch (e) {
-                this.logger.debug(e);
-                return buildApiRet(100);
-            }
-            let message_id = this.curr_msg_id;
-            const resp = await this.send(packet);
-            if (resp.result === 0) {
-                message_id += resp.sendTime.toString(16);
-                this.logger.info(`send to: [Private: ${user_id}] ` + message);
-                return buildApiRet(0, {message_id});
-            }
-            this.logger.error(`send failed: [Private: ${user_id}] ` + resp.errmsg)
-            return buildApiRet(102, null, {error: resp.errmsg});
-        } catch (e) {
-            return buildApiRet(103);
-        }
+        return await this.callApi(chat.sendMsg, [user_id, message, auto_escape, 0]);
     }
-
-    /**
-     * 发送群聊，被风控会自动转为长消息发送
-     * @param {Number} group_id 
-     * @param {String|Array} message 
-     * @param {Boolean} auto_escape Default: false
-     * @param {Boolean} as_long
-     * @returns {JSON}
-     *  @field {String} message_id
-     */
-    async sendGroupMsg(group_id, message = "", auto_escape = false, as_long = false) {
-        group_id = parseInt(group_id);
-        if (!checkUin(group_id))
-            return buildApiRet(100);
-        try {
-            try {
-                var packet = await outgoing.commonMessage(group_id, message, auto_escape, 1, as_long, this);
-            } catch (e) {
-                this.logger.debug(e);
-                return buildApiRet(100);
-            }
-
-            // 注册监听器，监听这条自己的发言
-            var event_id = `interval.${group_id}.${this.curr_msg_rand}`;
-            let message_id;
-            this.once(event_id, (id)=>message_id=id);
-
-            const resp = await this.send(packet);
-
-            if (resp.result !== 0) {
-                this.removeAllListeners(event_id);
-                this.logger.error(`send failed: [Group: ${group_id}] ` + resp.errmsg);
-                return buildApiRet(102, null, {error: resp.errmsg});
-            }
-
-            if (this.listenerCount(event_id) > 0) {
-                this.removeAllListeners(event_id);
-                message_id = await new Promise((resolve)=>{
-                    const id = setTimeout(()=>{
-                        this.removeAllListeners(event_id);
-                        if (!as_long)
-                            resolve(false);
-                        else
-                            resolve(group_id.toString(16) + "0".repeat(16));
-                    }, 500);
-                    this.once(event_id, (a)=>{
-                        clearTimeout(id);
-                        resolve(a);
-                    });
-                });
-                if (!message_id) {
-                    this.logger.warn(`可能被风控了，将尝试作为长消息再发送一次。`);
-                    return await this.sendGroupMsg(group_id, message, auto_escape, true);
-                }
-            };
-
-            this.logger.info(`send to: [Group: ${group_id}] ` + message);
-            return buildApiRet(0, {message_id});
-        } catch (e) {
-            this.removeAllListeners(event_id);
-            return buildApiRet(103);
-        }
+    async sendGroupMsg(group_id, message = "", auto_escape = false) {
+        return await this.callApi(chat.sendMsg, [group_id, message, auto_escape, 1]);
     }
     async sendDiscussMsg(discuss_id, message = "", auto_escape = false) {
-        discuss_id = parseInt(discuss_id);
-        if (!checkUin(discuss_id))
-            return buildApiRet(100);
-        try {
-            const packet = await outgoing.commonMessage(discuss_id, message, auto_escape, 2, false, this);
-            const resp = await this.send(packet);
-            if (resp.result !== 0) {
-                this.logger.error(`send failed: [Discuss: ${discuss_id}] ` + resp.errmsg);
-                return buildApiRet(102);
-            }
-            this.logger.info(`send to: [Discuss: ${discuss_id}] ` + message);
-            return buildApiRet(0);
-        } catch (e) {
-            this.logger.debug(e);
-            return buildApiRet(100);
-        }
+        return await this.callApi(chat.sendMsg, [discuss_id, message, auto_escape, 2]);
     }
 
     /**
      * 撤回消息，暂时为立即返回，无法立即知晓是否成功
-     * @param {String} message_id hex字符串
+     * @param {String} message_id
      */
     async deleteMsg(message_id) {
-        try {
-            if (message_id.length < 24)
-                this.write(outgoing.buildGroupRecallRequestPacket(message_id, this));
-            else
-                this.write(outgoing.buildFriendRecallRequestPacket(message_id, this));
-        } catch (e) {
-            return buildApiRet(100);
-        }
-        return buildApiRet(1);
+        return await this.callApi(chat.recallMsg, arguments);
     }
 
     ///////////////////////////////////////////////////
@@ -784,283 +645,135 @@ class AndroidClient extends Client {
     // async setGroupAnonymous(group_id, enable = true) {}
     // async setGroupAnonymousBan(group_id, anonymous_flag,  duration = 600) {}
     // async setGroupWholeBan(group_id, enable = true) {}
-    async setGroupName(group_id, group_name = "") {
-        this.write(outgoing.buildGroupSettingRequestPacket(group_id, "ingGroupName", Buffer.from(String(group_name)), this));
-        return buildApiRet(1);
+    async setGroupName(group_id, group_name) {
+        return await this.setGroupSetting(group_id, "ingGroupName", Buffer.from(String(group_name)));
     }
-    async sendGroupNotice(group_id, content = "") {
-        this.write(outgoing.buildGroupSettingRequestPacket(group_id, "ingGroupMemo", Buffer.from(String(content)), this));
-        return buildApiRet(1);
+    async sendGroupNotice(group_id, content) {
+        return await this.setGroupSetting(group_id, "ingGroupMemo", Buffer.from(String(content)));
     }
-    // async setGroup(group_id, k, v) {
-    //     this.write(outgoing.buildGroupSettingRequestPacket(group_id, k, v, this));
-    //     return buildApiRet(1);
-    // }
+    async setGroupSetting(group_id, k, v) {
+        return await this.callApi(troop.setGroup, arguments);
+    }
     async setGroupAdmin(group_id, user_id, enable = true) {
-        group_id = parseInt(group_id), user_id = parseInt(user_id);
-        if (!checkUin(group_id) || !checkUin(user_id))
-            return buildApiRet(100);
-        try {
-            const res = await this.send(outgoing.buildSetGroupAdminRequestPacket(group_id, user_id, enable, this));
-            if (res) {
-                try {
-                    const old_role = this.gml.get(group_id).get(user_id).role;
-                    const new_role = enable ? "admin" : "member";
-                    if (old_role !== new_role && old_role !== "owner") {
-                        this.gml.get(group_id).get(user_id).role = new_role;
-                        event.emit(this, "notice.group.admin", {
-                            group_id, user_id, set: !!enable
-                        });
-                    }
-                } catch (e) {}
-            }
-            return buildApiRet(res?0:102);
-        } catch (e) {
-            return buildApiRet(103);
-        }
+        return await this.callApi(troop.setAdmin, arguments);
     }
 
     /**
      * 设置群头衔，最大长度未测试
-     * @param {Number} group_id 
-     * @param {Number} user_id 
      * @param {String} special_title 为空收回
-     * @param {Number} duration 
+     * @param {Number} duration -1代表无限期
      */
     async setGroupSpecialTitle(group_id, user_id, special_title = "", duration = -1) {
-        group_id = parseInt(group_id), user_id = parseInt(user_id), duration = parseInt(duration);
-        if (!checkUin(group_id) || !checkUin(user_id))
-            return buildApiRet(100);
-        try {
-            const res = await this.send(outgoing.buildEditSpecialTitleRequestPacket(group_id, user_id, String(special_title), duration?duration:-1, this));
-            return buildApiRet(res?0:102);
-        } catch (e) {
-            return buildApiRet(103);
-        }
+        return await this.callApi(troop.setTitle, arguments);
     }
 
     ///////////////////////////////////////////////////
 
     /**
      * 设置群名片，超过60字节会被截断
-     * @param {Number} group_id 
-     * @param {Number} user_id 
      * @param {String} card 为空还原
      */
     async setGroupCard(group_id, user_id, card = "") {
-        group_id = parseInt(group_id), user_id = parseInt(user_id);
-        if (!checkUin(group_id) || !checkUin(user_id))
-            return buildApiRet(100);
-        try {
-            const res = await this.send(outgoing.buildEditGroupCardRequestPacket(group_id, user_id, String(card), this));
-            return buildApiRet(res?0:102);
-        } catch (e) {
-            return buildApiRet(103);
-        }
+        return await this.callApi(troop.setCard, arguments);
     }
 
     /**
      * 踢人，即使原来就无此人也会返回成功
-     * @param {Number} group_id 
-     * @param {Number} user_id 
-     * @param {Boolean} reject_add_request 
+     * @param {Boolean} reject_add_request 是否屏蔽
      */
     async setGroupKick(group_id, user_id, reject_add_request = false) {
-        group_id = parseInt(group_id), user_id = parseInt(user_id);
-        if (!checkUin(group_id) || !checkUin(user_id))
-            return buildApiRet(100);
-        try {
-            if (await this.send(outgoing.buildGroupKickRequestPacket(group_id, user_id, reject_add_request, this))) {
-                if (this.gml.has(group_id) && this.gml.get(group_id).delete(user_id)) {
-                    event.emit(this, "notice.group.decrease", {
-                        group_id, user_id,
-                        operator_id: this.uin,
-                        dismiss: false
-                    });
-                }
-                return buildApiRet(0);
-            }
-            return buildApiRet(102);
-        } catch (e) {
-            return buildApiRet(103);
-        }
+        return await this.callApi(troop.kickMember, arguments);
     }
 
     /**
-     * 禁言，暂时为立即返回，无法立即知晓是否成功
-     * @param {Number} group_id 
-     * @param {Number} user_id 
+     * 禁言，暂时为立即返回，无法立即知晓是否成功 
      * @param {Number} duration 秒数
      */
     async setGroupBan(group_id, user_id, duration = 1800) {
-        group_id = parseInt(group_id), user_id = parseInt(user_id), duration = parseInt(duration);
-        if (!checkUin(group_id) || !checkUin(user_id) || !(duration >= 0 && duration <= 2592000))
-            return buildApiRet(100);
-        this.write(outgoing.buildGroupBanRequestPacket(group_id, user_id, duration, this));
-        return buildApiRet(1);
+        return await this.callApi(troop.banMember, arguments);
     }
 
     /**
      * 退群，即使你本来就不在此群，也会返回成功
-     * @param {Number} group_id 
      * @param {Boolean} is_dismiss 不设置is_dismiss只要是群主貌似也可以解散(可能和规模有关?)
      */
     async setGroupLeave(group_id, is_dismiss = false) {
-        try {
-            group_id = parseInt(group_id);
-            if (!checkUin(group_id))
-                return buildApiRet(100);
-            const res = await this.send(outgoing.buildGroupLeaveRequestPacket(group_id, is_dismiss, this));
-            return buildApiRet(res ? 0 : 102);
-        } catch (e) {
-            return buildApiRet(103);
-        }
+        return await this.callApi(troop.leaveGroup, arguments);
     }
 
     /**
-     * 戳一戳，暂时为立即返回，无法立即知晓是否成功
-     * @param {Number} group_id 
-     * @param {Number} user_id
+     * 群戳一戳，暂时为立即返回，无法立即知晓是否成功
      */
     async sendGroupPoke(group_id, user_id) {
-        group_id = parseInt(group_id), user_id = parseInt(user_id);
-        if (!checkUin(group_id) || !checkUin(user_id))
-            return buildApiRet(100);
-        this.write(outgoing.buildGroupPokeRequestPacket(group_id, user_id, this));
-        return buildApiRet(1);
+        return await this.callApi(troop.pokeMember, arguments);
     }
 
     ///////////////////////////////////////////////////
 
     /**
      * 处理好友申请
-     * @param {String} flag 
+     * @param {String} flag 从事件中得到
      * @param {Boolean} approve 
-     * @param {String} remark
-     * @param {Boolean} block 是否加入黑名单
+     * @param {String} remark 暂未实现remark
+     * @param {Boolean} block 是否屏蔽
      */
     async setFriendAddRequest(flag, approve = true, remark = "", block = false) {
-        try {
-            const res = await this.send(outgoing.buildNewFriendActionRequestPacket(flag, approve, block, this));
-            return buildApiRet(res?0:102);
-        } catch (e) {}
-        return buildApiRet(103);
+        return await this.callApi(core.friendAction, arguments);
     }
 
     /**
      * 处理群申请和邀请
-     * @param {String} flag 
+     * @param {String} flag 从事件中得到
      * @param {Boolean} approve 
      * @param {String} reason 拒绝理由，仅在拒绝他人加群时有效
-     * @param {Boolean} block 是否加入黑名单
+     * @param {Boolean} block 是否屏蔽
      */
     async setGroupAddRequest(flag, approve = true, reason = "", block = false) {
-        try {
-            const res = await this.send(outgoing.buildNewGroupActionRequestPacket(flag, approve, String(reason), block, this));
-            return buildApiRet(res?0:102);
-        } catch (e) {}
-        return buildApiRet(103);
+        return await this.callApi(core.groupAction, arguments);
     }
 
     /**
      * 发送加群申请，即使你已经在群里，也会返回成功
      * ※设置为要正确回答问题的群，暂时回返回失败
      * ※风险接口，每日加群超过一定数量账号必被风控(甚至ip)
-     * @param {Number} group_id 
      * @param {String} comment 该参数仅占位，暂未实现
      */
     async addGroup(group_id, comment = "") {
-        group_id = parseInt(group_id);
-        if (!checkUin(group_id))
-            return buildApiRet(100);
-        try {
-            const res = await this.send(outgoing.buildAddGroupRequestPacket(group_id, this));
-            return buildApiRet(res ? 0 : 102);
-        } catch (e) {
-            return buildApiRet(103);
-        }
+        return await this.callApi(troop.addGroup, arguments);
     }
 
     /**
      * 加群员为好友，暂不支持非群员(群号可以传0，但是必须有共同群，否则对方无法收到请求)
      * ※对方设置要正确回答问题的时候，暂时会返回失败
      * ※风险接口，每日加好友超过一定数量账号必被风控(甚至ip)
-     * @param {Number} group_id 
-     * @param {Number} user_id 
-     * @param {String} comment 
+     * @param {String} comment 附加信息
      */
     async addFriend(group_id, user_id, comment = "") {
-        group_id = parseInt(group_id), user_id = parseInt(user_id);
-        if ((!checkUin(group_id)&&group_id!==0) || !checkUin(user_id))
-            return buildApiRet(100);
-        try {
-            const type = await this.send(outgoing.buildAddSettingRequestPacket(user_id, this));
-            switch (type) {
-                case 0:
-                case 1:
-                // case 3:
-                case 4:
-                    var res = await this.send(outgoing.buildAddFriendRequestPacket(type, group_id, user_id, String(comment), this));
-                    return buildApiRet(res ? 0 : 102);
-                default:
-                    return buildApiRet(102);
-            }
-        } catch (e) {
-            return buildApiRet(103);
-        }
+        return await this.callApi(troop.addFriend, arguments);
     }
 
     /**
      * 删除好友，即使对方本来就不是你的好友，也会返回成功
-     * @param {Number} user_id 
-     * @param {Boolean} block 
+     * @param {Boolean} block 是否屏蔽
      */
     async deleteFriend(user_id, block = true) {
-        user_id = parseInt(user_id);
-        if (!checkUin(user_id))
-            return buildApiRet(100);
-        try {
-            const res = await this.send(outgoing.buildDelFriendRequestPacket(user_id, block, this));
-            return buildApiRet(res ? 0 : 102);
-        } catch (e) {
-            return buildApiRet(103);
-        }
+        return await this.callApi(troop.delFriend, arguments);
     }
 
     /**
      * 邀请好友入群，暂不支持邀请陌生人
      * ※对方必须是BOT的好友，否则返回失败
      * ※如果BOT不是对方的好友(单向)，对方又设置了拒绝陌生人邀请，此时会返回成功但是对方实际收不到邀请
-     * @param {Number} group_id 
-     * @param {Number} user_id 
      */
     async inviteFriend(group_id, user_id) {
-        group_id = parseInt(group_id), user_id = parseInt(user_id);
-        if (!checkUin(group_id) || !checkUin(user_id))
-            return buildApiRet(100);
-        try {
-            const res = await this.send(outgoing.buildInviteRequestPacket(group_id, user_id, this));
-            return buildApiRet(res ? 0 : 102);
-        } catch (e) {
-            return buildApiRet(103);
-        }
+        return await this.callApi(troop.inviteFriend, arguments);
     }
 
     /**
      * 点赞，请勿频繁调用，否则有冻结风险
-     * @param {Number} user_id 
-     * @param {Number} times 
      */
     async sendLike(user_id, times = 1) {
-        times = parseInt(times), user_id = parseInt(user_id);
-        if (!checkUin(user_id) || !(times > 0 && times <= 20))
-            return buildApiRet(100);
-        try {
-            const res = await this.send(outgoing.buildSendLikeRequestPacket(user_id, times, this));
-            return buildApiRet(res ? 0 : 102);
-        } catch (e) {
-            return buildApiRet(103);
-        }
+        return await this.callApi(troop.sendLike, arguments);
     }
 
     /////////////////////////////////////////////// 个人设置
@@ -1069,24 +782,14 @@ class AndroidClient extends Client {
      * @param {String} nickname 昵称最长48字节，允许设为空，别人看到的昵称会变为你的QQ号
      */
     async setNickname(nickname) {
-        try {
-            const res = await this.send(outgoing.buildSetProfileRequestPacket(0x14E22, String(nickname), this));
-            return buildApiRet(res ? 0 : 102);
-        } catch (e) {
-            return buildApiRet(103);
-        }
+        return await this.callApi(troop.setProfile, [0x14E22, String(nickname)]);
     }
 
     /**
-     * @param {String} description 个人说明
+     * @param {String} description 设置个人说明
      */
     async setDescription(description = "") {
-        try {
-            const res = await this.send(outgoing.buildSetProfileRequestPacket(0x14E33, String(description), this));
-            return buildApiRet(res ? 0 : 102);
-        } catch (e) {
-            return buildApiRet(103);
-        }
+        return await this.callApi(troop.setProfile, [0x14E33, String(description)]);
     }
 
     /**
@@ -1096,12 +799,7 @@ class AndroidClient extends Client {
         gender = parseInt(gender);
         if (![0,1,2].includes(gender))
             return buildApiRet(100);
-        try {
-            const res = await this.send(outgoing.buildSetProfileRequestPacket(0x14E29, Buffer.from([gender]), this));
-            return buildApiRet(res ? 0 : 102);
-        } catch (e) {
-            return buildApiRet(103);
-        }
+        return await this.callApi(troop.setProfile, [0x14E29, Buffer.from([gender])]);
     }
 
     /**
@@ -1114,10 +812,9 @@ class AndroidClient extends Client {
             buf.writeUInt16BE(parseInt(birthday.substr(0, 4)));
             buf.writeUInt8(parseInt(birthday.substr(4, 2)), 2);
             buf.writeUInt8(parseInt(birthday.substr(6, 2)), 3);
-            const res = await this.send(outgoing.buildSetProfileRequestPacket(0x16593, buf, this));
-            return buildApiRet(res ? 0 : 102);
+            return await this.callApi(troop.setProfile, [0x16593, buf]);
         } catch (e) {
-            return buildApiRet(103);
+            return buildApiRet(100);
         }
     }
 
@@ -1125,12 +822,7 @@ class AndroidClient extends Client {
      * @param {String} signature 个人签名超过254字节会被截断
      */
     async setSignature(signature = "") {
-        try {
-            const res = await this.send(outgoing.buildSetSignRequestPacket(String(signature), this));
-            return buildApiRet(res ? 0 : 102);
-        } catch (e) {
-            return buildApiRet(103);
-        }
+        return await this.callApi(troop.setSign, arguments);
     }
 
     ///////////////////////////////////////////////////
@@ -1156,10 +848,6 @@ class AndroidClient extends Client {
             nickname: this.nickname,
             age: this.age, sex: this.sex
         })
-    }
-
-    test(a) {
-        this.write(outgoing.buildAddGroupRequestPacket(a, "你好", this));
     }
 }
 

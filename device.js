@@ -3,7 +3,7 @@ const fs = require("fs");
 const path = require("path");
 const os = require("os");
 const crypto = require("crypto");
-const {rand, uuid, md5} = require("./common");
+const {rand, uuid, md5} = require("./lib/common");
 
 function getMac() {
     const o = os.networkInterfaces();
