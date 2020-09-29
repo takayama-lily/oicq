@@ -4,61 +4,47 @@
 
 import * as events from 'events';
 
-interface ConfGlobal {
+export type Uin = string | number;
+
+export interface ConfGlobal {
     web_image_timeout?: number, //下载的超时秒数，默认系统自己判断
     web_record_timeout?: number,
     cache_root?: string, //数据文件夹路径，需要可写权限，默认主目录下data文件夹
     debug?: boolean,
 }
-
-declare enum Platform {
-    phone = 1,  //手机
-    pad = 2,    //平板
-    watch = 3,  //手表，不支持部分群事件
-}
-interface ConfBot {
+export interface ConfBot {
     log_level?: "trace" | "debug" | "info" | "warn" | "error" | "fatal" | "off", //默认info
-    platform?: Platform, //默认平板
+    platform?: number, //1手机 2平板(默认) 3手表(不支持部分群事件)
     kickoff?: boolean, //被挤下线是否在3秒后反挤对方，默认false
     ignore_self?: boolean,//群聊是否无视自己的发言，默认true
 }
 
-//////////
-
-declare enum Retcode {
-    ok = 0,
-    async = 1,
-    error = 100,
-    failed = 102,
-    timeout = 103,
-    offline = 104,
-}
-interface RetErrorObj {
+export interface RetError {
     code?: number,
     message?: string,
 }
-interface RetCommon {
-    retcode: Retcode,
-    status: "ok" | "async" | "failed",
+export interface RetCommon {
+    retcode: number, //0ok 1async 100error 102failed 103timeout 104offline
+    status: string, //"ok", "async", "failed"
     data: object | null,
-    error?: RetErrorObj,
+    error?: RetError | null,
 }
 
 //////////
 
-interface StrangerInfo {
+export interface StrangerInfo {
     user_id?: number,
     nickname?: string,
-    sex?: "unknown" | "male" | "female",
+    sex?: string,
     age?: number,
     area?: string,
 }
-interface FriendInfo extends StrangerInfo {
+export interface FriendInfo extends StrangerInfo {
     remark?: string,
     signature?: string,
     description?: string,
 }
-interface GroupInfo {
+export interface GroupInfo {
     group_id?: number,
     group_name?: string,
     member_count?: number,
@@ -66,7 +52,7 @@ interface GroupInfo {
     owner_id?: number,
     last_join_time?: number,
     last_sent_time?: number,
-    shutup_time_whole?: 0 | -1,
+    shutup_time_whole?: number,
     shutup_time_me?: number,
     create_time?: number,
     grade?: number,
@@ -74,68 +60,68 @@ interface GroupInfo {
     active_member_count?: number,
     update_time?: number,
 }
-interface MemberInfo {
+export interface MemberInfo {
     group_id?: number,
     user_id?: number,
     nickname?: string,
     card?: string,
-    sex?: "unknown" | "male" | "female",
+    sex?: string,
     age?: number,
     area?: string,
     join_time?: number,
     last_sent_time?: number,
     level?: number,
     rank?: string,
-    role?: "owner" | "admin" | "member",
+    role?: string,
     unfriendly?: boolean,
     title?: string,
     title_expire_time?: number,
     card_changeable?: boolean,
     update_time?: number,
 }
-interface MessageId {
+export interface MessageId {
     message_id: string
 }
 
-interface RetStrangerList extends RetCommon {
+export interface RetStrangerList extends RetCommon {
     data: Map<number, StrangerInfo>
 }
-interface RetFriendList extends RetCommon {
+export interface RetFriendList extends RetCommon {
     data: Map<number, FriendInfo>
 }
-interface RetGroupList extends RetCommon {
+export interface RetGroupList extends RetCommon {
     data: Map<number, GroupInfo>
 }
-interface RetMemberList extends RetCommon {
+export interface RetMemberList extends RetCommon {
     data: Map<number, MemberInfo> | null
 }
-interface RetStrangerInfo extends RetCommon {
+export interface RetStrangerInfo extends RetCommon {
     data: StrangerInfo | null
 }
-interface RetGroupInfo extends RetCommon {
+export interface RetGroupInfo extends RetCommon {
     data: GroupInfo | null
 }
-interface RetMemberInfo extends RetCommon {
+export interface RetMemberInfo extends RetCommon {
     data: MemberInfo | null
 }
-interface RetSendMsg extends RetCommon {
+export interface RetSendMsg extends RetCommon {
     data: MessageId | null
 }
 
 //////////
 
-interface MessageElem {
+export interface MessageElem {
     type: string,
     data: object,
 }
 
-interface Anonymous {
+export interface Anonymous {
     id: number,
     name: string,
     flag: string,
 }
 
-interface GroupFile {
+export interface GroupFile {
     name: string,
     url: string,
     size: number,
@@ -143,7 +129,7 @@ interface GroupFile {
     duration: number,
 }
 
-interface EventData {
+export interface EventData {
     self_id: number,
     time: number,
     post_type: string,
@@ -198,8 +184,9 @@ interface EventData {
 
 //////////
 
-declare class AndroidClient extends events.EventEmitter {
+export class Client extends events.EventEmitter {
 
+    private constructor();
     login(password_md5?: Buffer | string): void;
     captchaLogin(captcha: string): void;
     terminate(): void;
@@ -208,34 +195,34 @@ declare class AndroidClient extends events.EventEmitter {
     getFriendList(): RetFriendList;
     getStrangerList(): RetStrangerList;
     getGroupList(): RetGroupList;
-    getGroupMemberList(group_id: number): Promise<RetMemberList>;
-    getStrangerInfo(user_id: number, no_cache?: boolean): Promise<RetStrangerInfo>;
-    getGroupInfo(group_id: number, no_cache?: boolean): Promise<RetGroupInfo>;
-    getGroupMemberInfo(group_id: number, user_id: number, no_cache?: boolean): Promise<RetMemberInfo>;
+    getGroupMemberList(group_id: Uin): Promise<RetMemberList>;
+    getStrangerInfo(user_id: Uin, no_cache?: boolean): Promise<RetStrangerInfo>;
+    getGroupInfo(group_id: Uin, no_cache?: boolean): Promise<RetGroupInfo>;
+    getGroupMemberInfo(group_id: Uin, user_id: Uin, no_cache?: boolean): Promise<RetMemberInfo>;
 
-    sendPrivateMsg(user_id: number, message: MessageElem[] | string, auto_escape?: boolean): Promise<RetSendMsg>;
-    sendGroupMsg(group_id: number, message: MessageElem[] | string, auto_escape?: boolean): Promise<RetSendMsg>;
-    sendDiscussMsg(discuss_id: number, message: MessageElem[] | string, auto_escape?: boolean): Promise<RetCommon>;
+    sendPrivateMsg(user_id: Uin, message: MessageElem[] | string, auto_escape?: boolean): Promise<RetSendMsg>;
+    sendGroupMsg(group_id: Uin, message: MessageElem[] | string, auto_escape?: boolean): Promise<RetSendMsg>;
+    sendDiscussMsg(discuss_id: Uin, message: MessageElem[] | string, auto_escape?: boolean): Promise<RetCommon>;
     deleteMsg(message_id: string): Promise<RetCommon>;
 
-    sendGroupNotice(group_id: number, content: string): Promise<RetCommon>;
-    setGroupName(group_id: number, group_name: string): Promise<RetCommon>;
-    setGroupAdmin(group_id: number, user_id: number, enable?: boolean): Promise<RetCommon>;
-    setGroupSpecialTitle(group_id: number, user_id: number, special_title?: string, duration?: number): Promise<RetCommon>;
-    setGroupCard(group_id: number, user_id: number, card?: string): Promise<RetCommon>;
-    setGroupKick(group_id: number, user_id: number, reject_add_request?: boolean): Promise<RetCommon>;
-    setGroupBan(group_id: number, user_id: number, duration?: number): Promise<RetCommon>;
-    setGroupLeave(group_id: number, is_dismiss?: boolean): Promise<RetCommon>;
-    sendGroupPoke(group_id: number, user_id: number): Promise<RetCommon>;
+    sendGroupNotice(group_id: Uin, content: string): Promise<RetCommon>;
+    setGroupName(group_id: Uin, group_name: string): Promise<RetCommon>;
+    setGroupAdmin(group_id: Uin, user_id: Uin, enable?: boolean): Promise<RetCommon>;
+    setGroupSpecialTitle(group_id: Uin, user_id: Uin, special_title?: string, duration?: number): Promise<RetCommon>;
+    setGroupCard(group_id: Uin, user_id: Uin, card?: string): Promise<RetCommon>;
+    setGroupKick(group_id: Uin, user_id: Uin, reject_add_request?: boolean): Promise<RetCommon>;
+    setGroupBan(group_id: Uin, user_id: Uin, duration?: number): Promise<RetCommon>;
+    setGroupLeave(group_id: Uin, is_dismiss?: boolean): Promise<RetCommon>;
+    sendGroupPoke(group_id: Uin, user_id: Uin): Promise<RetCommon>;
 
     setFriendAddRequest(flag: string, approve?: boolean, remark?: string, block?: boolean): Promise<RetCommon>;
     setGroupAddRequest(flag: string, approve?: boolean, reason?: string, block?: boolean): Promise<RetCommon>;
 
-    addGroup(group_id: number): Promise<RetCommon>;
-    addFriend(group_id: number, user_id: number, comment?: string): Promise<RetCommon>;
-    deleteFriend(user_id: number, block?: boolean): Promise<RetCommon>;
-    inviteFriend(group_id: number, user_id: number): Promise<RetCommon>;
-    sendLike(user_id: number, times?: number): Promise<RetCommon>;
+    addGroup(group_id: Uin): Promise<RetCommon>;
+    addFriend(group_id: Uin, user_id: Uin, comment?: string): Promise<RetCommon>;
+    deleteFriend(user_id: Uin, block?: boolean): Promise<RetCommon>;
+    inviteFriend(group_id: Uin, user_id: Uin): Promise<RetCommon>;
+    sendLike(user_id: Uin, times?: number): Promise<RetCommon>;
     setNickname(nickname: string): Promise<RetCommon>;
     setGender(gender: 0 | 1 | 2): Promise<RetCommon>;
     setBirthday(birthday: string | number): Promise<RetCommon>; //20110202的形式
@@ -256,9 +243,5 @@ declare class AndroidClient extends events.EventEmitter {
     off(event: string, listener: (data: EventData) => void): this;
 }
 
-declare namespace oicq {
-    function createClient(uin: number, config?: ConfBot): AndroidClient;
-    function setGlobalConfig(config?: ConfGlobal): void;
-}
-
-export = oicq;
+export function createClient(uin: Uin, config?: ConfBot): Client;
+export function setGlobalConfig(config?: ConfGlobal): void;
