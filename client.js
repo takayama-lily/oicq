@@ -346,7 +346,7 @@ class AndroidClient extends Client {
      * @param {Array} params 
      */
     async callApi(fn, params) {
-        if (!this.isOnline())
+        if (!this.isOnline() || !this.sync_finished)
             return buildApiRet(104);
         try {
             const rsp = await fn.apply(this, params);
