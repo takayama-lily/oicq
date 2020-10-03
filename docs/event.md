@@ -206,24 +206,6 @@ client.on("notice", (data)=>console.log(data)); //监听所有的通知事件
     + *`operator_id`* 旧群主
     + *`user_id`* 新群主
 
-  + `notice.group.notice` 收到群公告
-    + *`group_id`*
-    + *`user_id`*
-    + *`sender`*
-    + *`title`*
-    + *`content`*
-
-  + `notice.group.file` 收到群文件
-    + *`group_id`*
-    + *`user_id`*
-    + *`sender`*
-    + *`file`*
-      + *`name`*
-      + *`url`*
-      + *`size`*
-      + *`md5`*
-      + *`duration`*
-
   + `notice.group.title` 群头衔变更事件
     + *`group_id`*
     + *`user_id`*
