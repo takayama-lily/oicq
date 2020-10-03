@@ -72,6 +72,7 @@
 |image|◯|◯|[CQ:image,file=xxxxxxxx,url=xxxxxxxx] 收到的图片<br>[CQ:image,file=C:/123.jpg] 本地图片(支持file:///和base64://)<br>[CQ:image,cache=0,file=http://abc.com] 网络图片|
 |record|◯|◯|发送语音，写法和image一样<br>支持任何格式的音频自动转amr(必须将 [ffmpeg](http://ffmpeg.org/download.html) 加入环境变量path)<br>linux下的ffmpeg不自带amr解码器，可能需要自行编译ffmpeg|
 |flash|◯|◯|闪照，写法和image一样|
+|notice|◯|✕|群公告，[CQ:notice,title=群公告,content=xxxxxx]|
 |file|◯|✕|群文件，[CQ:file,url=xxxxxx,size=123456,md5=xxxxxx,duration=0,name=xxxxxx]|
 |music|✕|✕|
 |video|✕|✕|

@@ -9,7 +9,7 @@ const device = require("./device");
 const {checkUin, emit, TimeoutError} = require("./lib/common");
 const core = require("./lib/core");
 const wt = require("./lib/wtlogin/wt");
-const chat = require("./lib/chat");
+const chat = require("./lib/message/chat");
 const troop = require("./lib/troop");
 const BUF0 = Buffer.alloc(0);
 

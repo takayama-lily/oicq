@@ -121,14 +121,6 @@ export interface Anonymous {
     flag: string,
 }
 
-export interface GroupFile {
-    name: string,
-    url: string,
-    size: number,
-    md5: string,
-    duration: number,
-}
-
 export interface EventData {
     self_id: number,
     time: number,
@@ -169,7 +161,6 @@ export interface EventData {
     content?: string,
     action?: string,
     suffix?: string,
-    file?: GroupFile,
     enable_guest?: boolean,
     enable_anonymous?: boolean,
     enable_upload_album?: boolean,
