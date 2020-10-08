@@ -40,7 +40,7 @@ class AndroidClient extends Client {
 
     uin = 0;
     password_md5;
-    // appid = 16;
+    appid = 16;
     sub_appid;
     ignore_self = true;
 
@@ -63,11 +63,11 @@ class AndroidClient extends Client {
     session_id = Buffer.from([0x02, 0xB0, 0x5B, 0x8B]);
     random_key = crypto.randomBytes(16);
     ksid = Buffer.from("|454001228437590|A8.2.7.27f6ea96");
-    device_info;
+    device;
     captcha_sign;
     t104;
 
-    sign_info = {
+    sig = {
         bitmap: 0,
         tgt: BUF0,
         tgt_key: BUF0,
@@ -117,7 +117,7 @@ class AndroidClient extends Client {
         const filepath = path.join(this.dir, `device-${uin}.json`);
         if (!fs.existsSync(filepath))
             this.logger.info("创建了新的设备文件：" + filepath);
-        this.device_info = device(filepath);
+        this.device = device(filepath);
 
         this.on("error", (err)=>{
             this.logger.error(err.message);
