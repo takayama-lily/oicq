@@ -159,7 +159,7 @@ message可以使用 `Array` 格式或 `String` 格式，支持CQ码
 
 ### 加群加好友、删好友、邀请好友入群、点赞
 
-+ async `client.addGroup(group_id)`
++ async `client.addGroup(group_id[, comment])`
 + async `client.addFriend(group_id, user_id[, comment])`
 + async `client.deleteFriend(user_id[, block])` block默认是true
 + async `client.inviteFriend(group_id, user_id)`

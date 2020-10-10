@@ -635,7 +635,7 @@ class AndroidClient extends Client {
      * 发送加群申请，即使你已经在群里，也会返回成功
      * ※设置为要正确回答问题的群，暂时回返回失败
      * ※风险接口，每日加群超过一定数量账号必被风控(甚至ip)
-     * @param {String} comment 该参数仅占位，暂未实现
+     * @param {String} comment 附加信息
      */
     async addGroup(group_id, comment = "") {
         return await this.callApi(troop.addGroup, arguments);
