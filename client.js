@@ -49,7 +49,7 @@ class AndroidClient extends Client {
     sub_appid = 537064989;
     bitmap = 184024956;
     sigmap = 34869472;
-    sdkver = "6.0.0.2428";
+    sdkver = "6.0.0.2433";
     ksid;
     device;
     
