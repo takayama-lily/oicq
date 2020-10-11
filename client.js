@@ -37,13 +37,24 @@ class AndroidClient extends Client {
     config;
     status = Client.OFFLINE;
     kickoff_reconn = false;
-
-    uin = 0;
-    password_md5;
-    // appid = 16;
-    sub_appid;
     ignore_self = true;
 
+    // default phone
+    apkid = "com.tencent.mobileqq";
+    apkver = "8.4.1.2703";
+    apkname = "A8.4.1.2703aac4";
+    apksign = Buffer.from([166, 183, 69, 191, 36, 162, 194, 119, 82, 119, 22, 246, 243, 110, 182, 141]);
+    buildtime = 1591690260;
+    appid = 16;
+    sub_appid = 537064989;
+    bitmap = 184024956;
+    sigmap = 34869472;
+    sdkver = "6.0.0.2433";
+    ksid;
+    device;
+    
+    uin = 0;
+    password_md5;
     nickname = "";
     age = 0;
     sex = 0;
@@ -60,15 +71,12 @@ class AndroidClient extends Client {
     handlers = new Map();
     seq_cache = new Map();
 
-    session_id = Buffer.from([0x02, 0xB0, 0x5B, 0x8B]);
+    session_id = crypto.randomBytes(4);
     random_key = crypto.randomBytes(16);
-    ksid = Buffer.from("|454001228437590|A8.2.7.27f6ea96");
-    device_info;
     captcha_sign;
     t104;
 
-    sign_info = {
-        bitmap: 0,
+    sig = {
         tgt: BUF0,
         tgt_key: BUF0,
         st_key: BUF0,
@@ -76,13 +84,13 @@ class AndroidClient extends Client {
         s_key: BUF0,
         d2: BUF0,
         d2key: BUF0,
+        sig_key: BUF0,
         ticket_key: BUF0,
         device_token: BUF0,
     };
 
     sync_finished = false;
     sync_cookie;
-
     const1 = crypto.randomBytes(4).readUInt32BE();
     const2 = crypto.randomBytes(4).readUInt32BE();
 
@@ -109,15 +117,27 @@ class AndroidClient extends Client {
 
         this.logger = log4js.getLogger(`[BOT:${uin}]`);
         this.logger.level = config.log_level;
-
-        this.sub_appid = config.platform === 1 ? 537062845 : (config.platform === 3 ? 537061176 : 537062409);
         this.ignore_self = config.ignore_self;
         this.kickoff_reconn = config.kickoff;
+
+        if (config.platform == 3)
+            this.sub_appid = 537061176;
+        else if  (config.platform == 2) {
+            this.sub_appid = 537065549;
+            this.apkid = "com.tencent.minihd.qq";
+            this.apkver = "5.8.9.3460";
+            this.apkname = "A5.8.9.3460";
+            this.apksign = Buffer.from([170, 57, 120, 244, 31, 217, 111, 249, 145, 74, 102, 158, 24, 100, 116, 199]);
+            this.buildtime = 1595836208;
+            this.bitmap = 150470524;
+            this.sigmap = 1970400;
+        }
 
         const filepath = path.join(this.dir, `device-${uin}.json`);
         if (!fs.existsSync(filepath))
             this.logger.info("创建了新的设备文件：" + filepath);
-        this.device_info = device(filepath);
+        this.device = device(filepath);
+        this.ksid = Buffer.from(`|${this.device.imei}|` + this.apkname);
 
         this.on("error", (err)=>{
             this.logger.error(err.message);
@@ -615,7 +635,7 @@ class AndroidClient extends Client {
      * 发送加群申请，即使你已经在群里，也会返回成功
      * ※设置为要正确回答问题的群，暂时回返回失败
      * ※风险接口，每日加群超过一定数量账号必被风控(甚至ip)
-     * @param {String} comment 该参数仅占位，暂未实现
+     * @param {String} comment 附加信息
      */
     async addGroup(group_id, comment = "") {
         return await this.callApi(troop.addGroup, arguments);

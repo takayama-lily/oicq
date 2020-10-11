@@ -61,7 +61,7 @@ module.exports = function(filepath) {
         boot_id:      d.boot_id,
         proc_version: d.proc_version,
         baseband:     "",
-        sim_info:     "T-Mobile",
+        sim:          "T-Mobile",
         os_type:      "android",
         mac_address:  d.mac_address,
         ip_address:   d.ip_address,
@@ -77,8 +77,8 @@ module.exports = function(filepath) {
             sdk:         29
         }
     };
-    device.imsi_md5 = crypto.randomBytes(16);
-    device.tgtgt_key = crypto.randomBytes(16);
+    device.imsi = crypto.randomBytes(16);
+    device.tgtgt = crypto.randomBytes(16);
     device.guid = md5(Buffer.concat([Buffer.from(device.android_id), Buffer.from(device.mac_address)]));
     return device;
 };

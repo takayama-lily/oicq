@@ -41,6 +41,7 @@ client.on("notice", (data)=>console.log(data)); //监听所有的通知事件
     + *`url`* 设备锁验证地址(string)
   + `system.login.error` 其他原因导致登陆失败
     + *`message`* "密码错误"等(string)
+    + *`code`* 错误码
 
 + `system.online` 上线事件，可以开始处理消息
 

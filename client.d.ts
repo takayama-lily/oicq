@@ -209,7 +209,7 @@ export class Client extends events.EventEmitter {
     setFriendAddRequest(flag: string, approve?: boolean, remark?: string, block?: boolean): Promise<RetCommon>;
     setGroupAddRequest(flag: string, approve?: boolean, reason?: string, block?: boolean): Promise<RetCommon>;
 
-    addGroup(group_id: Uin): Promise<RetCommon>;
+    addGroup(group_id: Uin, comment?: string): Promise<RetCommon>;
     addFriend(group_id: Uin, user_id: Uin, comment?: string): Promise<RetCommon>;
     deleteFriend(user_id: Uin, block?: boolean): Promise<RetCommon>;
     inviteFriend(group_id: Uin, user_id: Uin): Promise<RetCommon>;
