@@ -67,6 +67,7 @@
 |-|-|-|-|
 |at|◯|◯|[CQ:at,qq=123456,text=@ABC] text用来定义@不到时的输出|
 |face|◯|◯|表情，[CQ:face,id=104]
+|sface|◯|◯|小表情(HD协议不支持)，[CQ:sface,id=271,text=/吃瓜]|
 |bface|◯|◯|原创表情，[CQ:bface,file=xxxxxxxx,text=摸头]|
 |dice&rps|◯|◯|魔法表情骰子和猜拳：<br>[CQ:dice,id=1] ※id=1-6 不填则随机<br>[CQ:rps,id=1] ※id=1-3 分别对应1石头2剪刀3布|
 |image|◯|◯|[CQ:image,file=xxxxxxxx,url=xxxxxxxx] 收到的图片<br>[CQ:image,file=C:/123.jpg] 本地图片(支持file:///和base64://)<br>[CQ:image,cache=0,file=http://abc.com] 网络图片|
