@@ -46,11 +46,11 @@ client.on("notice", (data)=>console.log(data)); //监听所有的通知事件
 + `system.online` 上线事件，可以开始处理消息
 
 + `system.offline` 下线事件
-  + `system.offline.network` 网络断开
+  + `system.offline.network` 网络断开，可以过几秒后尝试重新login
   + `system.offline.frozen` 被冻结
   + `system.offline.kickoff` 另一处登陆
   + `system.offline.device` 由于开启设备锁，需要重新验证
-  + `system.offline.unknown` 未知
+  + `system.offline.unknown` 其他，可以过几秒后尝试重新login
 
 ----
 

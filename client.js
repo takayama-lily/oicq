@@ -300,7 +300,7 @@ class AndroidClient extends Client {
         } catch (e) {
             this.logger.error("上线失败。");
             this.terminate();
-            emit(this, "system.offline.unknown");
+            emit(this, "system.offline.network");
             return;
         }
         this.status = Client.ONLINE;
