@@ -199,7 +199,8 @@ client.on("notice", (data)=>console.log(data)); //监听所有的通知事件
   + `notice.group.ban` 群禁言事件
     + *`group_id`*
     + *`operator_id`*
-    + *`user_id`*
+    + *`user_id`* 匿名用户为80000000
+    + *`nickname`* 匿名用户才有这个字段
     + *`duration`* 时间(0为解禁)
 
   + `notice.group.transfer` 群转让事件

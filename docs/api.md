@@ -154,6 +154,8 @@ message可以使用 `Array` 格式或 `String` 格式，支持CQ码
 + async `client.setGroupSpecialTitle(group_id, user_id[, special_title, duration])`
 + async `client.sendGroupNotice(group_id, content)`
 + async `client.sendGroupPoke(group_id, user_id)` 最近新增的戳一戳
++ async `client.setGroupAnonymous(group_id[, enable])`
++ async `client.setGroupWholeBan(group_id[, enable])`
 
 ----
 

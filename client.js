@@ -540,10 +540,13 @@ class AndroidClient extends Client {
 
     ///////////////////////////////////////////////////
 
-    //todo
-    // async setGroupAnonymous(group_id, enable = true) {}
-    // async setGroupAnonymousBan(group_id, anonymous_flag,  duration = 600) {}
-    // async setGroupWholeBan(group_id, enable = true) {}
+    // async setGroupAnonymousBan(group_id, anonymous_flag,  duration = 1800) {}
+    async setGroupAnonymous(group_id, enable = true) {
+        return await this.callApi(troop.setGroupAnonymous, arguments);
+    }
+    async setGroupWholeBan(group_id, enable = true) {
+        return await this.setGroupSetting(group_id, "shutupTime", enable?-1:0);
+    }
     async setGroupName(group_id, group_name) {
         return await this.setGroupSetting(group_id, "ingGroupName", Buffer.from(String(group_name)));
     }
