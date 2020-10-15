@@ -1,7 +1,7 @@
 # OICQ
 
 [![npm version](https://img.shields.io/npm/v/oicq.svg?logo=npm)](https://www.npmjs.com/package/oicq)
-[![node engine](https://img.shields.io/node/v/oicq.svg)](https://nodejs.org)
+[![node engine](https://img.shields.io/node/v/oicq.svg)](https://nodejs.org) ← 注意版本
 
 * QQ(安卓)协议的nodejs实现。参考了一些其他开源仓库如mirai、miraiGo等。  
 * 以高效和稳定为第一目的，在此基础上不断完善功能。  
