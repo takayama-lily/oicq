@@ -319,6 +319,7 @@ class AndroidClient extends Client {
                     sub_type = "kickoff";
                     if (this.kickoff_reconn) {
                         this.logger.info("3秒后重新连接..");
+                        this.ksid = Buffer.from(`|${this.device.imei}|` + this.apkname);
                         setTimeout(this.login.bind(this), 3000);
                     } else {
                         this.terminate();
