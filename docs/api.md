@@ -178,6 +178,7 @@ message可以使用 `Array` 格式或 `String` 格式，支持CQ码
 + async `client.setBirthday(birthday)` 20110202的形式
 + async `client.setDescription([description])` 设置个人说明
 + async `client.setSignature([signature])` 设置个性签名
++ async `client.setPortrait(file)` 设置个人头像(file为Buffer或图片CQ码中相同格式的字符串)
 
 ----
 

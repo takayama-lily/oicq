@@ -728,6 +728,14 @@ class AndroidClient extends Client {
         return await this.callApi(troop.setSign, arguments);
     }
 
+    /**
+     * 设置个人头像
+     * @param {Buffer|String} file Buffer或与图片CQ码中file格式相同的字符串("base64://xxx"或"http://xxx"等)
+     */
+    async setPortrait(file) {
+        return await this.callApi(troop.setPortrait, arguments);
+    }
+
     ///////////////////////////////////////////////////
 
     canSendImage() {

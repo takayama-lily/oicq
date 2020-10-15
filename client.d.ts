@@ -221,6 +221,7 @@ export class Client extends events.EventEmitter {
     setBirthday(birthday: string | number): Promise<RetCommon>; //20110202的形式
     setDescription(description?: string): Promise<RetCommon>;
     setSignature(signature?: string): Promise<RetCommon>;
+    setPortrait(file?: Buffer | string): Promise<RetCommon>; //图片CQ码中file相同格式
 
     canSendImage(): RetCommon;
     canSendRecord(): RetCommon;
