@@ -319,6 +319,7 @@ class AndroidClient extends Client {
                     sub_type = "kickoff";
                     if (this.kickoff_reconn) {
                         this.logger.info("3秒后重新连接..");
+                        this.ksid = Buffer.from(`|${this.device.imei}|` + this.apkname);
                         setTimeout(this.login.bind(this), 3000);
                     } else {
                         this.terminate();
@@ -725,6 +726,14 @@ class AndroidClient extends Client {
      */
     async setSignature(signature = "") {
         return await this.callApi(troop.setSign, arguments);
+    }
+
+    /**
+     * 设置个人头像
+     * @param {Buffer|String} file Buffer或与图片CQ码中file格式相同的字符串("base64://xxx"或"http://xxx"等)
+     */
+    async setPortrait(file) {
+        return await this.callApi(troop.setPortrait, arguments);
     }
 
     ///////////////////////////////////////////////////

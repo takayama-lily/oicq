@@ -198,6 +198,8 @@ export class Client extends events.EventEmitter {
 
     sendGroupNotice(group_id: Uin, content: string): Promise<RetCommon>;
     setGroupName(group_id: Uin, group_name: string): Promise<RetCommon>;
+    setGroupAnonymous(group_id: Uin, enable?: boolean): Promise<RetCommon>;
+    setGroupWholeBan(group_id: Uin, enable?: boolean): Promise<RetCommon>;
     setGroupAdmin(group_id: Uin, user_id: Uin, enable?: boolean): Promise<RetCommon>;
     setGroupSpecialTitle(group_id: Uin, user_id: Uin, special_title?: string, duration?: number): Promise<RetCommon>;
     setGroupCard(group_id: Uin, user_id: Uin, card?: string): Promise<RetCommon>;
@@ -219,6 +221,7 @@ export class Client extends events.EventEmitter {
     setBirthday(birthday: string | number): Promise<RetCommon>; //20110202的形式
     setDescription(description?: string): Promise<RetCommon>;
     setSignature(signature?: string): Promise<RetCommon>;
+    setPortrait(file?: Buffer | string): Promise<RetCommon>; //图片CQ码中file相同格式
 
     canSendImage(): RetCommon;
     canSendRecord(): RetCommon;
