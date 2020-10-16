@@ -113,6 +113,7 @@ const client = oicq.createClient(uin, config);
   + *`role`* \<String>
   + *`title`* \<String>
   + *`title_expire_time`* \<Number>
+  + *`shutup_time`* \<Number>
   + *`update_time`* \<Number> 此群员资料的最后更新时间
 + async `client.getStrangerInfo(user_id[, no_cache])` 获取陌生人资料
   + *`user_id`* \<Number>
