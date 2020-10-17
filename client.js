@@ -141,8 +141,10 @@ class AndroidClient extends Client {
 
         this.on("error", (err)=>{
             this.logger.error(err.message);
+            this.status = Client.INIT;
         });
         this.on("close", (e_flag)=>{
+            this.read();
             if (this.remoteAddress)
                 this.logger.info(`${this.remoteAddress}:${this.remotePort} closed`);
             this.stopHeartbeat();
@@ -154,9 +156,9 @@ class AndroidClient extends Client {
             if (this.reconn_flag) {
                 if (e_flag)
                     this.reconn_flag = false;
-                this._connect(()=>{
-                    this.register();
-                });
+                setTimeout(()=>{
+                    this._connect(this.register.bind(this));
+                }, 1000);
             }
         });
 

@@ -77,6 +77,7 @@ export interface MemberInfo {
     title?: string,
     title_expire_time?: number,
     card_changeable?: boolean,
+    shutup_time?: number,
     update_time?: number,
 }
 export interface MessageId {
