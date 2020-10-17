@@ -8,24 +8,10 @@
 * 支持typescript。
 * 使用 [CQHTTP](https://cqhttp.cc) 风格的API、事件和参数(少量差异)，并且原生支持经典的CQ码。  
 * 本项目使用AGPL-3.0许可证，旨在学习。不推荐也不提供商业化使用的支持。
-* 使用本项目产生的一切后果与本人无关。
-
-<details>
-
-  <summary>一些想说的话</summary>
-  如果有一门技术，可以促进社会发展，但也可以为违法犯罪提供便利，<br>
-  在无法完全掌控和管理的情况下，公开它是正确的吗？<br>
-  以前认为开源就是正义，现在看来也并不完全如此（可参考DeepFake事件）。
-
-</details>
 
 ----
 
-**目前可以直接使用的SDK或应用程序：**
-
-[http-api](https://github.com/takayama-lily/onebot)
-
-**作为依赖引入进行开发（简单demo）：**
+**API简洁友好，开箱即用，推荐直接引入依赖进行开发。**
 
 ```bash
 # npm i oicq
@@ -49,6 +35,10 @@ bot.on("notice", data=>console.log(data));
 const password_md5 = "202cb962ac59075b964b07152d234b70";
 bot.login(password_md5);
 ```
+
+**如果需要跨进程的通信，可以使用：**
+
+[http-api](https://github.com/takayama-lily/onebot)
 
 **使用内置的控制台进行调试：**
 
