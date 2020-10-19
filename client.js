@@ -266,10 +266,10 @@ class AndroidClient extends Client {
         });
     }
     writeUNI(cmd, body, seq) {
-        this.write(wt.buildUNIPacket.apply(this, arguments));
+        this.write(wt.build0x0BPacket.apply(this, arguments));
     }
     async sendUNI(cmd, body, seq) {
-        return await this.send(wt.buildUNIPacket.apply(this, arguments));
+        return await this.send(wt.build0x0BPacket.apply(this, arguments));
     }
 
     /**

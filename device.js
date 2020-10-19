@@ -85,6 +85,6 @@ module.exports = function(filepath) {
     };
     device.imsi = crypto.randomBytes(16);
     device.tgtgt = crypto.randomBytes(16);
-    device.guid = md5(Buffer.concat([Buffer.from(device.android_id), Buffer.from(device.mac_address)]));
+    device.guid = md5(Buffer.concat([Buffer.from(device.imei), Buffer.from(device.mac_address)]));
     return device;
 };
