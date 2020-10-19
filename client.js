@@ -77,6 +77,7 @@ class AndroidClient extends Client {
     t104;
 
     sig = {
+        srm_token: BUF0,
         tgt: BUF0,
         tgt_key: BUF0,
         st_key: BUF0,
