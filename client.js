@@ -11,6 +11,7 @@ const core = require("./lib/core");
 const wt = require("./lib/wtlogin/wt");
 const chat = require("./lib/message/chat");
 const troop = require("./lib/troop");
+const {getErrorMessage} = require("./exception");
 const BUF0 = Buffer.alloc(0);
 
 const server_list = [
@@ -379,7 +380,12 @@ class AndroidClient extends Client {
             if (!rsp)
                 return buildApiRet(1);
             if (rsp.result > 0)
-                return buildApiRet(102, null, {code: rsp.result});
+                return buildApiRet(102, null,
+                    {
+                        code: rsp.result,
+                        message: rsp.emsg?rsp.emsg:getErrorMessage(fn, rsp.result)
+                    }
+                );
             else
                 return buildApiRet(0, rsp.data);
         } catch (e) {
