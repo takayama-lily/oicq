@@ -6,7 +6,7 @@ const path = require("path");
 const crypto = require("crypto");
 const log4js = require("log4js");
 const device = require("./device");
-const {checkUin, emit, TimeoutError} = require("./lib/common");
+const {checkUin} = require("./lib/common");
 const core = require("./lib/core");
 const wt = require("./lib/wtlogin/wt");
 const chat = require("./lib/message/chat");
@@ -25,6 +25,8 @@ function buildApiRet(retcode, data = null, error = null) {
         retcode, data, status, error
     };
 }
+
+class TimeoutError extends Error {}
 
 class Client extends net.Socket {
     static OFFLINE = Symbol("OFFLINE");
@@ -151,7 +153,7 @@ class AndroidClient extends Client {
             this.stopHeartbeat();
             if (this.status === Client.OFFLINE) {
                 this.logger.error("网络不通畅。");
-                return emit(this, "system.offline.network");
+                return this.em("system.offline.network");
             }
             this.status = Client.OFFLINE;
             if (this.reconn_flag) {
@@ -176,7 +178,7 @@ class AndroidClient extends Client {
                         core.parseIncomingPacket.call(this, packet);
                     } catch (e) {
                         this.logger.debug(e.stack);
-                        this.emit("internal.exception", e);
+                        this.em("internal.exception", e);
                     }
                 } else {
                     this.unshift(len_buf);
@@ -211,7 +213,7 @@ class AndroidClient extends Client {
             await core.getMsg.call(this);
             this.sync_finished = true;
             this.logger.info("初始化完毕，开始处理消息。")
-            emit(this, "system.online");
+            this.em("system.online");
         });
     }
 
@@ -256,7 +258,7 @@ class AndroidClient extends Client {
                 const id = setTimeout(()=>{
                     this.handlers.delete(seq_id);
                     reject(new TimeoutError());
-                    emit(this, "internal.timeout", {seq_id});
+                    this.em("internal.timeout", {seq_id});
                 }, timeout);
                 this.handlers.set(seq_id, (data)=>{
                     clearTimeout(id);
@@ -303,7 +305,7 @@ class AndroidClient extends Client {
         } catch (e) {
             this.logger.error("上线失败。");
             this.terminate();
-            emit(this, "system.offline.network");
+            this.em("system.offline.network");
             return;
         }
         this.status = Client.ONLINE;
@@ -337,7 +339,7 @@ class AndroidClient extends Client {
                     sub_type = "unknown";
                     this.terminate();
                 }
-                emit(this, "system.offline." + sub_type);
+                this.em("system.offline." + sub_type);
             });
         }
     }
@@ -385,6 +387,32 @@ class AndroidClient extends Client {
                 return buildApiRet(103, null, {code: -1, message: "packet timeout"});
             return buildApiRet(100, null, {code: -1, message: e.message});
         }
+    }
+
+    /**
+     * @param {String} name 
+     * @param {Object} data 
+     */
+    em(name, data = {}) {
+        const slice = name.split(".");
+        const post_type = slice[0], sub_type = slice[2];
+        const param = {
+            self_id:    this.uin,
+            time:       parseInt(Date.now()/1000),
+            post_type:  post_type
+        };
+        const type_name = slice[0] + "_type";
+        param[type_name] = slice[1];
+        if (sub_type)
+            param.sub_type = sub_type;
+        Object.assign(param, data);
+        const lv2_event = post_type + "." + slice[1];
+        if (this.listenerCount(name))
+            this.emit(name, param);
+        else if (this.listenerCount(lv2_event))
+            this.emit(lv2_event, param);
+        else
+            this.emit(post_type, param);
     }
 
     // 以下是public方法 ----------------------------------------------------------------------------------------------------
