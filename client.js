@@ -461,11 +461,24 @@ class AndroidClient extends Client {
     }
 
     /**
-     * 使用此函数关闭连接，不要使用end和destroy
+     * 直接关闭连接
+     * ！注意请勿直接调用end和destroy
      */
     terminate() {
         this.reconn_flag = false;
         this.destroy();
+    }
+
+    /**
+     * 安全下线
+     */
+    async logout() {
+        if (this.isOnline) {
+            try {
+                await wt.register.call(this, true);
+            } catch {}
+        }
+        this.terminate();
     }
 
     isOnline() {

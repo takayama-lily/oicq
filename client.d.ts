@@ -147,6 +147,7 @@ export interface EventData {
     font?: string,
     anonymous?: Anonymous | null,
     sender?: FriendInfo & MemberInfo,
+    auto_reply?: boolean,
 
     flag?: string,
     comment?: string,
@@ -182,6 +183,7 @@ export class Client extends events.EventEmitter {
     login(password_md5?: Buffer | string): void;
     captchaLogin(captcha: string): void;
     terminate(): void;
+    logout(): Promise<void>;
     isOnline(): boolean;
 
     getFriendList(): RetFriendList;

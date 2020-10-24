@@ -56,7 +56,11 @@ const client = oicq.createClient(uin, config);
 
 ----
 
-### `client.terminate()` 关闭连接
+### `client.logout()` 安全下线
+
+----
+
+### `client.terminate()` 直接关闭连接(不推荐使用)
 
 ----
 
