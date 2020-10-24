@@ -76,6 +76,7 @@ client.on("notice", (data)=>console.log(data)); //监听所有的通知事件
       + *`sex`*
       + *`age`*
       + *`area`*
+    + *`auto_reply`* 是否是自动回复(boolean)
 
 + **message.group**
 

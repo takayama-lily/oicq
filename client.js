@@ -97,6 +97,7 @@ class AndroidClient extends Client {
     sync_cookie;
     const1 = crypto.randomBytes(4).readUInt32BE();
     const2 = crypto.randomBytes(4).readUInt32BE();
+    const3 = crypto.randomBytes(1)[0];
 
     dir;
 
