@@ -155,7 +155,7 @@ class AndroidClient extends Client {
             this.stopHeartbeat();
             if (this.status === Client.OFFLINE) {
                 this.logger.error("网络不通畅。");
-                return this.em("system.offline.network");
+                return this.em("system.offline.network", {message: "网络不通畅"});
             }
             this.status = Client.OFFLINE;
             if (this.reconn_flag) {
@@ -307,7 +307,7 @@ class AndroidClient extends Client {
         } catch (e) {
             this.logger.error("上线失败。");
             this.terminate();
-            this.em("system.offline.network");
+            this.em("system.offline.network", {message: "register失败"});
             return;
         }
         this.status = Client.ONLINE;
@@ -341,7 +341,7 @@ class AndroidClient extends Client {
                     sub_type = "unknown";
                     this.terminate();
                 }
-                this.em("system.offline." + sub_type);
+                this.em("system.offline." + sub_type, {message: data.info});
             });
         }
     }
@@ -453,10 +453,8 @@ class AndroidClient extends Client {
      * @param {String} captcha 
      */
     captchaLogin(captcha) {
-        if (this.isOnline())
-            return;
         if (!this.captcha_sign)
-            throw new Error("Illegal call.");
+            return this.logger.error("未收到图片验证码或已过期，你不能调用captchaLogin函数。");
         wt.captchaLogin.call(this, captcha);
     }
 

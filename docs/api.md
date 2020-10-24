@@ -70,10 +70,10 @@ const client = oicq.createClient(uin, config);
 
 ```js
 {
-    retcode: 0,     //0成功 1状态未知 100参数错误 102失败 103超时
+    retcode: 0,     //0成功 1状态未知 100参数错误 102失败 103超时 104断线中
     status: "ok",   //ok或async或failed
     data: null,     //数据，只有获取列表以及发消息会返回message_id，其他时候为null
-    error: "",      //错误代码和错误消息，暂未完全实现
+    error: {code: -1, message: ""}, //TX返回的错误代码和错误消息
 }
 ```
 
