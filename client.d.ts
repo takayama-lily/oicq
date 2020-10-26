@@ -226,6 +226,8 @@ export class Client extends events.EventEmitter {
     setSignature(signature?: string): Promise<RetCommon>;
     setPortrait(file?: Buffer | string): Promise<RetCommon>; //图片CQ码中file相同格式
 
+    getCookies(domain?: string): Promise<RetCommon>;
+    getCsrfToken(): Promise<RetCommon>;
     canSendImage(): RetCommon;
     canSendRecord(): RetCommon;
     getVersionInfo(): RetCommon;

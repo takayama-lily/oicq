@@ -189,6 +189,9 @@ message可以使用 `Array` 格式或 `String` 格式，支持CQ码
 
 ### 其他
 
++ async `client.getCookies([domain])` 实验性质，更新可能存在问题
++ async `client.getCsrfToken()`
+
 + `client.canSendImage()`
 + `client.canSendRecord()`
 + `client.getStatus()`

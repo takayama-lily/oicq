@@ -95,6 +95,7 @@ class AndroidClient extends Client {
         ticket_key: BUF0,
         device_token: BUF0,
     };
+    cookies = {};
 
     sync_finished = false;
     sync_cookie;
@@ -787,6 +788,25 @@ class AndroidClient extends Client {
 
     ///////////////////////////////////////////////////
 
+    async getCookies(domain) {
+        // await wt.exchangeEMP();
+        if (domain && !this.cookies[domain])
+            return buildApiRet(100, null, {code: -1, message: "unknown domain"});
+        let cookies = `uin=o${this.uin}; skey=${this.sig.skey};`;
+        if (domain)
+            cookies = `${cookies} p_uin=o${this.uin}; p_skey=${this.cookies[domain]};`;
+        return buildApiRet(0, {cookies});
+    }
+
+    async getCsrfToken(domain) {
+        // await wt.exchangeEMP();
+        let token = 5381;
+        for (let v of this.sig.skey)
+            token = token + (token << 5) + v;
+        token &= 2147483647;
+        return buildApiRet(0, {token});
+    }
+
     canSendImage() {
         return buildApiRet(0, {yes: true});
     }
@@ -815,7 +835,7 @@ class AndroidClient extends Client {
 
 const logger = log4js.getLogger("[SYSTEM]");
 logger.level = "info";
-logger.info("OICQ程序启动。当前内核版本：v" + version.version);
+console.log("OICQ程序启动。当前内核版本：v" + version.version);
 
 const config = {
     cache_root: path.join(process.mainModule.path, "data"),
