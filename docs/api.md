@@ -194,20 +194,3 @@ message可以使用 `Array` 格式或 `String` 格式，支持CQ码
 + `client.getStatus()`
 + `client.getVersionInfo()`
 + `client.getLoginInfo()`
-
-----
-
-## `setGlobalConfig(config)` 全局设置
-
-+ `config` \<JSON>
-
-默认config
-
-```js
-{
-    web_image_timeout:  0,  //下载网络图片的超时时间(0表示系统自己判断)
-    web_record_timeout: 0,  //下载网络语音的超时时间
-    cache_root:         "", //数据文件夹根目录，需要可写权限。默认主目录下的data文件夹
-    debug: false,
-}
-```

@@ -241,4 +241,8 @@ export class Client extends events.EventEmitter {
 }
 
 export function createClient(uin: Uin, config?: ConfBot): Client;
+
+/**
+ * @deprecated
+ */
 export function setGlobalConfig(config?: ConfGlobal): void;

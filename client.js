@@ -818,8 +818,6 @@ logger.level = "info";
 logger.info("OICQ程序启动。当前内核版本：v" + version.version);
 
 const config = {
-    web_image_timeout: 0,
-    web_record_timeout: 0,
     cache_root: path.join(process.mainModule.path, "data"),
     debug: false,
 };
@@ -844,6 +842,7 @@ function createCacheDir(uin) {
 }
 
 /**
+ * @deprecated
  * @param {JSON} config 
  */
 function setGlobalConfig(config = {}) {
