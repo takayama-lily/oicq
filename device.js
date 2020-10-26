@@ -66,6 +66,10 @@ function genDevice(filepath) {
     return JSON.parse(device);
 }
 
+/**
+ * @param {String} filepath 
+ * @returns {import("./lib/ref").Device}
+ */
 module.exports = function(filepath) {
     var d;
     if (fs.existsSync(filepath)) {

@@ -24,6 +24,11 @@ const exceptions = new Map([
     }]
 ]);
 
+/**
+ * @param {Function} fn 
+ * @param {Number} code 
+ * @returns {String}
+ */
 module.exports.getErrorMessage = function(fn, code) {
     if (!exceptions.has(fn))
         return "unknown";

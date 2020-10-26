@@ -63,7 +63,7 @@ class AndroidClient extends Client {
     password_md5;
     nickname = "";
     age = 0;
-    sex = 0;
+    sex = "unknown";
     online_status = 0;
     fl = new Map(); //friendList
     sl = new Map(); //strangerList
@@ -88,7 +88,7 @@ class AndroidClient extends Client {
         tgt_key: BUF0,
         st_key: BUF0,
         st_web_sig: BUF0,
-        s_key: BUF0,
+        skey: BUF0,
         d2: BUF0,
         d2key: BUF0,
         sig_key: BUF0,
