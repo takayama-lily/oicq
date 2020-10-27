@@ -96,6 +96,7 @@ class AndroidClient extends Client {
         device_token: BUF0,
     };
     cookies = {};
+    msg_times = [];
 
     sync_finished = false;
     sync_cookie;
@@ -287,7 +288,8 @@ class AndroidClient extends Client {
         if (this.heartbeat)
             return;
         this.heartbeat = setInterval(async()=>{
-            if (Date.now() - this.send_timestamp > 300000)
+            this._calc_msg_cnt();
+            if (Date.now() - this.send_timestamp > 240000)
                 core.getMsg.call(this);
             try {
                 await wt.heartbeat.call(this);
@@ -296,7 +298,7 @@ class AndroidClient extends Client {
                 if (Date.now() - this.recv_timestamp > 10000)
                     this.destroy();
             }
-        }, 30000);
+        }, 60000);
     }
     stopHeartbeat() {
         clearInterval(this.heartbeat);
@@ -423,6 +425,19 @@ class AndroidClient extends Client {
             this.emit(lv2_event, param);
         else
             this.emit(post_type, param);
+    }
+
+    /**
+     * 计算每分钟消息数量
+     */
+    _calc_msg_cnt() {
+        for (let i = 0; i < this.msg_times.length; ++i) {
+            if (Date.now() - this.msg_times[i] * 1000 <= 60000) {
+                this.msg_times = this.msg_times.slice(i);
+                return;
+            }
+        }
+        this.msg_times = [];
     }
 
     // 以下是public方法 ----------------------------------------------------------------------------------------------------
@@ -817,9 +832,11 @@ class AndroidClient extends Client {
         return buildApiRet(0, version);
     }
     getStatus() {
+        this._calc_msg_cnt();
         return buildApiRet(0, {
             online: this.isOnline(),
             status: this.online_status,
+            msg_cnt_per_min: this.msg_times.length,
         })
     }
     getLoginInfo() {

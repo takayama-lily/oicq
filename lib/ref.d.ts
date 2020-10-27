@@ -123,6 +123,7 @@ export class Client extends oicq.Client {
     dir: string;
     sig: Sig;
     cookies: object;
+    msg_times: number[];
 
     nextSeq(): number;
     send(): Promise<Buffer>;
