@@ -147,6 +147,7 @@ export interface EventData {
     font?: string,
     anonymous?: Anonymous | null,
     sender?: FriendInfo & MemberInfo,
+    auto_reply?: boolean,
 
     flag?: string,
     comment?: string,
@@ -182,6 +183,7 @@ export class Client extends events.EventEmitter {
     login(password_md5?: Buffer | string): void;
     captchaLogin(captcha: string): void;
     terminate(): void;
+    logout(): Promise<void>;
     isOnline(): boolean;
 
     getFriendList(): RetFriendList;
@@ -224,6 +226,8 @@ export class Client extends events.EventEmitter {
     setSignature(signature?: string): Promise<RetCommon>;
     setPortrait(file?: Buffer | string): Promise<RetCommon>; //图片CQ码中file相同格式
 
+    getCookies(domain?: string): Promise<RetCommon>;
+    getCsrfToken(): Promise<RetCommon>;
     canSendImage(): RetCommon;
     canSendRecord(): RetCommon;
     getVersionInfo(): RetCommon;
@@ -239,4 +243,8 @@ export class Client extends events.EventEmitter {
 }
 
 export function createClient(uin: Uin, config?: ConfBot): Client;
+
+/**
+ * @deprecated
+ */
 export function setGlobalConfig(config?: ConfGlobal): void;

@@ -88,7 +88,7 @@ function loop() {
         const param = input.replace(cmd, "").trim();
         switch (cmd) {
             case "bye":
-                bot.terminate();
+                bot.logout();
                 process.stdin.destroy();
                 break;
             case "send":

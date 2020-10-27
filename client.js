@@ -6,11 +6,15 @@ const path = require("path");
 const crypto = require("crypto");
 const log4js = require("log4js");
 const device = require("./device");
-const {checkUin, emit, TimeoutError} = require("./lib/common");
+const {checkUin} = require("./lib/common");
 const core = require("./lib/core");
+const resource = require("./lib/resource");
+const sysmsg = require("./lib/sysmsg");
 const wt = require("./lib/wtlogin/wt");
 const chat = require("./lib/message/chat");
+const indi = require("./lib/individual");
 const troop = require("./lib/troop");
+const {getErrorMessage} = require("./exception");
 const BUF0 = Buffer.alloc(0);
 
 const server_list = [
@@ -25,6 +29,8 @@ function buildApiRet(retcode, data = null, error = null) {
         retcode, data, status, error
     };
 }
+
+class TimeoutError extends Error {}
 
 class Client extends net.Socket {
     static OFFLINE = Symbol("OFFLINE");
@@ -57,7 +63,7 @@ class AndroidClient extends Client {
     password_md5;
     nickname = "";
     age = 0;
-    sex = 0;
+    sex = "unknown";
     online_status = 0;
     fl = new Map(); //friendList
     sl = new Map(); //strangerList
@@ -77,22 +83,25 @@ class AndroidClient extends Client {
     t104;
 
     sig = {
+        srm_token: BUF0,
         tgt: BUF0,
         tgt_key: BUF0,
         st_key: BUF0,
         st_web_sig: BUF0,
-        s_key: BUF0,
+        skey: BUF0,
         d2: BUF0,
         d2key: BUF0,
         sig_key: BUF0,
         ticket_key: BUF0,
         device_token: BUF0,
     };
+    cookies = {};
 
     sync_finished = false;
     sync_cookie;
     const1 = crypto.randomBytes(4).readUInt32BE();
     const2 = crypto.randomBytes(4).readUInt32BE();
+    const3 = crypto.randomBytes(1)[0];
 
     dir;
 
@@ -150,7 +159,7 @@ class AndroidClient extends Client {
             this.stopHeartbeat();
             if (this.status === Client.OFFLINE) {
                 this.logger.error("网络不通畅。");
-                return emit(this, "system.offline.network");
+                return this.em("system.offline.network", {message: "网络不通畅"});
             }
             this.status = Client.OFFLINE;
             if (this.reconn_flag) {
@@ -175,7 +184,7 @@ class AndroidClient extends Client {
                         core.parseIncomingPacket.call(this, packet);
                     } catch (e) {
                         this.logger.debug(e.stack);
-                        this.emit("internal.exception", e);
+                        this.em("internal.exception", e);
                     }
                 } else {
                     this.unshift(len_buf);
@@ -197,20 +206,19 @@ class AndroidClient extends Client {
             const initFL = async()=>{
                 let start = 0;
                 while (1) {
-                    const total = await core.initFL.call(this, start);
+                    const total = await resource.initFL.call(this, start);
                     start += 150;
                     if (start > total) break;
                 }
             }
             await Promise.all([
-                initFL(),
-                core.initGL.call(this)
+                initFL(), resource.initGL.call(this)
             ]);
             this.logger.info(`加载了${this.fl.size}个好友，${this.gl.size}个群。`);
             await core.getMsg.call(this);
             this.sync_finished = true;
-            this.logger.info("初始化完毕，开始处理消息。")
-            emit(this, "system.online");
+            this.logger.info("初始化完毕，开始处理消息。");
+            this.em("system.online");
         });
     }
 
@@ -255,7 +263,7 @@ class AndroidClient extends Client {
                 const id = setTimeout(()=>{
                     this.handlers.delete(seq_id);
                     reject(new TimeoutError());
-                    emit(this, "internal.timeout", {seq_id});
+                    this.em("internal.timeout", {seq_id});
                 }, timeout);
                 this.handlers.set(seq_id, (data)=>{
                     clearTimeout(id);
@@ -266,10 +274,10 @@ class AndroidClient extends Client {
         });
     }
     writeUNI(cmd, body, seq) {
-        this.write(wt.buildUNIPacket.apply(this, arguments));
+        this.write(wt.build0x0BPacket.apply(this, arguments));
     }
     async sendUNI(cmd, body, seq) {
-        return await this.send(wt.buildUNIPacket.apply(this, arguments));
+        return await this.send(wt.build0x0BPacket.apply(this, arguments));
     }
 
     /**
@@ -302,7 +310,7 @@ class AndroidClient extends Client {
         } catch (e) {
             this.logger.error("上线失败。");
             this.terminate();
-            emit(this, "system.offline.network");
+            this.em("system.offline.network", {message: "register失败"});
             return;
         }
         this.status = Client.ONLINE;
@@ -336,7 +344,7 @@ class AndroidClient extends Client {
                     sub_type = "unknown";
                     this.terminate();
                 }
-                emit(this, "system.offline." + sub_type);
+                this.em("system.offline." + sub_type, {message: data.info});
             });
         }
     }
@@ -350,7 +358,7 @@ class AndroidClient extends Client {
         try {
             var next = 0;
             while (1) {
-                var {map, next} = await core.getGML.call(this, group_id, next);
+                var {map, next} = await resource.getGML.call(this, group_id, next);
                 mlist = new Map([...mlist, ...map]);
                 if (!next) break;
             }
@@ -368,7 +376,7 @@ class AndroidClient extends Client {
      * @param {Function} fn 
      * @param {Array} params 
      */
-    async callApi(fn, params) {
+    async useProtocol(fn, params) {
         if (!this.isOnline() || !this.sync_finished)
             return buildApiRet(104);
         try {
@@ -376,7 +384,12 @@ class AndroidClient extends Client {
             if (!rsp)
                 return buildApiRet(1);
             if (rsp.result > 0)
-                return buildApiRet(102, null, {code: rsp.result});
+                return buildApiRet(102, null,
+                    {
+                        code: rsp.result,
+                        message: rsp.emsg?rsp.emsg:getErrorMessage(fn, rsp.result)
+                    }
+                );
             else
                 return buildApiRet(0, rsp.data);
         } catch (e) {
@@ -384,6 +397,32 @@ class AndroidClient extends Client {
                 return buildApiRet(103, null, {code: -1, message: "packet timeout"});
             return buildApiRet(100, null, {code: -1, message: e.message});
         }
+    }
+
+    /**
+     * @param {String} name 
+     * @param {Object} data 
+     */
+    em(name, data = {}) {
+        const slice = name.split(".");
+        const post_type = slice[0], sub_type = slice[2];
+        const param = {
+            self_id:    this.uin,
+            time:       parseInt(Date.now()/1000),
+            post_type:  post_type
+        };
+        const type_name = slice[0] + "_type";
+        param[type_name] = slice[1];
+        if (sub_type)
+            param.sub_type = sub_type;
+        Object.assign(param, data);
+        const lv2_event = post_type + "." + slice[1];
+        if (this.listenerCount(name))
+            this.emit(name, param);
+        else if (this.listenerCount(lv2_event))
+            this.emit(lv2_event, param);
+        else
+            this.emit(post_type, param);
     }
 
     // 以下是public方法 ----------------------------------------------------------------------------------------------------
@@ -417,19 +456,30 @@ class AndroidClient extends Client {
      * @param {String} captcha 
      */
     captchaLogin(captcha) {
-        if (this.isOnline())
-            return;
         if (!this.captcha_sign)
-            throw new Error("Illegal call.");
+            return this.logger.error("未收到图片验证码或已过期，你不能调用captchaLogin函数。");
         wt.captchaLogin.call(this, captcha);
     }
 
     /**
-     * 使用此函数关闭连接，不要使用end和destroy
+     * 直接关闭连接
+     * ！注意请勿直接调用end和destroy
      */
     terminate() {
         this.reconn_flag = false;
         this.destroy();
+    }
+
+    /**
+     * 安全下线
+     */
+    async logout() {
+        if (this.isOnline) {
+            try {
+                await wt.register.call(this, true);
+            } catch {}
+        }
+        this.terminate();
     }
 
     isOnline() {
@@ -450,7 +500,7 @@ class AndroidClient extends Client {
      * @param {Number} status 11我在线上 31离开 41隐身 50忙碌 60Q我吧 70请勿打扰
      */
     async setOnlineStatus(status) {
-        return await this.callApi(troop.setStatus, arguments);
+        return await this.useProtocol(indi.setStatus, arguments);
     }
 
     ///////////////////////////////////////////////////
@@ -493,7 +543,7 @@ class AndroidClient extends Client {
      * @returns {JSON} data
      */
     async getStrangerInfo(user_id, no_cache = false) {
-        return await this.callApi(core.getSI, arguments);
+        return await this.useProtocol(resource.getSI, arguments);
     }
 
     /**
@@ -501,7 +551,7 @@ class AndroidClient extends Client {
      * @returns {JSON} data
      */
     async getGroupInfo(group_id, no_cache = false) {
-        return await this.callApi(core.getGI, arguments);
+        return await this.useProtocol(resource.getGI, arguments);
     }
 
     /**
@@ -509,7 +559,7 @@ class AndroidClient extends Client {
      * @returns {JSON}
      */
     async getGroupMemberInfo(group_id, user_id, no_cache = false) {
-        return await this.callApi(core.getGMI, arguments);
+        return await this.useProtocol(resource.getGMI, arguments);
     }
 
     ///////////////////////////////////////////////////
@@ -524,13 +574,13 @@ class AndroidClient extends Client {
      *  @field {String} message_id
      */
     async sendPrivateMsg(user_id, message = "", auto_escape = false) {
-        return await this.callApi(chat.sendMsg, [user_id, message, auto_escape, 0]);
+        return await this.useProtocol(chat.sendMsg, [user_id, message, auto_escape, 0]);
     }
     async sendGroupMsg(group_id, message = "", auto_escape = false) {
-        return await this.callApi(chat.sendMsg, [group_id, message, auto_escape, 1]);
+        return await this.useProtocol(chat.sendMsg, [group_id, message, auto_escape, 1]);
     }
     async sendDiscussMsg(discuss_id, message = "", auto_escape = false) {
-        return await this.callApi(chat.sendMsg, [discuss_id, message, auto_escape, 2]);
+        return await this.useProtocol(chat.sendMsg, [discuss_id, message, auto_escape, 2]);
     }
 
     /**
@@ -538,14 +588,14 @@ class AndroidClient extends Client {
      * @param {String} message_id
      */
     async deleteMsg(message_id) {
-        return await this.callApi(chat.recallMsg, arguments);
+        return await this.useProtocol(chat.recallMsg, arguments);
     }
 
     ///////////////////////////////////////////////////
 
     // async setGroupAnonymousBan(group_id, anonymous_flag,  duration = 1800) {}
     async setGroupAnonymous(group_id, enable = true) {
-        return await this.callApi(troop.setGroupAnonymous, arguments);
+        return await this.useProtocol(troop.setAnonymous, arguments);
     }
     async setGroupWholeBan(group_id, enable = true) {
         return await this.setGroupSetting(group_id, "shutupTime", enable?-1:0);
@@ -557,10 +607,10 @@ class AndroidClient extends Client {
         return await this.setGroupSetting(group_id, "ingGroupMemo", Buffer.from(String(content)));
     }
     async setGroupSetting(group_id, k, v) {
-        return await this.callApi(troop.setGroup, arguments);
+        return await this.useProtocol(troop.doSetting, arguments);
     }
     async setGroupAdmin(group_id, user_id, enable = true) {
-        return await this.callApi(troop.setAdmin, arguments);
+        return await this.useProtocol(troop.setAdmin, arguments);
     }
 
     /**
@@ -569,7 +619,7 @@ class AndroidClient extends Client {
      * @param {Number} duration -1代表无限期
      */
     async setGroupSpecialTitle(group_id, user_id, special_title = "", duration = -1) {
-        return await this.callApi(troop.setTitle, arguments);
+        return await this.useProtocol(troop.setTitle, arguments);
     }
 
     ///////////////////////////////////////////////////
@@ -579,7 +629,7 @@ class AndroidClient extends Client {
      * @param {String} card 为空还原
      */
     async setGroupCard(group_id, user_id, card = "") {
-        return await this.callApi(troop.setCard, arguments);
+        return await this.useProtocol(troop.setCard, arguments);
     }
 
     /**
@@ -587,7 +637,7 @@ class AndroidClient extends Client {
      * @param {Boolean} reject_add_request 是否屏蔽
      */
     async setGroupKick(group_id, user_id, reject_add_request = false) {
-        return await this.callApi(troop.kickMember, arguments);
+        return await this.useProtocol(troop.kickMember, arguments);
     }
 
     /**
@@ -595,7 +645,7 @@ class AndroidClient extends Client {
      * @param {Number} duration 秒数
      */
     async setGroupBan(group_id, user_id, duration = 1800) {
-        return await this.callApi(troop.banMember, arguments);
+        return await this.useProtocol(troop.muteMember, arguments);
     }
 
     /**
@@ -603,14 +653,14 @@ class AndroidClient extends Client {
      * @param {Boolean} is_dismiss 不设置is_dismiss只要是群主貌似也可以解散(可能和规模有关?)
      */
     async setGroupLeave(group_id, is_dismiss = false) {
-        return await this.callApi(troop.leaveGroup, arguments);
+        return await this.useProtocol(troop.quitGroup, arguments);
     }
 
     /**
      * 群戳一戳，暂时为立即返回，无法立即知晓是否成功
      */
     async sendGroupPoke(group_id, user_id) {
-        return await this.callApi(troop.pokeMember, arguments);
+        return await this.useProtocol(troop.pokeMember, arguments);
     }
 
     ///////////////////////////////////////////////////
@@ -623,7 +673,7 @@ class AndroidClient extends Client {
      * @param {Boolean} block 是否屏蔽
      */
     async setFriendAddRequest(flag, approve = true, remark = "", block = false) {
-        return await this.callApi(troop.friendAction, arguments);
+        return await this.useProtocol(sysmsg.friendAction, arguments);
     }
 
     /**
@@ -634,7 +684,7 @@ class AndroidClient extends Client {
      * @param {Boolean} block 是否屏蔽
      */
     async setGroupAddRequest(flag, approve = true, reason = "", block = false) {
-        return await this.callApi(troop.groupAction, arguments);
+        return await this.useProtocol(sysmsg.groupAction, arguments);
     }
 
     /**
@@ -644,7 +694,7 @@ class AndroidClient extends Client {
      * @param {String} comment 附加信息
      */
     async addGroup(group_id, comment = "") {
-        return await this.callApi(troop.addGroup, arguments);
+        return await this.useProtocol(troop.addGroup, arguments);
     }
 
     /**
@@ -654,7 +704,7 @@ class AndroidClient extends Client {
      * @param {String} comment 附加信息
      */
     async addFriend(group_id, user_id, comment = "") {
-        return await this.callApi(troop.addFriend, arguments);
+        return await this.useProtocol(indi.addFriend, arguments);
     }
 
     /**
@@ -662,7 +712,7 @@ class AndroidClient extends Client {
      * @param {Boolean} block 是否屏蔽
      */
     async deleteFriend(user_id, block = true) {
-        return await this.callApi(troop.delFriend, arguments);
+        return await this.useProtocol(indi.delFriend, arguments);
     }
 
     /**
@@ -671,30 +721,28 @@ class AndroidClient extends Client {
      * ※如果BOT不是对方的好友(单向)，对方又设置了拒绝陌生人邀请，此时会返回成功但是对方实际收不到邀请
      */
     async inviteFriend(group_id, user_id) {
-        return await this.callApi(troop.inviteFriend, arguments);
+        return await this.useProtocol(troop.inviteFriend, arguments);
     }
 
     /**
      * 点赞，请勿频繁调用，否则有冻结风险
      */
     async sendLike(user_id, times = 1) {
-        return await this.callApi(troop.sendLike, arguments);
+        return await this.useProtocol(indi.sendLike, arguments);
     }
-
-    /////////////////////////////////////////////// 个人设置
 
     /**
      * @param {String} nickname 昵称最长48字节，允许设为空，别人看到的昵称会变为你的QQ号
      */
     async setNickname(nickname) {
-        return await this.callApi(troop.setProfile, [0x14E22, String(nickname)]);
+        return await this.useProtocol(indi.setProfile, [0x14E22, String(nickname)]);
     }
 
     /**
      * @param {String} description 设置个人说明
      */
     async setDescription(description = "") {
-        return await this.callApi(troop.setProfile, [0x14E33, String(description)]);
+        return await this.useProtocol(indi.setProfile, [0x14E33, String(description)]);
     }
 
     /**
@@ -704,7 +752,7 @@ class AndroidClient extends Client {
         gender = parseInt(gender);
         if (![0,1,2].includes(gender))
             return buildApiRet(100);
-        return await this.callApi(troop.setProfile, [0x14E29, Buffer.from([gender])]);
+        return await this.useProtocol(indi.setProfile, [0x14E29, Buffer.from([gender])]);
     }
 
     /**
@@ -717,7 +765,7 @@ class AndroidClient extends Client {
             buf.writeUInt16BE(parseInt(birthday.substr(0, 4)));
             buf.writeUInt8(parseInt(birthday.substr(4, 2)), 2);
             buf.writeUInt8(parseInt(birthday.substr(6, 2)), 3);
-            return await this.callApi(troop.setProfile, [0x16593, buf]);
+            return await this.useProtocol(indi.setProfile, [0x16593, buf]);
         } catch (e) {
             return buildApiRet(100);
         }
@@ -727,7 +775,7 @@ class AndroidClient extends Client {
      * @param {String} signature 个人签名超过254字节会被截断
      */
     async setSignature(signature = "") {
-        return await this.callApi(troop.setSign, arguments);
+        return await this.useProtocol(indi.setSign, arguments);
     }
 
     /**
@@ -735,10 +783,29 @@ class AndroidClient extends Client {
      * @param {Buffer|String} file Buffer或与图片CQ码中file格式相同的字符串("base64://xxx"或"http://xxx"等)
      */
     async setPortrait(file) {
-        return await this.callApi(troop.setPortrait, arguments);
+        return await this.useProtocol(indi.setPortrait, arguments);
     }
 
     ///////////////////////////////////////////////////
+
+    async getCookies(domain) {
+        // await wt.exchangeEMP();
+        if (domain && !this.cookies[domain])
+            return buildApiRet(100, null, {code: -1, message: "unknown domain"});
+        let cookies = `uin=o${this.uin}; skey=${this.sig.skey};`;
+        if (domain)
+            cookies = `${cookies} p_uin=o${this.uin}; p_skey=${this.cookies[domain]};`;
+        return buildApiRet(0, {cookies});
+    }
+
+    async getCsrfToken(domain) {
+        // await wt.exchangeEMP();
+        let token = 5381;
+        for (let v of this.sig.skey)
+            token = token + (token << 5) + v;
+        token &= 2147483647;
+        return buildApiRet(0, {token});
+    }
 
     canSendImage() {
         return buildApiRet(0, {yes: true});
@@ -768,11 +835,9 @@ class AndroidClient extends Client {
 
 const logger = log4js.getLogger("[SYSTEM]");
 logger.level = "info";
-logger.info("OICQ程序启动。当前内核版本：v" + version.version);
+console.log("OICQ程序启动。当前内核版本：v" + version.version);
 
 const config = {
-    web_image_timeout: 0,
-    web_record_timeout: 0,
     cache_root: path.join(process.mainModule.path, "data"),
     debug: false,
 };
@@ -797,6 +862,7 @@ function createCacheDir(uin) {
 }
 
 /**
+ * @deprecated
  * @param {JSON} config 
  */
 function setGlobalConfig(config = {}) {

@@ -56,7 +56,11 @@ const client = oicq.createClient(uin, config);
 
 ----
 
-### `client.terminate()` 关闭连接
+### `client.logout()` 安全下线
+
+----
+
+### `client.terminate()` 直接关闭连接(不推荐使用)
 
 ----
 
@@ -66,10 +70,10 @@ const client = oicq.createClient(uin, config);
 
 ```js
 {
-    retcode: 0,     //0成功 1状态未知 100参数错误 102失败 103超时
+    retcode: 0,     //0成功 1状态未知 100参数错误 102失败 103超时 104断线中
     status: "ok",   //ok或async或failed
     data: null,     //数据，只有获取列表以及发消息会返回message_id，其他时候为null
-    error: "",      //错误代码和错误消息，暂未完全实现
+    error: {code: -1, message: ""}, //TX返回的错误代码和错误消息
 }
 ```
 
@@ -185,25 +189,11 @@ message可以使用 `Array` 格式或 `String` 格式，支持CQ码
 
 ### 其他
 
++ async `client.getCookies([domain])` 实验性质，更新可能存在问题
++ async `client.getCsrfToken()`
+
 + `client.canSendImage()`
 + `client.canSendRecord()`
 + `client.getStatus()`
 + `client.getVersionInfo()`
 + `client.getLoginInfo()`
-
-----
-
-## `setGlobalConfig(config)` 全局设置
-
-+ `config` \<JSON>
-
-默认config
-
-```js
-{
-    web_image_timeout:  0,  //下载网络图片的超时时间(0表示系统自己判断)
-    web_record_timeout: 0,  //下载网络语音的超时时间
-    cache_root:         "", //数据文件夹根目录，需要可写权限。默认主目录下的data文件夹
-    debug: false,
-}
-```

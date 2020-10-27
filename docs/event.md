@@ -51,6 +51,7 @@ client.on("notice", (data)=>console.log(data)); //监听所有的通知事件
   + `system.offline.kickoff` 另一处登陆
   + `system.offline.device` 由于开启设备锁，需要重新验证
   + `system.offline.unknown` 其他，可以过几秒后尝试重新login
+    + *`message`* 下线原因(string)
 
 ----
 
@@ -76,6 +77,7 @@ client.on("notice", (data)=>console.log(data)); //监听所有的通知事件
       + *`sex`*
       + *`age`*
       + *`area`*
+    + *`auto_reply`* 是否是自动回复(boolean)
 
 + **message.group**
 
