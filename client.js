@@ -3,6 +3,8 @@ const version = require("./package.json");
 const net = require("net");
 const fs = require("fs");
 const path = require("path");
+const os = require("os");
+const spawn = require("child_process");
 const crypto = require("crypto");
 const log4js = require("log4js");
 const device = require("./device");
@@ -820,6 +822,33 @@ class AndroidClient extends Client {
             token = token + (token << 5) + v;
         token &= 2147483647;
         return buildApiRet(0, {token});
+    }
+
+    /**
+     * @param {String} type "image" or "record" or undefined
+     */
+    async cleanCache(type = "") {
+        switch (type) {
+            case "image":
+            case "record":
+                const file = path.join(this.dir, "..", type, "*");
+                const cmd = os.platform().includes("win") ? `del /q ` : `rm -f `;
+                spawn.exec(cmd + file, (err, stdout, stderr)=>{
+                    if (err)
+                        return this.logger.error(err);
+                    if (stderr)
+                        return this.logger.error(stderr);
+                    this.logger.info(type + " cache clear");
+                });
+                break;
+            case "":
+                this.cleanCache("image");
+                this.cleanCache("record");
+                break;
+            default:
+                return buildApiRet(100, null, {code:-1, message:"unknown type (image, record, or undefined)"});
+        }
+        return buildApiRet(1);
     }
 
     canSendImage() {

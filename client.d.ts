@@ -228,6 +228,7 @@ export class Client extends events.EventEmitter {
 
     getCookies(domain?: string): Promise<RetCommon>;
     getCsrfToken(): Promise<RetCommon>;
+    cleanCache(type?: string): Promise<RetCommon>;
     canSendImage(): RetCommon;
     canSendRecord(): RetCommon;
     getVersionInfo(): RetCommon;
