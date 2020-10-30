@@ -615,13 +615,13 @@ class AndroidClient extends Client {
         return await this.useProtocol(troop.setAnonymous, arguments);
     }
     async setGroupWholeBan(group_id, enable = true) {
-        return await this.setGroupSetting(group_id, "shutupTime", enable?-1:0);
+        return await this.setGroupSetting(group_id, "shutupTime", enable?0xffffffff:0);
     }
     async setGroupName(group_id, group_name) {
-        return await this.setGroupSetting(group_id, "ingGroupName", Buffer.from(String(group_name)));
+        return await this.setGroupSetting(group_id, "ingGroupName", String(group_name));
     }
     async sendGroupNotice(group_id, content) {
-        return await this.setGroupSetting(group_id, "ingGroupMemo", Buffer.from(String(content)));
+        return await this.setGroupSetting(group_id, "ingGroupMemo", String(content));
     }
     async setGroupSetting(group_id, k, v) {
         return await this.useProtocol(troop.doSetting, arguments);
