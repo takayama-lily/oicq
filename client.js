@@ -382,12 +382,12 @@ class AndroidClient extends Client {
      */
     async useProtocol(fn, params) {
         if (!this.isOnline() || !this.sync_finished)
-            return buildApiRet(104);
+            return buildApiRet(104, null, {code: -1, message: "bot not online"});
         try {
             const rsp = await fn.apply(this, params);
             if (!rsp)
                 return buildApiRet(1);
-            if (rsp.result > 0)
+            if (rsp.result !== 0)
                 return buildApiRet(102, null,
                     {
                         code: rsp.result,
