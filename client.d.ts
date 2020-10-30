@@ -154,6 +154,7 @@ export interface EventData {
     source?: string,
     role?: string,
 
+    inviter_id?: number,
     operator_id?: number,
     duration?: number,
     set?: boolean,
