@@ -686,7 +686,7 @@ class AndroidClient extends Client {
      * 处理好友申请
      * @param {String} flag 从事件中得到
      * @param {Boolean} approve 
-     * @param {String} remark 暂未实现remark
+     * @param {String} remark 
      * @param {Boolean} block 是否屏蔽
      */
     async setFriendAddRequest(flag, approve = true, remark = "", block = false) {
