@@ -38,6 +38,7 @@ export interface StrangerInfo {
     sex?: string,
     age?: number,
     area?: string,
+    group_id?: number,
 }
 export interface FriendInfo extends StrangerInfo {
     remark?: string,
