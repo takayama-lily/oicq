@@ -183,9 +183,11 @@ export class Client extends events.EventEmitter {
     private constructor();
     login(password_md5?: Buffer | string): void;
     captchaLogin(captcha: string): void;
-    terminate(): void;
-    logout(): Promise<void>;
+    terminate(): void; //直接关闭连接
+    logout(): Promise<void>; //先下线再关闭连接
     isOnline(): boolean;
+
+    setOnlineStatus(status: number): Promise<RetCommon>; //11我在线上 31离开 41隐身 50忙碌 60Q我吧 70请勿打扰
 
     getFriendList(): RetFriendList;
     getStrangerList(): RetStrangerList;
@@ -221,7 +223,7 @@ export class Client extends events.EventEmitter {
     inviteFriend(group_id: Uin, user_id: Uin): Promise<RetCommon>;
     sendLike(user_id: Uin, times?: number): Promise<RetCommon>;
     setNickname(nickname: string): Promise<RetCommon>;
-    setGender(gender: 0 | 1 | 2): Promise<RetCommon>;
+    setGender(gender: 0 | 1 | 2): Promise<RetCommon>; //0未知 1男 2女
     setBirthday(birthday: string | number): Promise<RetCommon>; //20110202的形式
     setDescription(description?: string): Promise<RetCommon>;
     setSignature(signature?: string): Promise<RetCommon>;

@@ -444,10 +444,6 @@ class AndroidClient extends Client {
 
     // 以下是public方法 ----------------------------------------------------------------------------------------------------
 
-    /**
-     * 密码登陆
-     * @param {Buffer|String|undefined} password_md5 这里不传递明文密码
-     */
     login(password_md5) {
         if (this.isOnline())
             return;
@@ -468,28 +464,17 @@ class AndroidClient extends Client {
         });
     }
 
-    /**
-     * 验证码登陆
-     * @param {String} captcha 
-     */
     captchaLogin(captcha) {
         if (!this.captcha_sign)
             return this.logger.error("未收到图片验证码或已过期，你不能调用captchaLogin函数。");
         wt.captchaLogin.call(this, captcha);
     }
 
-    /**
-     * 直接关闭连接
-     * ！注意请勿直接调用end和destroy
-     */
     terminate() {
         this.reconn_flag = false;
         this.destroy();
     }
 
-    /**
-     * 安全下线
-     */
     async logout() {
         if (this.isOnline) {
             try {
@@ -503,29 +488,10 @@ class AndroidClient extends Client {
         return this.status === Client.ONLINE;
     }
 
-    /**
-     * 返回值的形式为
-     *  {
-     *      retcode: 0,     //0正常 1异步 100参数错误 102调用失败 103超时
-     *      status: "ok",   //ok正常 async异步 failed失败
-     *      data:null,      //数据，类型可能是Object或Map
-     *      error: ""       //错误信息，偶尔会有
-     *  }
-     * 之后的 @returns 指的都是成功时的data字段
-     * 
-     * 设置在线状态 仅支持手机协议
-     * @param {Number} status 11我在线上 31离开 41隐身 50忙碌 60Q我吧 70请勿打扰
-     */
     async setOnlineStatus(status) {
         return await this.useProtocol(indi.setStatus, arguments);
     }
 
-    ///////////////////////////////////////////////////
-
-    /**
-     * 好友列表、陌生人列表、群列表
-     * @returns {Map}
-     */
     getFriendList() {
         return buildApiRet(0, this.fl);
     }
@@ -536,11 +502,6 @@ class AndroidClient extends Client {
         return buildApiRet(0, this.gl);
     }
 
-    /**
-     * 群员列表使用懒加载，不会在启动时加载所有的群员列表
-     * 只会在系统认为需要用到的时候进行加载和更新
-     * @returns {Map}
-     */
     async getGroupMemberList(group_id) {
         group_id = parseInt(group_id);
         if (!checkUin(group_id))
@@ -554,42 +515,18 @@ class AndroidClient extends Client {
             return buildApiRet(0, mlist);
         return buildApiRet(102);
     }
-
-    /**
-     * 获取陌生人资料
-     * @returns {JSON} data
-     */
     async getStrangerInfo(user_id, no_cache = false) {
         return await this.useProtocol(resource.getSI, arguments);
     }
-
-    /**
-     * 群资料会自动和服务器同步，一般来说无需使用no_cache获取
-     * @returns {JSON} data
-     */
     async getGroupInfo(group_id, no_cache = false) {
         return await this.useProtocol(resource.getGI, arguments);
     }
-
-    /**
-     * 群员资料一般来说也无需使用no_cache获取(性别、年龄等可能更新不及时)
-     * @returns {JSON}
-     */
     async getGroupMemberInfo(group_id, user_id, no_cache = false) {
         return await this.useProtocol(resource.getGMI, arguments);
     }
 
     ///////////////////////////////////////////////////
 
-    /**
-     * 发送私聊
-     * 发送群聊，被风控会自动转为长消息发送
-     * 发送讨论组
-     * @param {String|Array} message 数组或字符串格式的消息
-     * @param {Boolean} auto_escape 是否不解析CQ码
-     * @returns {JSON}
-     *  @field {String} message_id
-     */
     async sendPrivateMsg(user_id, message = "", auto_escape = false) {
         return await this.useProtocol(chat.sendMsg, [user_id, message, auto_escape, 0]);
     }
@@ -599,11 +536,6 @@ class AndroidClient extends Client {
     async sendDiscussMsg(discuss_id, message = "", auto_escape = false) {
         return await this.useProtocol(chat.sendMsg, [discuss_id, message, auto_escape, 2]);
     }
-
-    /**
-     * 撤回消息，暂时为立即返回，无法立即知晓是否成功
-     * @param {String} message_id
-     */
     async deleteMsg(message_id) {
         return await this.useProtocol(chat.recallMsg, arguments);
     }
@@ -629,152 +561,63 @@ class AndroidClient extends Client {
     async setGroupAdmin(group_id, user_id, enable = true) {
         return await this.useProtocol(troop.setAdmin, arguments);
     }
-
-    /**
-     * 设置群头衔，最大长度未测试
-     * @param {String} special_title 为空收回
-     * @param {Number} duration -1代表无限期
-     */
     async setGroupSpecialTitle(group_id, user_id, special_title = "", duration = -1) {
         return await this.useProtocol(troop.setTitle, arguments);
     }
-
-    ///////////////////////////////////////////////////
-
-    /**
-     * 设置群名片，超过60字节会被截断
-     * @param {String} card 为空还原
-     */
     async setGroupCard(group_id, user_id, card = "") {
         return await this.useProtocol(troop.setCard, arguments);
     }
-
-    /**
-     * 踢人，即使原来就无此人也会返回成功
-     * @param {Boolean} reject_add_request 是否屏蔽
-     */
     async setGroupKick(group_id, user_id, reject_add_request = false) {
         return await this.useProtocol(troop.kickMember, arguments);
     }
-
-    /**
-     * 禁言，暂时为立即返回，无法立即知晓是否成功 
-     * @param {Number} duration 秒数
-     */
     async setGroupBan(group_id, user_id, duration = 1800) {
         return await this.useProtocol(troop.muteMember, arguments);
     }
-
-    /**
-     * 退群，即使你本来就不在此群，也会返回成功
-     * @param {Boolean} is_dismiss 不设置is_dismiss只要是群主貌似也可以解散(可能和规模有关?)
-     */
     async setGroupLeave(group_id, is_dismiss = false) {
         return await this.useProtocol(troop.quitGroup, arguments);
     }
-
-    /**
-     * 群戳一戳，暂时为立即返回，无法立即知晓是否成功
-     */
     async sendGroupPoke(group_id, user_id) {
         return await this.useProtocol(troop.pokeMember, arguments);
     }
 
     ///////////////////////////////////////////////////
 
-    /**
-     * 处理好友申请
-     * @param {String} flag 从事件中得到
-     * @param {Boolean} approve 
-     * @param {String} remark 
-     * @param {Boolean} block 是否屏蔽
-     */
     async setFriendAddRequest(flag, approve = true, remark = "", block = false) {
         return await this.useProtocol(sysmsg.friendAction, arguments);
     }
-
-    /**
-     * 处理群申请和邀请
-     * @param {String} flag 从事件中得到
-     * @param {Boolean} approve 
-     * @param {String} reason 拒绝理由，仅在拒绝他人加群时有效
-     * @param {Boolean} block 是否屏蔽
-     */
     async setGroupAddRequest(flag, approve = true, reason = "", block = false) {
         return await this.useProtocol(sysmsg.groupAction, arguments);
     }
 
-    /**
-     * 发送加群申请，即使你已经在群里，也会返回成功
-     * ※设置为要正确回答问题的群，暂时回返回失败
-     * ※风险接口，每日加群超过一定数量账号必被风控(甚至ip)
-     * @param {String} comment 附加信息
-     */
     async addGroup(group_id, comment = "") {
         return await this.useProtocol(troop.addGroup, arguments);
     }
-
-    /**
-     * 加群员为好友，暂不支持非群员(群号可以传0，但是必须有共同群，否则对方无法收到请求)
-     * ※对方设置要正确回答问题的时候，暂时会返回失败
-     * ※风险接口，每日加好友超过一定数量账号必被风控(甚至ip)
-     * @param {String} comment 附加信息
-     */
     async addFriend(group_id, user_id, comment = "") {
         return await this.useProtocol(indi.addFriend, arguments);
     }
-
-    /**
-     * 删除好友，即使对方本来就不是你的好友，也会返回成功
-     * @param {Boolean} block 是否屏蔽
-     */
     async deleteFriend(user_id, block = true) {
         return await this.useProtocol(indi.delFriend, arguments);
     }
-
-    /**
-     * 邀请好友入群，暂不支持邀请陌生人
-     * ※对方必须是BOT的好友，否则返回失败
-     * ※如果BOT不是对方的好友(单向)，对方又设置了拒绝陌生人邀请，此时会返回成功但是对方实际收不到邀请
-     */
     async inviteFriend(group_id, user_id) {
         return await this.useProtocol(troop.inviteFriend, arguments);
     }
 
-    /**
-     * 点赞，请勿频繁调用，否则有冻结风险
-     */
+
     async sendLike(user_id, times = 1) {
         return await this.useProtocol(indi.sendLike, arguments);
     }
-
-    /**
-     * @param {String} nickname 昵称最长48字节，允许设为空，别人看到的昵称会变为你的QQ号
-     */
     async setNickname(nickname) {
         return await this.useProtocol(indi.setProfile, [0x14E22, String(nickname)]);
     }
-
-    /**
-     * @param {String} description 设置个人说明
-     */
     async setDescription(description = "") {
         return await this.useProtocol(indi.setProfile, [0x14E33, String(description)]);
     }
-
-    /**
-     * @param {Number} gender 性别 0未知 1男 2女
-     */
     async setGender(gender) {
         gender = parseInt(gender);
         if (![0,1,2].includes(gender))
             return buildApiRet(100);
         return await this.useProtocol(indi.setProfile, [0x14E29, Buffer.from([gender])]);
     }
-
-    /**
-     * @param {String} birthday 生日必须是20110202这样的形式
-     */
     async setBirthday(birthday) {
         try {
             birthday = String(birthday).replace(/[^\d]/g, "");
@@ -787,18 +630,9 @@ class AndroidClient extends Client {
             return buildApiRet(100);
         }
     }
-
-    /**
-     * @param {String} signature 个人签名超过254字节会被截断
-     */
     async setSignature(signature = "") {
         return await this.useProtocol(indi.setSign, arguments);
     }
-
-    /**
-     * 设置个人头像
-     * @param {Buffer|String} file Buffer或与图片CQ码中file格式相同的字符串("base64://xxx"或"http://xxx"等)
-     */
     async setPortrait(file) {
         return await this.useProtocol(indi.setPortrait, arguments);
     }
