@@ -112,6 +112,9 @@ export interface RetSendMsg extends RetCommon {
 
 //////////
 
+/**
+ * @see https://github.com/howmanybots/onebot/blob/master/v11/specs/message/segment.md
+ */
 export interface MessageElem {
     type: string,
     data: object,
