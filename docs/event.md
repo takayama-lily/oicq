@@ -139,6 +139,7 @@ client.on("notice", (data)=>console.log(data)); //监听所有的通知事件
     + *`user_id`*
     + *`nickname`*
     + *`comment`*
+    + *`inviter_id`*
     + *`flag`*
 
   + `request.group.invite` 加群邀请
