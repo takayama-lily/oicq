@@ -106,6 +106,7 @@ export class Client extends oicq.Client {
     seq_id: number;
     handlers: Map<number, (Buffer) => void>;
     seq_cache: Map<number, number>;
+    notify33cache: Set<BigInt>;
 
     session_id: Buffer;
     random_key: Buffer;

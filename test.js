@@ -54,13 +54,13 @@ function account() {
             })
 
             bot.on("request", (data)=>{
-                console.log(data);
+                console.log("收到request事件", data);
             });
             bot.on("notice", (data)=>{
-                console.log(data);
+                console.log("收到notice事件", data);
             });
             bot.on("message", (data)=>{
-                // console.log(data.message_id);
+                // console.log("收到message事件", data);
             });
         } catch (e) {
             console.log(e.message);
@@ -78,7 +78,8 @@ function password() {
     })
 }
 function loop() {
-    const help = `※发言: send target msg
+    const help = `※友情提示：将log_level设为trace可获得详细的收发包信息。
+※发言: send target msg
 ※退出: bye
 ※执行任意代码: eval code`;
     console.log(help);
@@ -99,14 +100,14 @@ function loop() {
                     res = await bot.sendGroupMsg(target, abc[1]);
                 else
                     res = await bot.sendPrivateMsg(target, abc[1]);
-                console.log(res);
+                console.log("发送消息结果", res);
                 break;
             case "eval":
                 try {
                     let res = eval(param);
                     if (res instanceof Promise)
                         res = await res;
-                    console.log(res);
+                    console.log("执行结果", res);
                 } catch (e) {
                     console.log(e.stack);
                 }

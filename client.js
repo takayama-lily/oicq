@@ -78,6 +78,7 @@ class AndroidClient extends Client {
     seq_id = 0;
     handlers = new Map();
     seq_cache = new Map();
+    notify33cache = new Set();
 
     session_id = crypto.randomBytes(4);
     random_key = crypto.randomBytes(16);
