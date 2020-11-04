@@ -130,5 +130,6 @@ export class Client extends oicq.Client {
     send(): Promise<Buffer>;
     sendUNI(cmd: string, body: Buffer, seq?: number): Promise<Buffer>;
     writeUNI(cmd: string, body: Buffer, seq?: number): void;
+    useProtocol(fn: Function, params: any[]): oicq.RetCommon;
     em(name: string, data: object): void;
 }

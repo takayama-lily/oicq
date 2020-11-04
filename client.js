@@ -8,7 +8,7 @@ const spawn = require("child_process");
 const crypto = require("crypto");
 const log4js = require("log4js");
 const device = require("./device");
-const {checkUin} = require("./lib/common");
+const {checkUin, timestamp} = require("./lib/common");
 const core = require("./lib/core");
 const resource = require("./lib/resource");
 const sysmsg = require("./lib/sysmsg");
@@ -109,11 +109,6 @@ class AndroidClient extends Client {
 
     dir;
 
-    /**
-     * @constructor
-     * @param {Number} uin
-     * @param {Object} config 
-     */
     constructor(uin, config = {}) {
         super();
         this.uin = uin;
@@ -198,25 +193,15 @@ class AndroidClient extends Client {
         })
 
         this.on("internal.login", async()=>{
-            this.once("internal.change-server", ()=>{
-                // todo
-            });
             this.logger.info(`Welcome, ${this.nickname} ! 开始初始化资源...`);
             this.sync_cookie = null;
             this.sync_finished = false;
             await this.register();
             if (!this.isOnline())
                 return;
-            const initFL = async()=>{
-                let start = 0;
-                while (1) {
-                    const total = await resource.initFL.call(this, start);
-                    start += 150;
-                    if (start > total) break;
-                }
-            }
             await Promise.all([
-                initFL(), resource.initGL.call(this)
+                resource.initFL.call(this),
+                resource.initGL.call(this)
             ]);
             this.logger.info(`加载了${this.fl.size}个好友，${this.gl.size}个群。`);
             await core.getMsg.call(this);
@@ -226,10 +211,6 @@ class AndroidClient extends Client {
         });
     }
 
-    /**
-     * @private
-     * @param {Function} callback 
-     */
     _connect(callback = ()=>{}) {
         if (this.status !== Client.OFFLINE) {
             return callback();
@@ -244,22 +225,12 @@ class AndroidClient extends Client {
         });
     }
 
-    /**
-     * @private
-     * @returns {Number} this.seq_id
-     */
     nextSeq() {
         if (++this.seq_id >= 0x8000)
             this.seq_id = 1;
         return this.seq_id;
     }
 
-    /**
-     * @private
-     * @param {Buffer} packet
-     * @param {Number} timeout ms
-     * @returns {OICQResponse}
-     */
     async send(packet, timeout = 3000) {
         const seq_id = this.seq_id;
         return new Promise((resolve, reject)=>{
@@ -284,14 +255,11 @@ class AndroidClient extends Client {
         return await this.send(wt.build0x0BPacket.apply(this, arguments));
     }
 
-    /**
-     * @private
-     */
     startHeartbeat() {
         if (this.heartbeat)
             return;
         this.heartbeat = setInterval(async()=>{
-            this._calc_msg_cnt();
+            core.calcMsgCnt.call(this);
             if (Date.now() - this.send_timestamp > 240000)
                 core.getMsg.call(this);
             try {
@@ -355,29 +323,6 @@ class AndroidClient extends Client {
     }
 
     /**
-     * @private
-     * @param {Number} group_id
-     */
-    async _getGroupMemberList(group_id) {
-        let mlist = new Map();
-        try {
-            var next = 0;
-            while (1) {
-                var {map, next} = await resource.getGML.call(this, group_id, next);
-                mlist = new Map([...mlist, ...map]);
-                if (!next) break;
-            }
-        } catch (e) {}
-        if (!mlist.size) {
-            this.gml.delete(group_id);
-            return null;
-        } else {
-            this.gml.set(group_id, mlist);
-            return mlist;
-        }
-    }
-
-    /**
      * @param {Function} fn 
      * @param {Array} params 
      */
@@ -404,16 +349,12 @@ class AndroidClient extends Client {
         }
     }
 
-    /**
-     * @param {String} name 
-     * @param {Object} data 
-     */
     em(name, data = {}) {
         const slice = name.split(".");
         const post_type = slice[0], sub_type = slice[2];
         const param = {
             self_id:    this.uin,
-            time:       parseInt(Date.now()/1000),
+            time:       timestamp(),
             post_type:  post_type
         };
         const type_name = slice[0] + "_type";
@@ -428,19 +369,6 @@ class AndroidClient extends Client {
             this.emit(lv2_event, param);
         else
             this.emit(post_type, param);
-    }
-
-    /**
-     * 计算每分钟消息数量
-     */
-    _calc_msg_cnt() {
-        for (let i = 0; i < this.msg_times.length; ++i) {
-            if (Date.now() - this.msg_times[i] * 1000 <= 60000) {
-                this.msg_times = this.msg_times.slice(i);
-                return;
-            }
-        }
-        this.msg_times = [];
     }
 
     // 以下是public方法 ----------------------------------------------------------------------------------------------------
@@ -468,7 +396,9 @@ class AndroidClient extends Client {
     captchaLogin(captcha) {
         if (!this.captcha_sign)
             return this.logger.error("未收到图片验证码或已过期，你不能调用captchaLogin函数。");
-        wt.captchaLogin.call(this, captcha);
+        this._connect(()=>{
+            wt.captchaLogin.call(this, captcha);
+        });
     }
 
     terminate() {
@@ -508,7 +438,7 @@ class AndroidClient extends Client {
         if (!checkUin(group_id))
             return buildApiRet(100);
         if (!this.gml.has(group_id))
-            this.gml.set(group_id, this._getGroupMemberList(group_id));
+            this.gml.set(group_id, resource.getGML.call(this, group_id));
         let mlist = this.gml.get(group_id);
         if (mlist instanceof Promise)
             mlist = await mlist;
@@ -543,7 +473,7 @@ class AndroidClient extends Client {
 
     ///////////////////////////////////////////////////
 
-    // async setGroupAnonymousBan(group_id, anonymous_flag,  duration = 1800) {}
+    // async setGroupAnonymousBan(group_id, anonymous_flag, duration = 1800) {}
     async setGroupAnonymous(group_id, enable = true) {
         return await this.useProtocol(troop.setAnonymous, arguments);
     }
@@ -603,7 +533,6 @@ class AndroidClient extends Client {
         return await this.useProtocol(troop.inviteFriend, arguments);
     }
 
-
     async sendLike(user_id, times = 1) {
         return await this.useProtocol(indi.sendLike, arguments);
     }
@@ -650,7 +579,7 @@ class AndroidClient extends Client {
         return buildApiRet(0, {cookies});
     }
 
-    async getCsrfToken(domain) {
+    async getCsrfToken() {
         // await wt.exchangeEMP();
         let token = 5381;
         for (let v of this.sig.skey)
@@ -696,7 +625,7 @@ class AndroidClient extends Client {
         return buildApiRet(0, version);
     }
     getStatus() {
-        this._calc_msg_cnt();
+        core.calcMsgCnt.call(this);
         return buildApiRet(0, {
             online: this.isOnline(),
             status: this.online_status,
