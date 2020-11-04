@@ -78,7 +78,6 @@ class AndroidClient extends Client {
     seq_id = 0;
     handlers = new Map();
     seq_cache = new Map();
-    notify33cache = new Set();
 
     session_id = crypto.randomBytes(4);
     random_key = crypto.randomBytes(16);
@@ -99,7 +98,6 @@ class AndroidClient extends Client {
         device_token: BUF0,
     };
     cookies = {};
-    msg_times = [];
 
     sync_finished = false;
     sync_cookie;
@@ -259,7 +257,7 @@ class AndroidClient extends Client {
         if (this.heartbeat)
             return;
         this.heartbeat = setInterval(async()=>{
-            core.calcMsgCnt.call(this);
+            this.doCircle();
             if (Date.now() - this.send_timestamp > 240000)
                 core.getMsg.call(this);
             try {
@@ -369,6 +367,41 @@ class AndroidClient extends Client {
             this.emit(lv2_event, param);
         else
             this.emit(post_type, param);
+    }
+
+    msgExists(from, type, seq, time) {
+        if (timestamp() - time >= 60)
+            return true;
+        const id = [from, type, seq].join("-");
+        const set = this.seq_cache.get(time);
+        if (!set) {
+            this.seq_cache.set(time, new Set([id]));
+            return false;
+        } else {
+            if (set.has(id))
+                return true;
+            else
+                set.add(id);
+            return false;
+        }
+    }
+    doCircle() {
+        for (let time of this.seq_cache.keys()) {
+            if (timestamp() - time >= 60)
+                this.seq_cache.delete(time);
+            else
+                break;
+        }
+    }
+    calcMsgCnt() {
+        let cnt = 0;
+        for (let [time, set] of this.seq_cache) {
+            if (timestamp() - time >= 60)
+                this.seq_cache.delete(time);
+            else
+                cnt += set.size;
+        }
+        return cnt;
     }
 
     // 以下是public方法 ----------------------------------------------------------------------------------------------------
@@ -625,11 +658,10 @@ class AndroidClient extends Client {
         return buildApiRet(0, version);
     }
     getStatus() {
-        core.calcMsgCnt.call(this);
         return buildApiRet(0, {
             online: this.isOnline(),
             status: this.online_status,
-            msg_cnt_per_min: this.msg_times.length,
+            msg_cnt_per_min: this.calcMsgCnt()
         })
     }
     getLoginInfo() {
