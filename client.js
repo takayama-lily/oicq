@@ -110,16 +110,18 @@ class AndroidClient extends Client {
     constructor(uin, config = {}) {
         super();
         this.uin = uin;
-        this.dir = createCacheDir(uin);
 
         config = {
             platform:    2,      //1手机 2平板 3手表(不支持部分群事件)
             log_level:   "info", //trace,debug,info,warn,error,fatal,off
             kickoff:     false,  //被挤下线是否在3秒后反挤
             ignore_self: true,   //是否无视自己的消息(群聊、私聊)
+            data_dir:    path.join(process.mainModule.path, "data"),
             ...config
         };
         this.config = config;
+
+        this.dir = createCacheDir(config.data_dir, uin);
 
         this.logger = log4js.getLogger(`[BOT:${uin}]`);
         this.logger.level = config.log_level;
@@ -675,25 +677,23 @@ class AndroidClient extends Client {
 
 //----------------------------------------------------------------------------------------------------
 
+/**
+ * @deprecated
+ */
 const logger = log4js.getLogger("[SYSTEM]");
 logger.level = "info";
+process.OICQ = {
+    logger
+};
+
 console.log("OICQ程序启动。当前内核版本：v" + version.version);
 
-const config = {
-    cache_root: path.join(process.mainModule.path, "data"),
-    debug: false,
-};
-
-process.OICQ = {
-    logger, config
-};
-
-function createCacheDir(uin) {
-    if (!fs.existsSync(config.cache_root))
-        fs.mkdirSync(config.cache_root, {mode: 0o755, recursive: true});
-    const img_path = path.join(config.cache_root, "image");
-    const ptt_path = path.join(config.cache_root, "record");
-    const uin_path = path.join(config.cache_root, uin.toString());
+function createCacheDir(dir, uin) {
+    if (!fs.existsSync(dir))
+        fs.mkdirSync(dir, {mode: 0o755, recursive: true});
+    const img_path = path.join(dir, "image");
+    const ptt_path = path.join(dir, "record");
+    const uin_path = path.join(dir, String(uin));
     if (!fs.existsSync(img_path))
         fs.mkdirSync(img_path);
     if (!fs.existsSync(ptt_path))
@@ -705,13 +705,8 @@ function createCacheDir(uin) {
 
 /**
  * @deprecated
- * @param {JSON} config 
  */
-function setGlobalConfig(config = {}) {
-    Object.assign(process.OICQ.config, config);
-    if (config.debug)
-        logger.level = "debug";
-}
+function setGlobalConfig() {}
 
 /**
  * @param {Number} uin 
