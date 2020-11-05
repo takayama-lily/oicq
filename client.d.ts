@@ -6,17 +6,12 @@ import * as events from 'events';
 
 export type Uin = string | number;
 
-export interface ConfGlobal {
-    web_image_timeout?: number, //下载的超时秒数，默认系统自己判断
-    web_record_timeout?: number,
-    cache_root?: string, //数据文件夹路径，需要可写权限，默认主目录下data文件夹
-    debug?: boolean,
-}
 export interface ConfBot {
     log_level?: "trace" | "debug" | "info" | "warn" | "error" | "fatal" | "off", //默认info
     platform?: number, //1手机 2平板(默认) 3手表(不支持部分群事件)
     kickoff?: boolean, //被挤下线是否在3秒后反挤对方，默认false
     ignore_self?: boolean,//群聊是否无视自己的发言，默认true
+    data_dir?: string, //数据存储文件夹，需要可写权限，默认主目录下的data文件夹
 }
 
 export interface RetError {
@@ -251,8 +246,3 @@ export class Client extends events.EventEmitter {
 }
 
 export function createClient(uin: Uin, config?: ConfBot): Client;
-
-/**
- * @deprecated
- */
-export function setGlobalConfig(config?: ConfGlobal): void;

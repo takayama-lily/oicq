@@ -105,8 +105,7 @@ export class Client extends oicq.Client {
     heartbeat: NodeJS.Timeout | null;
     seq_id: number;
     handlers: Map<number, (Buffer) => void>;
-    seq_cache: Map<number, number>;
-    notify33cache: Set<BigInt>;
+    seq_cache: Map<number, Set<string>>;
 
     session_id: Buffer;
     random_key: Buffer;
@@ -124,11 +123,12 @@ export class Client extends oicq.Client {
     dir: string;
     sig: Sig;
     cookies: object;
-    msg_times: number[];
 
     nextSeq(): number;
     send(): Promise<Buffer>;
     sendUNI(cmd: string, body: Buffer, seq?: number): Promise<Buffer>;
     writeUNI(cmd: string, body: Buffer, seq?: number): void;
+    useProtocol(fn: Function, params: any[]): oicq.RetCommon;
     em(name: string, data: object): void;
+    msgExists(from: number, type: number, seq: number, time: number): boolean;
 }
