@@ -5,12 +5,12 @@
 
 ----
 
-|[消息]|文字和表情|长消息|图片|语音|合并转发|xml/json|
-|-|-|-|-|-|-|-|
-|好友|◯|◯|◯|◯|<s>◯</s>|✕|
-|群聊|◯|◯|◯|◯|<s>◯</s>|✕|
-|讨论组|◯|◯|◯|◯|<s>◯</s>|✕|
-|临时会话|◯|◯|◯|||✕|
+|[消息]|文字和表情|长消息|图片|语音|合并转发|xml/json|匿名|
+|-|-|-|-|-|-|-|-|
+|好友|◯|◯|◯|◯|<s>◯</s>|✕||
+|群聊|◯|◯|◯|◯|<s>◯</s>|✕|◯|
+|讨论组|◯|◯|◯|◯|<s>◯</s>|✕|✕|
+|临时会话|◯|◯|◯|✕|✕|✕||
 
 ----
 
@@ -75,6 +75,7 @@
 |image|◯|◯|参考 [图片](https://github.com/howmanybots/onebot/blob/master/v11/specs/message/segment.md#%E5%9B%BE%E7%89%87)|
 |record|◯|◯|语音，写法同image<br>支持任何格式的音频自动转amr(必须将 [ffmpeg](http://ffmpeg.org/download.html) 加入环境变量path)<br>linux下的ffmpeg不自带amr解码器，可能需要自行编译ffmpeg|
 |flash|◯|◯|闪照，写法同image|
+|anonymous||◯|发匿名，[CQ:anonymous,ignore=1]<br>ignore可省略，为0时匿名失败不发送|
 |notice|◯|✕|群公告，[CQ:notice,title=群公告,content=xxxxxx]|
 |file|◯|✕|群文件，[CQ:file,url=xxxxxx,size=123456,md5=xxxxxx,duration=0,name=xxxxxx]|
 |music|✕|✕|
