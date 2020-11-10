@@ -8,7 +8,7 @@
 * 将会逐步支持手机协议的大部分功能。
 * 使用 [CQHTTP](https://cqhttp.cc) 风格的API、事件和参数(少量差异)，并且原生支持经典的CQ码。  
 * 本项目使用AGPL-3.0许可证，旨在学习。不推荐也不提供商业化使用的支持。
-* 有bug请告诉我！
+* 有bug请告诉我！PR请基于dev分支！
 
 ----
 
@@ -36,6 +36,8 @@ bot.on("notice", data=>console.log(data));
 const password_md5 = "202cb962ac59075b964b07152d234b70";
 bot.login(password_md5);
 ```
+
+[登陆失败常见问题](https://github.com/takayama-lily/onebot/issues/12)
 
 **如果需要跨进程的通信，可以使用：**
 
