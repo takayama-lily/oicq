@@ -149,7 +149,6 @@ class AndroidClient extends Client {
 
         this.on("error", (err)=>{
             this.logger.error(err.message);
-            this.status = Client.INIT;
         });
         this.on("close", (e_flag)=>{
             this.read();
