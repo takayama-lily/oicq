@@ -129,7 +129,7 @@ class AndroidClient extends Client {
                     this.reconn_flag = false;
                 setTimeout(()=>{
                     this._connect(this.register.bind(this));
-                }, 1000);
+                }, 500);
             }
         });
 

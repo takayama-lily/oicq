@@ -87,7 +87,7 @@ CQ码是指字符串格式下用于表示多媒体内容的方式，形如：
 |anonymous||◯|发匿名，[CQ:anonymous,ignore=1]<br>ignore可省略，为0时匿名失败不发送|
 |notice|◯||群公告|
 |file|◯||群文件|
-|music|✕|✕|
+|music|◯|◯|[CQ:music,type=qq,id=xxxxxx]<br>[CQ:music,type=163,id=xxxxxx]|
 |video|✕|✕|
 |location|◯|◯|[CQ:location,address=江西省九江市修水县,lat=29.063940,lng=114.339610]|
 |contact|◯|✕|联系人或群推荐
