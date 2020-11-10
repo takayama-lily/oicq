@@ -54,6 +54,20 @@ export interface Sig {
     device_token?: Buffer,
 }
 
+export interface ApkInfo {
+    id: string,
+    name: string,
+    version: string,
+    ver: string,
+    sign: Buffer,
+    buildtime: number,
+    appid: number,
+    subid: number,
+    bitmap: number,
+    sigmap: number,
+    sdkver: string,
+}
+
 export interface ProtocolResponse {
     result: number,
     emsg?: string,
@@ -76,16 +90,7 @@ export class Client extends oicq.Client {
     status: Symbol;
     kickoff_reconn: boolean;
 
-    apkid: string;
-    apkver: string;
-    apkname: string;
-    apksign: Buffer;
-    buildtime: number;
-    appid: number;
-    sub_appid: number;
-    bitmap: number;
-    sigmap: number;
-    sdkver: string;
+    apk: ApkInfo;
     ksid: string | Buffer;
     device: Device;
     
