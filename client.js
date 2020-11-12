@@ -74,6 +74,7 @@ class AndroidClient extends Client {
         sig_key: BUF0,
         ticket_key: BUF0,
         device_token: BUF0,
+        emp_time: timestamp(),
     };
     cookies = {};
 
@@ -223,14 +224,16 @@ class AndroidClient extends Client {
             return;
         this.heartbeat = setInterval(async()=>{
             this.doCircle();
-            if (Date.now() - this.send_timestamp > 240000)
-                core.getMsg.call(this);
             try {
                 await wt.heartbeat.call(this);
-            } catch (e) {
-                this.logger.warn("Heartbeat timeout!");
-                if (Date.now() - this.recv_timestamp > 10000)
-                    this.destroy();
+            } catch {
+                try {
+                    await wt.heartbeat.call(this);
+                } catch {
+                    this.logger.warn("Heartbeat timeout!");
+                    if (Date.now() - this.recv_timestamp > 15000)
+                        this.destroy();
+                }
             }
         }, 60000);
     }
@@ -350,6 +353,9 @@ class AndroidClient extends Client {
         }
     }
     doCircle() {
+        wt.exchangeEMP.call(this);
+        if (Date.now() - this.send_timestamp > 120000)
+            core.getMsg.call(this);
         for (let time of this.seq_cache.keys()) {
             if (timestamp() - time >= 60)
                 this.seq_cache.delete(time);
@@ -567,7 +573,7 @@ class AndroidClient extends Client {
     ///////////////////////////////////////////////////
 
     async getCookies(domain) {
-        // await wt.exchangeEMP();
+        await wt.exchangeEMP.call(this);
         if (domain && !this.cookies[domain])
             return buildApiRet(100, null, {code: -1, message: "unknown domain"});
         let cookies = `uin=o${this.uin}; skey=${this.sig.skey};`;
@@ -577,7 +583,7 @@ class AndroidClient extends Client {
     }
 
     async getCsrfToken() {
-        // await wt.exchangeEMP();
+        await wt.exchangeEMP.call(this);
         let token = 5381;
         for (let v of this.sig.skey)
             token = token + (token << 5) + v;

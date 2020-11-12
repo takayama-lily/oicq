@@ -52,6 +52,7 @@ export interface Sig {
     sig_key: Buffer,
     ticket_key: Buffer,
     device_token?: Buffer,
+    emp_time: number,
 }
 
 export interface ApkInfo {
