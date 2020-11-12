@@ -77,8 +77,7 @@ CQ码是指字符串格式下用于表示多媒体内容的方式，形如：
 |[CQ码]|收|发|说明|
 |-|-|-|-|
 |at|◯|◯|[CQ:at,qq=123456,text=@ABC,dummy=0]<br>text用来定义@不到时的输出<br>dummy设为1可以假@|
-|face|◯|◯|[CQ:face,id=104]
-|sface|◯|◯|此表情HD协议不支持，[CQ:sface,id=271,text=/吃瓜]|
+|face|◯|◯|[CQ:face,id=104]|
 |bface|◯|◯|原创表情，[CQ:bface,file=xxxxxxxx,text=摸头]|
 |dice&rps|◯|◯|骰子和猜拳：<br>[CQ:dice,id=1]<br>[CQ:rps,id=1]|
 |image|◯|◯|参考 [图片](https://github.com/howmanybots/onebot/blob/master/v11/specs/message/segment.md#%E5%9B%BE%E7%89%87)|
