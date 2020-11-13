@@ -84,6 +84,15 @@ class AndroidClient extends Client {
     const2 = crypto.randomBytes(4).readUInt32BE();
     const3 = crypto.randomBytes(1)[0];
 
+    stat = {
+        start_time: timestamp(),
+        lost_times: 0,
+        recv_pkt_cnt: 0,
+        sent_pkt_cnt: 0,
+        recv_msg_cnt: 0,
+        sent_msg_cnt: 0,
+    };
+
     constructor(uin, config) {
         super();
         this.uin = uin;
@@ -117,6 +126,7 @@ class AndroidClient extends Client {
         });
         this.on("close", (e_flag)=>{
             this.read();
+            ++this.stat.lost_times;
             if (this.remoteAddress)
                 this.logger.info(`${this.remoteAddress}:${this.remotePort} closed`);
             this.stopHeartbeat();
@@ -143,6 +153,7 @@ class AndroidClient extends Client {
                     this.reconn_flag = true;
                     this.recv_timestamp = Date.now();
                     const packet = this.read(len - 4);
+                    ++this.stat.recv_pkt_cnt;
                     try {
                         core.parseIncomingPacket.call(this, packet);
                     } catch (e) {
@@ -196,6 +207,7 @@ class AndroidClient extends Client {
     }
 
     async send(packet, timeout = 3000) {
+        ++this.stat.sent_pkt_cnt;
         const seq_id = this.seq_id;
         return new Promise((resolve, reject)=>{
             this.write(packet, ()=>{
@@ -213,6 +225,7 @@ class AndroidClient extends Client {
         });
     }
     writeUNI(cmd, body, seq) {
+        ++this.stat.sent_pkt_cnt;
         this.write(wt.build0x0BPacket.apply(this, arguments));
     }
     async sendUNI(cmd, body, seq) {
@@ -634,7 +647,8 @@ class AndroidClient extends Client {
         return buildApiRet(0, {
             online: this.isOnline(),
             status: this.online_status,
-            msg_cnt_per_min: this.calcMsgCnt()
+            msg_cnt_per_min: this.calcMsgCnt(),
+            statistics: this.stat,
         })
     }
     getLoginInfo() {
