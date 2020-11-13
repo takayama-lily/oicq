@@ -569,6 +569,9 @@ class AndroidClient extends Client {
     async setPortrait(file) {
         return await this.useProtocol(indi.setPortrait, arguments);
     }
+    async setGroupPortrait(group_id, file) {
+        return await this.useProtocol(indi.setGroupPortrait, arguments);
+    }
 
     ///////////////////////////////////////////////////
 
