@@ -94,11 +94,9 @@ export interface Statistics {
 
 export class Client extends oicq.Client {
     logger: log4js.Logger;
-    ignore_self: boolean;
     reconn_flag: boolean;
     config: oicq.ConfBot;
     status: Symbol;
-    kickoff_reconn: boolean;
 
     apk: ApkInfo;
     ksid: string | Buffer;

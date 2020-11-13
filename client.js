@@ -98,19 +98,18 @@ class AndroidClient extends Client {
         this.uin = uin;
 
         config = {
-            platform:    2,      //1手机 2平板 3手表(不支持部分群事件)
-            log_level:   "info", //trace,debug,info,warn,error,fatal,off
-            kickoff:     false,  //被挤下线是否在3秒后反挤
-            ignore_self: true,   //是否无视自己的消息(群聊、私聊)
-            data_dir:    path.join(process.mainModule.path, "data"),
+            platform: 2,
+            log_level: "info",
+            kickoff: false,
+            ignore_self:true,
+            resend: true,
+            data_dir: path.join(process.mainModule.path, "data"),
             ...config
         };
         this.config = config;
-        this.dir = createCacheDir(config.data_dir, uin);
+        this.dir = createDataDir(config.data_dir, uin);
         this.logger = log4js.getLogger(`[BOT:${uin}]`);
         this.logger.level = config.log_level;
-        this.ignore_self = !!config.ignore_self;
-        this.kickoff_reconn = !!config.kickoff;
 
         const filepath = path.join(this.dir, `device-${uin}.json`);
         if (!fs.existsSync(filepath))
@@ -279,7 +278,7 @@ class AndroidClient extends Client {
                 let sub_type;
                 if (data.info.includes("另一")) {
                     sub_type = "kickoff";
-                    if (this.kickoff_reconn) {
+                    if (this.config.kickoff) {
                         this.logger.info("3秒后重新连接..");
                         setTimeout(this.login.bind(this), 3000);
                     } else {
@@ -671,7 +670,7 @@ process.OICQ = {
 
 console.log("OICQ程序启动。当前内核版本：v" + version.version);
 
-function createCacheDir(dir, uin) {
+function createDataDir(dir, uin) {
     if (!fs.existsSync(dir))
         fs.mkdirSync(dir, {mode: 0o755, recursive: true});
     const img_path = path.join(dir, "image");
