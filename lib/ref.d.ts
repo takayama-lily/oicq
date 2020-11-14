@@ -81,15 +81,22 @@ export interface HighwayUploadObject {
     key: Buffer,
 }
 
+export interface Statistics {
+    start_time: number,
+    lost_times: number,
+    recv_pkt_cnt: number,
+    sent_pkt_cnt: number,
+    recv_msg_cnt: number,
+    sent_msg_cnt: number,
+}
+
 //////////
 
 export class Client extends oicq.Client {
     logger: log4js.Logger;
-    ignore_self: boolean;
     reconn_flag: boolean;
     config: oicq.ConfBot;
     status: Symbol;
-    kickoff_reconn: boolean;
 
     apk: ApkInfo;
     ksid: string | Buffer;
@@ -129,6 +136,7 @@ export class Client extends oicq.Client {
     dir: string;
     sig: Sig;
     cookies: object;
+    stat: Statistics;
 
     nextSeq(): number;
     send(): Promise<Buffer>;

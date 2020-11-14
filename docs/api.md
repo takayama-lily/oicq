@@ -37,7 +37,8 @@ const client = oicq.createClient(uin, config);
     log_level:      "info", //日志级别，有trace,debug,info,warn,error,fatal,off
     kickoff:        false,  //被挤下线是否在3秒后反挤
     ignore_self:    true,   //是否无视自己的消息(群聊、私聊)
-    data_dir:       undefined, //数据存储文件夹，需要可写权限，默认主目录下的data文件夹
+    resend:         true,   //被风控时是否尝试用另一种方式强行发送
+    data_dir:       //数据存储文件夹，需要可写权限，默认主目录下的data文件夹
 }
 ```
 
@@ -186,6 +187,7 @@ message可以使用 `Array` 格式或 `String` 格式，支持CQ码
 + async `client.setDescription([description])` 设置个人说明
 + async `client.setSignature([signature])` 设置个性签名
 + async `client.setPortrait(file)` 设置个人头像(file为Buffer或图片CQ码中相同格式的字符串)
++ async `client.setGroupPortrait(group_id, file)` 设置群头像
 
 ----
 

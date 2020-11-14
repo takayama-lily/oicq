@@ -11,6 +11,7 @@ export interface ConfBot {
     platform?: number, //1手机 2平板(默认) 3手表(不支持部分群事件)
     kickoff?: boolean, //被挤下线是否在3秒后反挤对方，默认false
     ignore_self?: boolean,//群聊是否无视自己的发言，默认true
+    resend?: boolean, //被风控时是否尝试用另一种方式强行发送，默认true
     data_dir?: string, //数据存储文件夹，需要可写权限，默认主目录下的data文件夹
 }
 
@@ -226,7 +227,8 @@ export class Client extends events.EventEmitter {
     setBirthday(birthday: string | number): Promise<RetCommon>; //20110202的形式
     setDescription(description?: string): Promise<RetCommon>;
     setSignature(signature?: string): Promise<RetCommon>;
-    setPortrait(file?: Buffer | string): Promise<RetCommon>; //图片CQ码中file相同格式
+    setPortrait(file: Buffer | string): Promise<RetCommon>; //图片CQ码中file相同格式
+    setGroupPortrait(group_id: Uin, file: Buffer | string): Promise<RetCommon>;
 
     getCookies(domain?: string): Promise<RetCommon>;
     getCsrfToken(): Promise<RetCommon>;
