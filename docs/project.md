@@ -90,6 +90,6 @@ CQ码是指字符串格式下用于表示多媒体内容的方式，形如：
 |video|✕|✕|
 |location|◯|◯|[CQ:location,address=江西省九江市修水县,lat=29.063940,lng=114.339610]|
 |contact|◯|✕|联系人或群推荐
-|reply|✕|✕|
+|reply|◯|◯|[CQ:reply,id=xxxxxx]
 |share|◯|◯|链接分享
 |<s>node</s>|✕|◯|<s>[CQ:node,uin=123456789,name=昵称,content=消息内容,time=时间戳]<br>time可省略，暂时只支持纯文本/s>|
