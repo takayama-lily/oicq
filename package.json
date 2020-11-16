@@ -1,6 +1,6 @@
 {
   "name": "oicq",
-  "version": "1.10.6",
+  "version": "1.10.8",
   "description": "QQ protocol!",
   "main": "client.js",
   "scripts": {
@@ -29,6 +29,7 @@
     "cheerio": "^1.0.0-rc.3",
     "crypto-tea": "^0.2.0",
     "https-proxy-agent": "^5.0.0",
+    "image-size": "^0.9.3",
     "jce": "^0.1.7",
     "log4js": "^6.3.0",
     "protobufjs": "^6.10.1"
