@@ -3,7 +3,6 @@
 /// <reference types="node" />
 
 import * as oicq from '../client';
-import * as log4js from 'log4js';
 
 //////////
 
@@ -93,7 +92,6 @@ export interface Statistics {
 //////////
 
 export class Client extends oicq.Client {
-    logger: log4js.Logger;
     reconn_flag: boolean;
     config: oicq.ConfBot;
     status: Symbol;

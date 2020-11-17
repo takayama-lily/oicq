@@ -3,6 +3,7 @@
 /// <reference types="node" />
 
 import * as events from 'events';
+import * as log4js from 'log4js';
 
 export type Uin = string | number;
 
@@ -181,6 +182,7 @@ export interface EventData {
 export class Client extends events.EventEmitter {
 
     private constructor();
+    logger: log4js.Logger;
     login(password_md5?: Buffer | string): void;
     captchaLogin(captcha: string): void;
     terminate(): void; //直接关闭连接
