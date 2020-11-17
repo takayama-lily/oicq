@@ -175,6 +175,12 @@ client.on("notice", (data)=>console.log(data)); //监听所有的通知事件
     + *`nickname`*
     + *`signature`*
 
+  + `notice.friend.poke` 好友戳一戳事件
+    + *`operator_id`* 操作者
+    + *`user_id`* 目标
+    + *`action`* 动作名
+    + *`suffix`* 动作后缀
+
 + **notice.group**
 
   + `notice.group.increase` 群员增加
