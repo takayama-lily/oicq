@@ -448,11 +448,24 @@ class AndroidClient extends Client {
         return buildApiRet(0, this.gl);
     }
 
-    async getGroupMemberList(group_id) {
+    async reloadFriendList() {
+        this.sync_finished = false;
+        const success = await resource.initFL.call(this);
+        this.sync_finished = true;
+        return buildApiRet(success?0:102);
+    }
+    async reloadGroupList() {
+        this.sync_finished = false;
+        const success = await resource.initGL.call(this);
+        this.sync_finished = true;
+        return buildApiRet(success?0:102);
+    }
+
+    async getGroupMemberList(group_id, no_cache = false) {
         group_id = parseInt(group_id);
         if (!checkUin(group_id))
             return buildApiRet(100);
-        if (!this.gml.has(group_id))
+        if (!this.gml.has(group_id) || no_cache)
             this.gml.set(group_id, resource.getGML.call(this, group_id));
         let mlist = this.gml.get(group_id);
         if (mlist instanceof Promise)

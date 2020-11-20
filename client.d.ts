@@ -50,13 +50,13 @@ export interface GroupInfo {
     owner_id?: number,
     last_join_time?: number,
     last_sent_time?: number,
-    shutup_time_whole?: number,
-    shutup_time_me?: number,
+    shutup_time_whole?: number, //全员禁言到期时间
+    shutup_time_me?: number, //我的禁言到期时间
     create_time?: number,
     grade?: number,
     max_admin_count?: number,
     active_member_count?: number,
-    update_time?: number,
+    update_time?: number, //当前群资料的最后更新时间
 }
 export interface MemberInfo {
     group_id?: number,
@@ -75,8 +75,8 @@ export interface MemberInfo {
     title?: string,
     title_expire_time?: number,
     card_changeable?: boolean,
-    shutup_time?: number,
-    update_time?: number,
+    shutup_time?: number, //禁言到期时间
+    update_time?: number, //此群员资料的最后更新时间
 }
 export interface MessageId {
     message_id: string
@@ -194,7 +194,7 @@ export class Client extends events.EventEmitter {
     getFriendList(): RetFriendList;
     getStrangerList(): RetStrangerList;
     getGroupList(): RetGroupList;
-    getGroupMemberList(group_id: Uin): Promise<RetMemberList>;
+    getGroupMemberList(group_id: Uin, no_cache?: boolean): Promise<RetMemberList>;
     getStrangerInfo(user_id: Uin, no_cache?: boolean): Promise<RetStrangerInfo>;
     getGroupInfo(group_id: Uin, no_cache?: boolean): Promise<RetGroupInfo>;
     getGroupMemberInfo(group_id: Uin, user_id: Uin, no_cache?: boolean): Promise<RetMemberInfo>;
@@ -247,6 +247,10 @@ export class Client extends events.EventEmitter {
     once(event: string, listener: (data: EventData) => void): this;
     on(event: string, listener: (data: EventData) => void): this;
     off(event: string, listener: (data: EventData) => void): this;
+
+    //重载完成之前bot不接受其他任何请求，也不会上报任何事件
+    reloadFriendList(): Promise<RetCommon>; 
+    reloadGroupList(): Promise<RetCommon>;
 }
 
 export function createClient(uin: Uin, config?: ConfBot): Client;
