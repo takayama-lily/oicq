@@ -1,4 +1,4 @@
-# 请参考参照头文件 [client.d.ts](../client.d.ts)
+# 请参照头文件 [client.d.ts](../client.d.ts)
 
 ----
 
@@ -7,10 +7,10 @@
 + [启动-创建实例](#createClient(uin[,config]))
 + [系统类API](#系统类API)
 + [应用类API](#应用类API)
-  + [获取列表和资料](#获取好友群群员列表和info)
-  + [发消息和撤回](#发私聊消息群消息)
+  + [获取列表和资料](#获取好友群群员列表和资料)
+  + [发消息和撤回](#发消息和撤回)
   + [群操作](#群操作踢人禁言退群设置等)
-  + [好友操作](#加群加好友删好友邀请好友入群点赞)
+  + [好友操作](#加群加好友删好友邀请好友点赞)
   + [设置状态和资料](#设置状态和资料)
   + [其他](#其他)
 
@@ -83,7 +83,7 @@ const client = oicq.createClient(uin, config);
 
 ----
 
-### 获取好友、群、群员列表和info
+### 获取好友、群、群员列表和资料
 
 + `client.getFriendList()`
 + `client.getStrangerList()`
@@ -98,7 +98,7 @@ const client = oicq.createClient(uin, config);
 
 ----
 
-### 发私聊消息、群消息
+### 发消息和撤回
 
 message可以使用 `Array` 格式或 `String` 格式，支持CQ码  
 参考 [消息段类型](https://github.com/howmanybots/onebot/blob/master/v11/specs/message/segment.md)
