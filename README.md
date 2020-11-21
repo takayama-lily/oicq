@@ -18,9 +18,9 @@
 ```
 
 ```js
-const oicq = require("oicq");
-const uin = 123456789;
-const bot = oicq.createClient(uin);
+const {createClient} = require("oicq");
+const uin = 123456789; // your account
+const bot = createClient(uin);
 
 bot.on("system.login.captcha", ()=>{
   process.stdin.once("data", input=>{
@@ -28,11 +28,18 @@ bot.on("system.login.captcha", ()=>{
   });
 });
 
-bot.on("message", data=>console.log(data));
+bot.on("system.online", ()=>console.log("bot online!"));
+bot.on("message", data=>{
+  console.log(data);
+  if (data.group_id > 0)
+    bot.sendGroupMsg(data.group_id, "hello");
+  else
+    bot.sendPrivateMsg(data.user_id, "hello");
+});
 bot.on("request", data=>console.log(data));
 bot.on("notice", data=>console.log(data));
 
-const password_md5 = "202cb962ac59075b964b07152d234b70";
+const password_md5 = "202cb962ac59075b964b07152d234b70";  // your password md5
 bot.login(password_md5);
 ```
 
