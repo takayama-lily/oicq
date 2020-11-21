@@ -5,7 +5,7 @@ const fs = require("fs");
 const path = require("path");
 const os = require("os");
 const spawn = require("child_process");
-const crypto = require("crypto");
+const {randomBytes} = require("crypto");
 const log4js = require("log4js");
 const device = require("./device");
 const {checkUin, timestamp} = require("./lib/common");
@@ -40,27 +40,25 @@ class Client extends net.Socket {
     static ONLINE = Symbol("ONLINE");
 }
 class AndroidClient extends Client {
-    reconn_flag = true;
     status = Client.OFFLINE;
-
     nickname = "";
     age = 0;
     sex = "unknown";
     online_status = 0;
-    fl = new Map(); //friendList
-    sl = new Map(); //strangerList
-    gl = new Map(); //groupList
-    gml = new Map(); //groupMemberList
+    fl = new Map; //friendList
+    sl = new Map; //strangerList
+    gl = new Map; //groupList
+    gml = new Map; //groupMemberList
 
     recv_timestamp = 0;
     send_timestamp = 0xffffffff;
     heartbeat = null;
     seq_id = 0;
-    handlers = new Map();
-    seq_cache = new Map();
+    handlers = new Map;
+    seq_cache = new Map;
 
-    session_id = crypto.randomBytes(4);
-    random_key = crypto.randomBytes(16);
+    session_id = randomBytes(4);
+    random_key = randomBytes(16);
 
     sig = {
         srm_token: BUF0,
@@ -80,9 +78,9 @@ class AndroidClient extends Client {
 
     sync_finished = false;
     sync_cookie;
-    const1 = crypto.randomBytes(4).readUInt32BE();
-    const2 = crypto.randomBytes(4).readUInt32BE();
-    const3 = crypto.randomBytes(1)[0];
+    const1 = randomBytes(4).readUInt32BE();
+    const2 = randomBytes(4).readUInt32BE();
+    const3 = randomBytes(1)[0];
 
     stat = {
         start_time: timestamp(),
@@ -123,24 +121,21 @@ class AndroidClient extends Client {
         this.on("error", (err)=>{
             this.logger.error(err.message);
         });
-        this.on("close", (e_flag)=>{
+        this.on("close", ()=>{
             this.read();
-            ++this.stat.lost_times;
             if (this.remoteAddress)
                 this.logger.info(`${this.remoteAddress}:${this.remotePort} closed`);
             this.stopHeartbeat();
             if (this.status === Client.OFFLINE) {
                 this.logger.error("网络不通畅。");
                 return this.em("system.offline.network", {message: "网络不通畅"});
-            }
-            this.status = Client.OFFLINE;
-            if (this.reconn_flag) {
-                if (e_flag)
-                    this.reconn_flag = false;
+            } else if (this.status === Client.ONLINE) {
+                ++this.stat.lost_times;
                 setTimeout(()=>{
                     this._connect(this.register.bind(this));
                 }, 500);
             }
+            this.status = Client.OFFLINE;
         });
 
         // 在这里拆分包
@@ -149,7 +144,6 @@ class AndroidClient extends Client {
                 let len_buf = this.read(4);
                 let len = len_buf.readInt32BE();
                 if (this.readableLength >= len - 4) {
-                    this.reconn_flag = true;
                     this.recv_timestamp = Date.now();
                     const packet = this.read(len - 4);
                     ++this.stat.recv_pkt_cnt;
@@ -178,10 +172,15 @@ class AndroidClient extends Client {
                 resource.initGL.call(this)
             ]);
             this.logger.info(`加载了${this.fl.size}个好友，${this.gl.size}个群。`);
-            await core.getMsg.call(this);
             this.sync_finished = true;
             this.logger.info("初始化完毕，开始处理消息。");
             this.em("system.online");
+        });
+
+        this.on("internal.wt.failed", (message)=>{
+            this.logger.error(message);
+            this.terminate();
+            this.em("system.offline.network", {message});
         });
     }
 
@@ -239,11 +238,12 @@ class AndroidClient extends Client {
             try {
                 await wt.heartbeat.call(this);
             } catch {
+                core.getMsg.call(this);
                 try {
                     await wt.heartbeat.call(this);
                 } catch {
                     this.logger.warn("Heartbeat timeout!");
-                    if (Date.now() - this.recv_timestamp > 15000)
+                    if (Date.now() - this.recv_timestamp > 3000)
                         this.destroy();
                 }
             }
@@ -259,24 +259,21 @@ class AndroidClient extends Client {
             if (!await wt.register.call(this))
                 throw new Error();
         } catch (e) {
-            this.logger.error("上线失败。");
-            this.terminate();
-            this.em("system.offline.network", {message: "register失败"});
-            return;
+            return this.emit("internal.wt.failed", "register失败。");
         }
         this.status = Client.ONLINE;
         if (!this.online_status)
             this.online_status = 11;
-        if (this.platform === 1)
-            this.setOnlineStatus(this.online_status);
+        this.setOnlineStatus(this.online_status);
         this.startHeartbeat();
+        await core.getMsg.call(this);
         if (!this.listenerCount("internal.kickoff")) {
             this.once("internal.kickoff", (data)=>{
                 this.status = Client.INIT;
                 this.stopHeartbeat();
                 this.logger.warn(data.info);
                 let sub_type;
-                if (data.info.includes("另一")) {
+                if (data.info.includes("一台")) {
                     sub_type = "kickoff";
                     if (this.config.kickoff) {
                         this.logger.info("3秒后重新连接..");
@@ -410,19 +407,20 @@ class AndroidClient extends Client {
 
     captchaLogin(captcha) {
         if (!this.captcha_sign)
-            return this.logger.error("未收到图片验证码或已过期，你不能调用captchaLogin函数。");
+            return this.logger.warn("未收到图片验证码或已过期，你不能调用captchaLogin函数。");
         this._connect(()=>{
             wt.captchaLogin.call(this, captcha);
         });
     }
 
     terminate() {
-        this.reconn_flag = false;
+        if (this.status === Client.ONLINE)
+            this.status = Client.INIT;
         this.destroy();
     }
 
     async logout() {
-        if (this.isOnline) {
+        if (this.isOnline()) {
             try {
                 await wt.register.call(this, true);
             } catch {}

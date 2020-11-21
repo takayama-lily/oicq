@@ -92,7 +92,6 @@ export interface Statistics {
 //////////
 
 export class Client extends oicq.Client {
-    reconn_flag: boolean;
     config: oicq.ConfBot;
     status: Symbol;
 
