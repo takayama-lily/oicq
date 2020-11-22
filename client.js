@@ -191,6 +191,7 @@ class AndroidClient extends Client {
         }
         const {ip, port} = server_list[0];
         this.logger.info(`connecting to ${ip}:${port}`);
+        this.removeAllListeners("connect");
         this.connect(port, ip, ()=>{
             this.status = Client.INIT;
             this.logger.info(`${this.remoteAddress}:${this.remotePort} connected`);
