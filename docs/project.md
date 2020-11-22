@@ -78,20 +78,23 @@ CQ码是指字符串格式下用于表示多媒体内容的方式，形如：
 
 |[CQ码]|收|发|说明|
 |-|-|-|-|
-|at|◯|◯|[CQ:at,qq=123456,text=@ABC,dummy=0]<br>text用来定义@不到时的输出<br>dummy设为1可以假@|
+|at|◯|◯|[CQ:at,qq=123456,text=@ABC,dummy=0]<br>dummy设为1时假@|
 |face|◯|◯|[CQ:face,id=104]|
 |bface|◯|◯|原创表情，[CQ:bface,file=xxxxxxxx,text=摸头]|
 |dice&rps|◯|◯|骰子和猜拳：<br>[CQ:dice,id=1]<br>[CQ:rps,id=1]|
 |image|◯|◯|参考 [图片](https://github.com/howmanybots/onebot/blob/master/v11/specs/message/segment.md#%E5%9B%BE%E7%89%87)|
 |record|◯|◯|语音，写法同image<br>支持任何格式的音频自动转amr(必须将 [ffmpeg](http://ffmpeg.org/download.html) 加入环境变量path)<br>linux下的ffmpeg不自带amr解码器，可能需要自行编译ffmpeg|
 |flash|◯|◯|闪照，写法同image|
-|anonymous||◯|发匿名，[CQ:anonymous,ignore=1]<br>ignore可省略，为0时匿名失败不发送|
-|notice|◯||群公告|
-|file|◯||群文件|
-|music|◯|◯|[CQ:music,type=qq,id=xxxxxx]<br>[CQ:music,type=163,id=xxxxxx]|
+|anonymous||◯|发匿名，[CQ:anonymous,ignore=1]<br>ignore为0时匿名失败不发送|
+|file|◯|✕|群文件|
+|music|json|◯|[CQ:music,type=qq,id=xxxxxx]<br>[CQ:music,type=163,id=xxxxxx]|
+|location|json|◯|[CQ:location,address=江西省九江市修水县,lat=29.063940,lng=114.339610]|
+|reply|◯|◯|[CQ:reply,id=xxxxxx] 通过消息id回复
+|shake|◯|◯|[CQ:shake]
+|poke|◯|◯|[CQ:poke,type=6] 暂时支持0~6，可以在群里发
+|xml&json|◯|◯|可用于接收群公告等消息。封杀比较严重，不推荐发原生。
+|share|xml|◯|链接分享
 |video|✕|✕|
-|location|◯|◯|[CQ:location,address=江西省九江市修水县,lat=29.063940,lng=114.339610]|
-|contact|◯|✕|联系人或群推荐
-|reply|◯|◯|[CQ:reply,id=xxxxxx]
-|share|◯|◯|链接分享
 |<s>node</s>|✕|◯|<s>[CQ:node,uin=123456789,name=昵称,content=消息内容,time=时间戳]<br>time可省略，暂时只支持纯文本/s>|
+
+有不明白的参考[此文档](https://github.com/howmanybots/onebot/blob/master/v11/specs/message/segment.md)

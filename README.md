@@ -4,8 +4,7 @@
 [![node engine](https://img.shields.io/node/v/oicq.svg)](https://nodejs.org) ← 注意版本
 
 * QQ(安卓)协议的nodejs实现。也参考了一些其他开源仓库如mirai、miraiGo等。  
-* 以高效和稳定为第一目的，在此基础上不断完善功能。  
-* 将会逐步支持手机协议的大部分功能。
+* 以高效和稳定为第一目的，在此基础上不断完善，将会逐步支持手机协议的大部分功能。
 * 使用 [CQHTTP](https://cqhttp.cc) 风格的API、事件和参数(少量差异)，并且原生支持经典的CQ码。  
 * 本项目使用AGPL-3.0许可证，旨在学习。不推荐也不提供商业化使用的支持。
 * 有bug请告诉我！PR请基于dev分支！
@@ -19,9 +18,9 @@
 ```
 
 ```js
-const oicq = require("oicq");
-const uin = 123456789;
-const bot = oicq.createClient(uin);
+const {createClient} = require("oicq");
+const uin = 123456789; // your account
+const bot = createClient(uin);
 
 bot.on("system.login.captcha", ()=>{
   process.stdin.once("data", input=>{
@@ -29,11 +28,18 @@ bot.on("system.login.captcha", ()=>{
   });
 });
 
-bot.on("message", data=>console.log(data));
+bot.on("system.online", ()=>console.log("bot online!"));
+bot.on("message", data=>{
+  console.log(data);
+  if (data.group_id > 0)
+    bot.sendGroupMsg(data.group_id, "hello");
+  else
+    bot.sendPrivateMsg(data.user_id, "hello");
+});
 bot.on("request", data=>console.log(data));
 bot.on("notice", data=>console.log(data));
 
-const password_md5 = "202cb962ac59075b964b07152d234b70";
+const password_md5 = "202cb962ac59075b964b07152d234b70";  // your password md5
 bot.login(password_md5);
 ```
 

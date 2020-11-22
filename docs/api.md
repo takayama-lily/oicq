@@ -1,18 +1,18 @@
+# 请参照头文件 [client.d.ts](../client.d.ts)
+
+----
+
 # API
 
-+ [createClient(uin[,config])](#createClient(uin[,config])))
-+ [Class: Client](#Class-Client)
-  + [系统类API](#系统类API)
-    + [client.login(password_md5)](#client.login(password_md5))
-    + [client.captchaLogin(captcha)](#client.captchaLogin(captcha))
-    + [client.terminate()](#client.terminate())
-  + [应用类API](#应用类API)
-    + [获取列表](#获取好友群群员列表和info)
-    + [发消息和撤回](#发私聊消息群消息)
-    + [群操作](#群操作踢人禁言退群设置等)
-    + [加好友](#加好友删好友邀请好友入群点赞)
-    + [设置状态和资料](#设置状态和资料)
-+ [setGlobalConfig(config)](#setGlobalConfig(config)-全局设置)
++ [启动-创建实例](#createClient(uin[,config]))
++ [系统类API](#系统类API)
++ [应用类API](#应用类API)
+  + [获取列表和资料](#获取好友群群员列表和资料)
+  + [发消息和撤回](#发消息和撤回)
+  + [群操作](#群操作踢人禁言退群设置等)
+  + [好友操作](#加群加好友删好友邀请好友点赞)
+  + [设置状态和资料](#设置状态和资料)
+  + [其他](#其他)
 
 ----
 
@@ -21,7 +21,7 @@
 + *`uin`* \<Number>
 + *`config`* \<JSON>
 
-创建client一个实例：
+创建一个client实例：
 
 ```js
 const oicq = require("oicq");
@@ -79,75 +79,45 @@ const client = oicq.createClient(uin, config);
 }
 ```
 
-使用 [CQHTTP](https://github.com/howmanybots/onebot/blob/master/v11/specs/api/public.md) 风格的命名和参数。同步函数会直接返回。异步函数标注为 `async` ，返回的是 `Promise`
+使用 [CQHTTP](https://github.com/howmanybots/onebot/blob/master/v11/specs/api/public.md) 风格的命名和参数。  
 
 ----
 
-### 获取好友、群、群员列表和info
+### 获取好友、群、群员列表和资料
 
 + `client.getFriendList()`
 + `client.getStrangerList()`
 + `client.getGroupList()`
-+ async `client.getGroupMemberList(group_id)` 四个list函数返回的data是ES6的Map类型
-+ async `client.getGroupInfo(group_id[, no_cache])` 获取群资料
-  + *`group_id`* \<Number>
-  + *`group_name`* \<String>
-  + *`member_count`* \<Number>
-  + *`max_member_count`* \<Number>
-  + *`owner_id`* \<Number>
-  + *`last_join_time`* \<Number>
-  + *`last_sent_time`* \<Number>
-  + *`shutup_time_whole`* \<Number> -1代表全员禁言中，0代表未禁言
-  + *`shutup_time_me`* \<Number> 我的禁言到期时间
-  + *`create_time`* \<Number>
-  + *`grade`* \<Number>
-  + *`max_admin_count`* \<Number>
-  + *`active_member_count`* \<Number>
-  + *`update_time`* \<Number> 当前群资料的最后更新时间
-+ async `client.getGroupMemberInfo(group_id, user_id[, no_cache])` 获取群员资料
-  + *`group_id`* \<Number>
-  + *`user_id`* \<Number>
-  + *`nickname`* \<String>
-  + *`card`* \<String>
-  + *`sex`* \<String>
-  + *`age`* \<Number>
-  + *`area`* \<String>
-  + *`join_time`* \<Number>
-  + *`last_sent_time`* \<Number>
-  + *`level`* \<Number>
-  + *`rank`* \<String>
-  + *`role`* \<String>
-  + *`title`* \<String>
-  + *`title_expire_time`* \<Number>
-  + *`shutup_time`* \<Number>
-  + *`update_time`* \<Number> 此群员资料的最后更新时间
-+ async `client.getStrangerInfo(user_id[, no_cache])` 获取陌生人资料
-  + *`user_id`* \<Number>
-  + *`nickname`* \<String>
-  + *`sex`* \<String>
-  + *`age`* \<Number>
-  + *`area`* \<String>
++ async `client.getGroupMemberList(group_id[, no_cache])`
++ async `client.getGroupInfo(group_id[, no_cache])`
+  + 返回值参照 [GroupInfo](../client.d.ts#GroupInfo)
++ async `client.getGroupMemberInfo(group_id, user_id[, no_cache])`
+  + 返回值参照 [MemberInfo](../client.d.ts#MemberInfo)
++ async `client.getStrangerInfo(user_id[, no_cache])`
+  + 返回值参照 [StrangerInfo](../client.d.ts#StrangerInfo)
 
 ----
 
-### 发私聊消息、群消息
+### 发消息和撤回
 
 message可以使用 `Array` 格式或 `String` 格式，支持CQ码  
 参考 [消息段类型](https://github.com/howmanybots/onebot/blob/master/v11/specs/message/segment.md)
 
-+ async `client.sendPrivateMsg(user_id, message[, auto_escape])`
-  + *`message_id`* \<String> 返回字符串格式的message_id
++ async `client.sendPrivateMsg(user_id, message[, auto_escape])` 
+  + 返回值 *`message_id`* \<String>
 + async `client.sendGroupMsg(group_id, user_id, message[, auto_escape])`
-  + *`message_id`* \<String> 返回字符串格式的message_id
+  + 返回值 *`message_id`* \<String>
 + async `client.sendDiscussMsg(discuss_id, user_id, message[, auto_escape])`
 + async `client.deleteMsg(message_id)`
+
+※ auto_escape参数：是否原样输出CQ码(既不解析)，默认false
 
 ----
 
 ### 处理申请和邀请
 
-+ async `client.setFriendAddRequest(flag[, approve, remark, block])` block默认是false
-+ async `client.setGroupAddRequest(flag[, approve, reason, block])` block默认是false
++ async `client.setFriendAddRequest(flag[, approve, remark, block])` block默认false
++ async `client.setGroupAddRequest(flag[, approve, reason, block])` block默认false
 
 ----
 
@@ -161,19 +131,19 @@ message可以使用 `Array` 格式或 `String` 格式，支持CQ码
 + async `client.setGroupAdmin(group_id, user_id[, enable])`
 + async `client.setGroupSpecialTitle(group_id, user_id[, special_title, duration])`
 + async `client.sendGroupNotice(group_id, content)`
-+ async `client.sendGroupPoke(group_id, user_id)` 最近新增的戳一戳
++ async `client.sendGroupPoke(group_id, user_id)`
 + async `client.setGroupAnonymous(group_id[, enable])`
 + async `client.setGroupWholeBan(group_id[, enable])`
 
 ----
 
-### 加群加好友、删好友、邀请好友入群、点赞
+### 加群加好友、删好友、邀请好友、点赞
 
 + async `client.addGroup(group_id[, comment])`
 + async `client.addFriend(group_id, user_id[, comment])`
-+ async `client.deleteFriend(user_id[, block])` block默认是true
++ async `client.deleteFriend(user_id[, block])` block默认true
 + async `client.inviteFriend(group_id, user_id)`
-+ async `client.sendLike(user_id[, times])` times默认为1，不能大于20
++ async `client.sendLike(user_id[, times])` times默认1，不能大于20
 
 ----
 
@@ -193,12 +163,20 @@ message可以使用 `Array` 格式或 `String` 格式，支持CQ码
 
 ### 其他
 
-+ async `client.getCookies([domain])` 实验性质，更新可能存在问题
++ async `client.getCookies([domain])`
 + async `client.getCsrfToken()`
 + async `client.cleanCache([type])`
-
 + `client.canSendImage()`
 + `client.canSendRecord()`
-+ `client.getStatus()`
++ `client.getStatus()` 该函数返回一些有用的统计信息
 + `client.getVersionInfo()`
 + `client.getLoginInfo()`
+
+----
+
+### 重载好友列表、群列表
+
+注意：一旦调用，重载完成之前bot不接受其他任何请求，也不会上报任何事件
+
++ async `client.reloadFriendList()`
++ async `client.reloadGroupList()`

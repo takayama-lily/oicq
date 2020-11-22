@@ -85,6 +85,7 @@ export interface Statistics {
     lost_times: number,
     recv_pkt_cnt: number,
     sent_pkt_cnt: number,
+    lost_pkt_cnt: number, //超时未响应的包
     recv_msg_cnt: number,
     sent_msg_cnt: number,
 }
@@ -92,7 +93,6 @@ export interface Statistics {
 //////////
 
 export class Client extends oicq.Client {
-    reconn_flag: boolean;
     config: oicq.ConfBot;
     status: Symbol;
 
