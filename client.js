@@ -659,6 +659,8 @@ class AndroidClient extends Client {
         return buildApiRet(0, {
             online: this.isOnline(),
             status: this.online_status,
+            remote_ip: this.remoteAddress,
+            remote_port: this.remotePort,
             msg_cnt_per_min: this.calcMsgCnt(),
             statistics: this.stat,
             config: this.config
