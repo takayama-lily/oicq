@@ -87,6 +87,7 @@ class AndroidClient extends Client {
         lost_times: 0,
         recv_pkt_cnt: 0,
         sent_pkt_cnt: 0,
+        lost_pkt_cnt: 0,
         recv_msg_cnt: 0,
         sent_msg_cnt: 0,
     };
@@ -211,6 +212,7 @@ class AndroidClient extends Client {
             this.write(packet, ()=>{
                 const id = setTimeout(()=>{
                     this.handlers.delete(seq_id);
+                    ++this.stat.lost_pkt_cnt;
                     reject(new TimeoutError());
                     this.em("internal.timeout", {seq_id});
                 }, timeout);
@@ -659,6 +661,7 @@ class AndroidClient extends Client {
             status: this.online_status,
             msg_cnt_per_min: this.calcMsgCnt(),
             statistics: this.stat,
+            config: this.config
         })
     }
     getLoginInfo() {
@@ -679,7 +682,12 @@ process.OICQ = {
     logger
 };
 
-console.log("OICQ程序启动。当前内核版本：v" + version.version);
+console.log(`
+###########################################################################
+#     Package Version: oicq@${version.version} (Release on ${version.upday})
+#     View Changelogs：https://github.com/takayama-lily/oicq/releases     #
+###########################################################################
+`);
 
 function createDataDir(dir, uin) {
     if (!fs.existsSync(dir))
