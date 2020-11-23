@@ -114,7 +114,7 @@ export interface RetSendMsg extends RetCommon {
  */
 export interface MessageElem {
     type: string,
-    data: object,
+    data?: object,
 }
 
 export interface Anonymous {

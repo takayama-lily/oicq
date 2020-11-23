@@ -4,7 +4,7 @@ const net = require("net");
 const fs = require("fs");
 const path = require("path");
 const os = require("os");
-const spawn = require("child_process");
+const {exec} = require("child_process");
 const {randomBytes} = require("crypto");
 const log4js = require("log4js");
 const device = require("./device");
@@ -159,7 +159,7 @@ class AndroidClient extends Client {
                     break;
                 }
             }
-        })
+        });
 
         this.on("internal.login", async()=>{
             this.logger.info(`Welcome, ${this.nickname} ! 开始初始化资源...`);
@@ -629,7 +629,7 @@ class AndroidClient extends Client {
             case "record":
                 const file = path.join(this.dir, "..", type, "*");
                 const cmd = os.platform().includes("win") ? `del /q ` : `rm -f `;
-                spawn.exec(cmd + file, (err, stdout, stderr)=>{
+                exec(cmd + file, (err, stdout, stderr)=>{
                     if (err)
                         return this.logger.error(err);
                     if (stderr)
