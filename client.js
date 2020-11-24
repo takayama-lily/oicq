@@ -19,10 +19,6 @@ const troop = require("./lib/troop");
 const {getErrorMessage} = require("./exception");
 const BUF0 = Buffer.alloc(0);
 
-const server_list = [
-    {ip:"msfwifi.3g.qq.com", port:8080},
-];
-
 function buildApiRet(retcode, data = null, error = null) {
     data = data ? data : null;
     error = error ? error : null;
@@ -194,7 +190,11 @@ class AndroidClient extends Client {
         if (this.status !== Client.OFFLINE) {
             return callback();
         }
-        const {ip, port} = server_list[0];
+        let ip = "msfwifi.3g.qq.com", port = 8080;
+        if (net.isIP(this.config.remote_ip))
+            ip = this.config.remote_ip;
+        if (this.config.remote_port > 0 && this.config.remote_port < 65536)
+            port = this.config.remote_port;
         this.logger.info(`connecting to ${ip}:${port}`);
         this.removeAllListeners("connect");
         this.connect(port, ip, ()=>{
@@ -395,6 +395,7 @@ class AndroidClient extends Client {
 
     login(password_md5) {
         if (this.isOnline())
+            return;
         if (password_md5 || !this.password_md5) {
             try {
                 if (typeof password_md5 === "string")
