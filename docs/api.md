@@ -18,8 +18,8 @@
 
 ## `createClient(uin[,config])`
 
-+ *`uin`* \<Number>
-+ *`config`* \<JSON>
++ *`uin`* \<number>
++ *`config`* \<ConfBot>
 
 创建一个client实例：
 
@@ -29,18 +29,7 @@ const uin = 123456789, config = {};
 const client = oicq.createClient(uin, config);
 ```
 
-默认config：
-
-```js
-{
-    platform:       2,      //登陆类型 1手机 2平板 3手表(不支持部分群事件)
-    log_level:      "info", //日志级别，有trace,debug,info,warn,error,fatal,off
-    kickoff:        false,  //被挤下线是否在3秒后反挤
-    ignore_self:    true,   //是否无视自己的消息(群聊、私聊)
-    resend:         true,   //被风控时是否尝试用另一种方式强行发送
-    data_dir:       //数据存储文件夹，需要可写权限，默认主目录下的data文件夹
-}
-```
+关于config请参考头文件中的 [ConfBot](../client.d.ts#ConfBot)
 
 ----
 
@@ -50,17 +39,11 @@ const client = oicq.createClient(uin, config);
 
 + *`password_md5`* \<string|Buffer> md5后的密码，hex字符串或Buffer
 
-----
-
 ### `client.captchaLogin(captcha)` 验证码登陆
 
 + *`captcha`* \<string> 4个字母
 
-----
-
 ### `client.logout()` 安全下线
-
-----
 
 ### `client.terminate()` 直接关闭连接(不推荐使用)
 

@@ -102,6 +102,7 @@ class AndroidClient extends Client {
             kickoff: false,
             ignore_self:true,
             resend: true,
+            reconn_interval: 5,
             data_dir: path.join(process.mainModule.path, "data"),
             ...config
         };
@@ -128,8 +129,7 @@ class AndroidClient extends Client {
                 this.logger.info(`${this.remoteAddress}:${this.remotePort} closed`);
             this.stopHeartbeat();
             if (this.status === Client.OFFLINE) {
-                this.logger.error("网络不通畅。");
-                return this.em("system.offline.network", {message: "网络不通畅"});
+                return this.emit("internal.wt.failed", "网络不通畅。");
             } else if (this.status === Client.ONLINE) {
                 ++this.stat.lost_times;
                 setTimeout(()=>{
@@ -179,8 +179,13 @@ class AndroidClient extends Client {
         });
 
         this.on("internal.wt.failed", (message)=>{
+            if (this.config.reconn_interval >= 1) {
+                this.logger.warn(message + " " + this.config.reconn_interval + "秒后重新连接。");
+                return setTimeout(this.login.bind(this), this.config.reconn_interval * 1000);
+            }
             this.logger.error(message);
-            this.terminate();
+            if (this.status !== Client.OFFLINE)
+                this.terminate();
             this.em("system.offline.network", {message});
         });
     }
@@ -280,7 +285,7 @@ class AndroidClient extends Client {
                     sub_type = "kickoff";
                     if (this.config.kickoff) {
                         this.logger.info("3秒后重新连接..");
-                        setTimeout(this.login.bind(this), 3000);
+                        return setTimeout(this.login.bind(this), 3000);
                     } else {
                         this.terminate();
                     }
@@ -366,7 +371,7 @@ class AndroidClient extends Client {
     }
     doCircle() {
         wt.exchangeEMP.call(this);
-        if (Date.now() - this.send_timestamp > 120000)
+        if (Date.now() - this.send_timestamp >= 59000)
             core.getMsg.call(this);
         for (let time of this.seq_cache.keys()) {
             if (timestamp() - time >= 60)
@@ -390,7 +395,6 @@ class AndroidClient extends Client {
 
     login(password_md5) {
         if (this.isOnline())
-            return;
         if (password_md5 || !this.password_md5) {
             try {
                 if (typeof password_md5 === "string")
@@ -450,12 +454,16 @@ class AndroidClient extends Client {
     }
 
     async reloadFriendList() {
+        if (!this.isOnline() || !this.sync_finished)
+            return buildApiRet(104, null, {code: -1, message: "bot not online"});
         this.sync_finished = false;
         const success = await resource.initFL.call(this);
         this.sync_finished = true;
         return buildApiRet(success?0:102);
     }
     async reloadGroupList() {
+        if (!this.isOnline() || !this.sync_finished)
+            return buildApiRet(104, null, {code: -1, message: "bot not online"});
         this.sync_finished = false;
         const success = await resource.initGL.call(this);
         this.sync_finished = true;
@@ -463,6 +471,8 @@ class AndroidClient extends Client {
     }
 
     async getGroupMemberList(group_id, no_cache = false) {
+        if (!this.isOnline() || !this.sync_finished)
+            return buildApiRet(104, null, {code: -1, message: "bot not online"});
         group_id = parseInt(group_id);
         if (!checkUin(group_id))
             return buildApiRet(100);
