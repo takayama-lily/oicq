@@ -193,6 +193,7 @@ client.on("notice", (data)=>console.log(data)); //监听所有的通知事件
     + *`operator_id`*
     + *`user_id`*
     + *`dismiss`* 是否是解散(boolean型)
+    + *`member`* 该群员资料
 
   + `notice.group.recall` 群消息撤回事件
     + *`group_id`*

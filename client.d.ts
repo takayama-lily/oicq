@@ -148,6 +148,7 @@ export interface EventData {
     font?: string,
     anonymous?: Anonymous | null,
     sender?: FriendInfo & MemberInfo,
+    member?: MemberInfo,
     auto_reply?: boolean,
 
     flag?: string,
