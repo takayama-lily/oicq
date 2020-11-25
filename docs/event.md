@@ -55,8 +55,6 @@ client.on("notice", (data)=>console.log(data)); //监听所有的通知事件
 
 ----
 
-以下事件使用 [CQHTTP](https://github.com/howmanybots/onebot/blob/master/v11/specs/event/README.md) 风格的命名和字段
-
 ## Event: `message`
 
 + **message.private**

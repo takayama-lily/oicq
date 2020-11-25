@@ -56,7 +56,7 @@ bot.login(password);
 # npm test
 ```
 
-**文档：**
+**相关文档：**
 
 [功能实现程度](./docs/project.md)  
 [API](./docs/api.md)  

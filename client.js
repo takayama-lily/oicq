@@ -246,17 +246,23 @@ class AndroidClient extends Client {
             this.doCircle();
             try {
                 await wt.heartbeat.call(this);
+                if (Date.now() - this.send_timestamp >= 59000) {
+                    if (!await core.getMsg.call(this)) {
+                        if (!await core.getMsg.call(this) && this.isOnline())
+                            this.destroy();
+                    }
+                }
             } catch {
                 core.getMsg.call(this);
                 try {
                     await wt.heartbeat.call(this);
                 } catch {
                     this.logger.warn("Heartbeat timeout!");
-                    if (Date.now() - this.recv_timestamp > 3000)
+                    if (Date.now() - this.recv_timestamp > 5000 && this.isOnline())
                         this.destroy();
                 }
             }
-        }, 60000);
+        }, 30000);
     }
     stopHeartbeat() {
         clearInterval(this.heartbeat);
@@ -372,8 +378,6 @@ class AndroidClient extends Client {
     }
     doCircle() {
         wt.exchangeEMP.call(this);
-        if (Date.now() - this.send_timestamp >= 59000)
-            core.getMsg.call(this);
         for (let time of this.seq_cache.keys()) {
             if (timestamp() - time >= 60)
                 this.seq_cache.delete(time);
@@ -743,6 +747,3 @@ function createClient(uin, config = {}) {
 module.exports = {
     createClient, setGlobalConfig
 };
-
-const c = new AndroidClient(123456)
-c.login().then(console.log)

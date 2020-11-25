@@ -4,7 +4,7 @@
 
 # API
 
-+ [启动-创建实例](#createClient(uin[,config]))
++ [启动-创建实例](#createclientuinconfig)
 + [系统类API](#系统类API)
 + [应用类API](#应用类API)
   + [获取列表和资料](#获取好友群群员列表和资料)
@@ -29,7 +29,7 @@ const uin = 123456789, config = {};
 const client = oicq.createClient(uin, config);
 ```
 
-关于config请参考头文件中的 [ConfBot](../client.d.ts#ConfBot)
+  > 关于config请参考头文件中的 [ConfBot](../client.d.ts#ConfBot)
 
 ----
 
@@ -62,8 +62,6 @@ const client = oicq.createClient(uin, config);
 }
 ```
 
-使用 [CQHTTP](https://github.com/howmanybots/onebot/blob/master/v11/specs/api/public.md) 风格的命名和参数。  
-
 ----
 
 ### 获取好友、群、群员列表和资料
@@ -93,7 +91,7 @@ message可以使用 `Array` 格式或 `String` 格式，支持CQ码
 + async `client.sendDiscussMsg(discuss_id, user_id, message[, auto_escape])`
 + async `client.deleteMsg(message_id)`
 
-※ auto_escape参数：是否原样输出CQ码(既不解析)，默认false
+  > auto_escape参数：是否原样输出CQ码(既不解析)，默认false
 
 ----
 
@@ -121,6 +119,8 @@ message可以使用 `Array` 格式或 `String` 格式，支持CQ码
 ----
 
 ### 加群加好友、删好友、邀请好友、点赞
+
+  > 注意：加群加好友本身是风险接口，频繁调用会被风控(表现为几天内别人无法看到你的请求)
 
 + async `client.addGroup(group_id[, comment])`
 + async `client.addFriend(group_id, user_id[, comment])`
@@ -159,7 +159,7 @@ message可以使用 `Array` 格式或 `String` 格式，支持CQ码
 
 ### 重载好友列表、群列表
 
-注意：一旦调用，重载完成之前bot不接受其他任何请求，也不会上报任何事件
+  > 注意：一旦调用，重载完成之前bot不接受其他任何请求，也不会上报任何事件
 
 + async `client.reloadFriendList()`
 + async `client.reloadGroupList()`
