@@ -171,6 +171,7 @@ class AndroidClient extends Client {
             this.logger.info(`加载了${this.fl.size}个好友，${this.gl.size}个群。`);
             this.sync_finished = true;
             this.logger.info("初始化完毕，开始处理消息。");
+            core.getMsg.call(this);
             this.em("system.online");
         });
 
@@ -274,7 +275,6 @@ class AndroidClient extends Client {
             this.online_status = 11;
         this.setOnlineStatus(this.online_status);
         this.startHeartbeat();
-        await core.getMsg.call(this);
         if (!this.listenerCount("internal.kickoff")) {
             this.once("internal.kickoff", (data)=>{
                 this.status = Client.INIT;
@@ -302,6 +302,7 @@ class AndroidClient extends Client {
                 this.em("system.offline." + sub_type, {message: data.info});
             });
         }
+        await core.getMsg.call(this);
     }
 
     /**
