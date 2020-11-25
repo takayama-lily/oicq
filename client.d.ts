@@ -196,7 +196,7 @@ export class Client extends events.EventEmitter {
 
     private constructor();
     logger: log4js.Logger;
-    login(password_md5?: Buffer | string): void;
+    login(password?: Buffer | string): void;
     captchaLogin(captcha: string): void;
     terminate(): void; //直接关闭连接
     logout(): Promise<void>; //先下线再关闭连接

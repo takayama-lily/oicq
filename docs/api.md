@@ -35,9 +35,9 @@ const client = oicq.createClient(uin, config);
 
 ## 系统类API
 
-### `client.login(password_md5)` 密码登陆
+### `client.login(password)` 密码登陆
 
-+ *`password_md5`* \<string|Buffer> md5后的密码，hex字符串或Buffer
++ *`password`* \<string|Buffer> 支持传递明文或md5后的密码
 
 ### `client.captchaLogin(captcha)` 验证码登陆
 

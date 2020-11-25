@@ -8,7 +8,7 @@ const {exec} = require("child_process");
 const {randomBytes} = require("crypto");
 const log4js = require("log4js");
 const device = require("./device");
-const {checkUin, timestamp} = require("./lib/common");
+const {checkUin, timestamp, md5} = require("./lib/common");
 const core = require("./lib/core");
 const resource = require("./lib/resource");
 const sysmsg = require("./lib/sysmsg");
@@ -394,20 +394,20 @@ class AndroidClient extends Client {
 
     // 以下是public方法 ----------------------------------------------------------------------------------------------------
 
-    login(password_md5) {
+    login(password) {
         if (this.isOnline())
             return;
-        if (password_md5 || !this.password_md5) {
-            try {
-                if (typeof password_md5 === "string")
-                    password_md5 = Buffer.from(password_md5, "hex");
-                if (password_md5 instanceof Buffer && password_md5.length === 16)
-                    this.password_md5 = password_md5;
-                else
-                    throw new Error("error");
-            } catch (e) {
-                throw new Error("Argument password_md5 is illegal.");
-            }
+        if (password || !this.password_md5) {
+            if (password === undefined)
+                throw new Error("No password input.");
+            if (typeof password === "string")
+                var password_md5 = Buffer.from(password, "hex");
+            else if (password instanceof Buffer || password instanceof Uint8Array)
+                var password_md5 = Buffer.from(password);
+            if (password_md5 && password_md5.length === 16)
+                this.password_md5 = password_md5;
+            else
+                this.password_md5 = md5(String(password));
         }
         this._connect(()=>{
             wt.passwordLogin.call(this);
@@ -743,3 +743,6 @@ function createClient(uin, config = {}) {
 module.exports = {
     createClient, setGlobalConfig
 };
+
+const c = new AndroidClient(123456)
+c.login().then(console.log)
