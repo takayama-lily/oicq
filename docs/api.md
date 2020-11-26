@@ -4,7 +4,7 @@
 
 # API
 
-+ [启动-创建实例](#createClient(uin[,config]))
++ [启动-创建实例](#createclientuinconfig)
 + [系统类API](#系统类API)
 + [应用类API](#应用类API)
   + [获取列表和资料](#获取好友群群员列表和资料)
@@ -18,8 +18,8 @@
 
 ## `createClient(uin[,config])`
 
-+ *`uin`* \<Number>
-+ *`config`* \<JSON>
++ *`uin`* \<number>
++ *`config`* \<ConfBot>
 
 创建一个client实例：
 
@@ -29,38 +29,21 @@ const uin = 123456789, config = {};
 const client = oicq.createClient(uin, config);
 ```
 
-默认config：
-
-```js
-{
-    platform:       2,      //登陆类型 1手机 2平板 3手表(不支持部分群事件)
-    log_level:      "info", //日志级别，有trace,debug,info,warn,error,fatal,off
-    kickoff:        false,  //被挤下线是否在3秒后反挤
-    ignore_self:    true,   //是否无视自己的消息(群聊、私聊)
-    resend:         true,   //被风控时是否尝试用另一种方式强行发送
-    data_dir:       //数据存储文件夹，需要可写权限，默认主目录下的data文件夹
-}
-```
+  > 关于config请参考头文件中的 [ConfBot](../client.d.ts#ConfBot)
 
 ----
 
 ## 系统类API
 
-### `client.login(password_md5)` 密码登陆
+### `client.login(password)` 密码登陆
 
-+ *`password_md5`* \<string|Buffer> md5后的密码，hex字符串或Buffer
-
-----
++ *`password`* \<string|Buffer> 支持传递明文或md5后的密码
 
 ### `client.captchaLogin(captcha)` 验证码登陆
 
 + *`captcha`* \<string> 4个字母
 
-----
-
 ### `client.logout()` 安全下线
-
-----
 
 ### `client.terminate()` 直接关闭连接(不推荐使用)
 
@@ -78,8 +61,6 @@ const client = oicq.createClient(uin, config);
     error: {code: -1, message: ""}, //TX返回的错误代码和错误消息
 }
 ```
-
-使用 [CQHTTP](https://github.com/howmanybots/onebot/blob/master/v11/specs/api/public.md) 风格的命名和参数。  
 
 ----
 
@@ -110,7 +91,7 @@ message可以使用 `Array` 格式或 `String` 格式，支持CQ码
 + async `client.sendDiscussMsg(discuss_id, user_id, message[, auto_escape])`
 + async `client.deleteMsg(message_id)`
 
-※ auto_escape参数：是否原样输出CQ码(既不解析)，默认false
+  > auto_escape参数：是否原样输出CQ码(既不解析)，默认false
 
 ----
 
@@ -138,6 +119,8 @@ message可以使用 `Array` 格式或 `String` 格式，支持CQ码
 ----
 
 ### 加群加好友、删好友、邀请好友、点赞
+
+  > 注意：加群加好友本身是风险接口，频繁调用会被风控(表现为几天内别人无法看到你的请求)
 
 + async `client.addGroup(group_id[, comment])`
 + async `client.addFriend(group_id, user_id[, comment])`
@@ -176,7 +159,7 @@ message可以使用 `Array` 格式或 `String` 格式，支持CQ码
 
 ### 重载好友列表、群列表
 
-注意：一旦调用，重载完成之前bot不接受其他任何请求，也不会上报任何事件
+  > 注意：一旦调用，重载完成之前bot不接受其他任何请求，也不会上报任何事件
 
 + async `client.reloadFriendList()`
 + async `client.reloadGroupList()`

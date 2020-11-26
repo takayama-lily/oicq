@@ -39,8 +39,8 @@ bot.on("message", data=>{
 bot.on("request", data=>console.log(data));
 bot.on("notice", data=>console.log(data));
 
-const password_md5 = "202cb962ac59075b964b07152d234b70";  // your password md5
-bot.login(password_md5);
+const password = "password";  // your password or password_md5
+bot.login(password);
 ```
 
 [登陆失败常见问题](https://github.com/takayama-lily/onebot/issues/12)
@@ -56,7 +56,7 @@ bot.login(password_md5);
 # npm test
 ```
 
-**文档：**
+**相关文档：**
 
 [功能实现程度](./docs/project.md)  
 [API](./docs/api.md)  

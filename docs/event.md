@@ -46,16 +46,14 @@ client.on("notice", (data)=>console.log(data)); //监听所有的通知事件
 + `system.online` 上线事件，可以开始处理消息
 
 + `system.offline` 下线事件
-  + `system.offline.network` 网络断开，可以过几秒后尝试重新login
+  + `system.offline.network` 网络断开，可以过几秒后尝试重新login (手动将配置中的`reconn_interval`设置为0时才会触发此事件)
+  + `system.offline.kickoff` 另一处登陆或被其他客户端要求下线 (将配置中的`kickoff`设置为true会在3秒后重新登陆，并且不触发此事件)
   + `system.offline.frozen` 被冻结
-  + `system.offline.kickoff` 另一处登陆
   + `system.offline.device` 由于开启设备锁，需要重新验证
-  + `system.offline.unknown` 其他，可以过几秒后尝试重新login
+  + `system.offline.unknown` 未知事件，可以过几秒后尝试重新login (目前尚未遇到过，如果你遇到了请告诉我)
     + *`message`* 下线原因(string)
 
 ----
-
-以下事件使用 [CQHTTP](https://github.com/howmanybots/onebot/blob/master/v11/specs/event/README.md) 风格的命名和字段
 
 ## Event: `message`
 
@@ -193,6 +191,7 @@ client.on("notice", (data)=>console.log(data)); //监听所有的通知事件
     + *`operator_id`*
     + *`user_id`*
     + *`dismiss`* 是否是解散(boolean型)
+    + *`member`* 该群员资料
 
   + `notice.group.recall` 群消息撤回事件
     + *`group_id`*

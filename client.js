@@ -4,11 +4,11 @@ const net = require("net");
 const fs = require("fs");
 const path = require("path");
 const os = require("os");
-const spawn = require("child_process");
+const {exec} = require("child_process");
 const {randomBytes} = require("crypto");
 const log4js = require("log4js");
 const device = require("./device");
-const {checkUin, timestamp} = require("./lib/common");
+const {checkUin, timestamp, md5} = require("./lib/common");
 const core = require("./lib/core");
 const resource = require("./lib/resource");
 const sysmsg = require("./lib/sysmsg");
@@ -18,10 +18,6 @@ const indi = require("./lib/individual");
 const troop = require("./lib/troop");
 const {getErrorMessage} = require("./exception");
 const BUF0 = Buffer.alloc(0);
-
-const server_list = [
-    {ip:"msfwifi.3g.qq.com", port:8080},
-];
 
 function buildApiRet(retcode, data = null, error = null) {
     data = data ? data : null;
@@ -102,6 +98,7 @@ class AndroidClient extends Client {
             kickoff: false,
             ignore_self:true,
             resend: true,
+            reconn_interval: 5,
             data_dir: path.join(process.mainModule.path, "data"),
             ...config
         };
@@ -128,8 +125,7 @@ class AndroidClient extends Client {
                 this.logger.info(`${this.remoteAddress}:${this.remotePort} closed`);
             this.stopHeartbeat();
             if (this.status === Client.OFFLINE) {
-                this.logger.error("网络不通畅。");
-                return this.em("system.offline.network", {message: "网络不通畅"});
+                return this.emit("internal.wt.failed", "网络不通畅。");
             } else if (this.status === Client.ONLINE) {
                 ++this.stat.lost_times;
                 setTimeout(()=>{
@@ -159,7 +155,7 @@ class AndroidClient extends Client {
                     break;
                 }
             }
-        })
+        });
 
         this.on("internal.login", async()=>{
             this.logger.info(`Welcome, ${this.nickname} ! 开始初始化资源...`);
@@ -175,12 +171,18 @@ class AndroidClient extends Client {
             this.logger.info(`加载了${this.fl.size}个好友，${this.gl.size}个群。`);
             this.sync_finished = true;
             this.logger.info("初始化完毕，开始处理消息。");
+            core.getMsg.call(this);
             this.em("system.online");
         });
 
         this.on("internal.wt.failed", (message)=>{
+            if (this.config.reconn_interval >= 1) {
+                this.logger.warn(message + " " + this.config.reconn_interval + "秒后重新连接。");
+                return setTimeout(this.login.bind(this), this.config.reconn_interval * 1000);
+            }
             this.logger.error(message);
-            this.terminate();
+            if (this.status !== Client.OFFLINE)
+                this.terminate();
             this.em("system.offline.network", {message});
         });
     }
@@ -189,7 +191,11 @@ class AndroidClient extends Client {
         if (this.status !== Client.OFFLINE) {
             return callback();
         }
-        const {ip, port} = server_list[0];
+        let ip = "msfwifi.3g.qq.com", port = 8080;
+        if (net.isIP(this.config.remote_ip))
+            ip = this.config.remote_ip;
+        if (this.config.remote_port > 0 && this.config.remote_port < 65536)
+            port = this.config.remote_port;
         this.logger.info(`connecting to ${ip}:${port}`);
         this.removeAllListeners("connect");
         this.connect(port, ip, ()=>{
@@ -240,17 +246,23 @@ class AndroidClient extends Client {
             this.doCircle();
             try {
                 await wt.heartbeat.call(this);
+                if (Date.now() - this.send_timestamp >= 59000) {
+                    if (!await core.getMsg.call(this)) {
+                        if (!await core.getMsg.call(this) && this.isOnline())
+                            this.destroy();
+                    }
+                }
             } catch {
                 core.getMsg.call(this);
                 try {
                     await wt.heartbeat.call(this);
                 } catch {
                     this.logger.warn("Heartbeat timeout!");
-                    if (Date.now() - this.recv_timestamp > 3000)
+                    if (Date.now() - this.recv_timestamp > 5000 && this.isOnline())
                         this.destroy();
                 }
             }
-        }, 60000);
+        }, 30000);
     }
     stopHeartbeat() {
         clearInterval(this.heartbeat);
@@ -269,7 +281,6 @@ class AndroidClient extends Client {
             this.online_status = 11;
         this.setOnlineStatus(this.online_status);
         this.startHeartbeat();
-        await core.getMsg.call(this);
         if (!this.listenerCount("internal.kickoff")) {
             this.once("internal.kickoff", (data)=>{
                 this.status = Client.INIT;
@@ -280,11 +291,11 @@ class AndroidClient extends Client {
                     sub_type = "kickoff";
                     if (this.config.kickoff) {
                         this.logger.info("3秒后重新连接..");
-                        setTimeout(this.login.bind(this), 3000);
+                        return setTimeout(this.login.bind(this), 3000);
                     } else {
                         this.terminate();
                     }
-                } else if (data.info.includes("冻结")) {
+                } else if (data.info.includes("冻结") || data.info.includes("泄露")) {
                     sub_type = "frozen";
                     this.terminate();
                 } else if (data.info.includes("设备锁")) {
@@ -297,6 +308,7 @@ class AndroidClient extends Client {
                 this.em("system.offline." + sub_type, {message: data.info});
             });
         }
+        await core.getMsg.call(this);
     }
 
     /**
@@ -366,8 +378,6 @@ class AndroidClient extends Client {
     }
     doCircle() {
         wt.exchangeEMP.call(this);
-        if (Date.now() - this.send_timestamp > 120000)
-            core.getMsg.call(this);
         for (let time of this.seq_cache.keys()) {
             if (timestamp() - time >= 60)
                 this.seq_cache.delete(time);
@@ -388,20 +398,20 @@ class AndroidClient extends Client {
 
     // 以下是public方法 ----------------------------------------------------------------------------------------------------
 
-    login(password_md5) {
+    login(password) {
         if (this.isOnline())
             return;
-        if (password_md5 || !this.password_md5) {
-            try {
-                if (typeof password_md5 === "string")
-                    password_md5 = Buffer.from(password_md5, "hex");
-                if (password_md5 instanceof Buffer && password_md5.length === 16)
-                    this.password_md5 = password_md5;
-                else
-                    throw new Error("error");
-            } catch (e) {
-                throw new Error("Argument password_md5 is illegal.");
-            }
+        if (password || !this.password_md5) {
+            if (password === undefined)
+                throw new Error("No password input.");
+            if (typeof password === "string")
+                var password_md5 = Buffer.from(password, "hex");
+            else if (password instanceof Buffer || password instanceof Uint8Array)
+                var password_md5 = Buffer.from(password);
+            if (password_md5 && password_md5.length === 16)
+                this.password_md5 = password_md5;
+            else
+                this.password_md5 = md5(String(password));
         }
         this._connect(()=>{
             wt.passwordLogin.call(this);
@@ -450,12 +460,16 @@ class AndroidClient extends Client {
     }
 
     async reloadFriendList() {
+        if (!this.isOnline() || !this.sync_finished)
+            return buildApiRet(104, null, {code: -1, message: "bot not online"});
         this.sync_finished = false;
         const success = await resource.initFL.call(this);
         this.sync_finished = true;
         return buildApiRet(success?0:102);
     }
     async reloadGroupList() {
+        if (!this.isOnline() || !this.sync_finished)
+            return buildApiRet(104, null, {code: -1, message: "bot not online"});
         this.sync_finished = false;
         const success = await resource.initGL.call(this);
         this.sync_finished = true;
@@ -463,6 +477,8 @@ class AndroidClient extends Client {
     }
 
     async getGroupMemberList(group_id, no_cache = false) {
+        if (!this.isOnline() || !this.sync_finished)
+            return buildApiRet(104, null, {code: -1, message: "bot not online"});
         group_id = parseInt(group_id);
         if (!checkUin(group_id))
             return buildApiRet(100);
@@ -629,7 +645,7 @@ class AndroidClient extends Client {
             case "record":
                 const file = path.join(this.dir, "..", type, "*");
                 const cmd = os.platform().includes("win") ? `del /q ` : `rm -f `;
-                spawn.exec(cmd + file, (err, stdout, stderr)=>{
+                exec(cmd + file, (err, stdout, stderr)=>{
                     if (err)
                         return this.logger.error(err);
                     if (stderr)

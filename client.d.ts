@@ -7,6 +7,7 @@ import * as log4js from 'log4js';
 
 export type Uin = string | number;
 
+// 大多数情况下你无需关心这些配置项，因为默认配置就是最常用的，除非你需要一些与默认不同的规则
 export interface ConfBot {
     log_level?: "trace" | "debug" | "info" | "warn" | "error" | "fatal" | "off", //默认info
     platform?: number, //1手机 2平板(默认) 3手表(不支持部分群事件)
@@ -14,6 +15,17 @@ export interface ConfBot {
     ignore_self?: boolean,//群聊是否无视自己的发言，默认true
     resend?: boolean, //被风控时是否尝试用另一种方式强行发送，默认true
     data_dir?: string, //数据存储文件夹，需要可写权限，默认主目录下的data文件夹
+
+    //网络原因导致的断线重连间隔秒数，默认5秒，不建议设置低于3秒
+    //你需要明白这并不是简单的连接断开，通常你的机器真的没有网络的时候才会发生
+    //设置为0则不会自动重连，然后你可以监听 system.offline.network 事件自己处理(比如重新调用login函数)；设置为大于0，上述的事件则不会触发
+    reconn_interval?: number,
+
+    //手动指定ip和port
+    //默认使用msfwifi.3g.qq.com:8080进行连接，若要修改建议优先更改该域名hosts指向而不是手动指定ip
+    //@link https://site.ip138.com/msfwifi.3g.qq.com/ 端口通常以下四个都会开放：80,443,8080,14000
+    remote_ip?: string,
+    remote_port?: number,
 }
 
 export interface RetError {
@@ -114,7 +126,7 @@ export interface RetSendMsg extends RetCommon {
  */
 export interface MessageElem {
     type: string,
-    data: object,
+    data?: object,
 }
 
 export interface Anonymous {
@@ -148,6 +160,7 @@ export interface EventData {
     font?: string,
     anonymous?: Anonymous | null,
     sender?: FriendInfo & MemberInfo,
+    member?: MemberInfo,
     auto_reply?: boolean,
 
     flag?: string,
@@ -183,7 +196,7 @@ export class Client extends events.EventEmitter {
 
     private constructor();
     logger: log4js.Logger;
-    login(password_md5?: Buffer | string): void;
+    login(password?: Buffer | string): void;
     captchaLogin(captcha: string): void;
     terminate(): void; //直接关闭连接
     logout(): Promise<void>; //先下线再关闭连接
