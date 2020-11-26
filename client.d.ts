@@ -28,6 +28,30 @@ export interface ConfBot {
     remote_port?: number,
 }
 
+export interface Statistics {
+    start_time: number,
+    lost_times: number,
+    recv_pkt_cnt: number,
+    sent_pkt_cnt: number,
+    lost_pkt_cnt: number, //超时未响应的包
+    recv_msg_cnt: number,
+    sent_msg_cnt: number,
+}
+
+export interface Status {
+    online: boolean,
+    status: number,
+    remote_ip?: number,
+    remote_port?: number,
+    msg_cnt_per_min: number,
+    statistics: Statistics,
+    config: ConfBot,
+}
+
+export type LoginInfo = StrangerInfo & VipInfo;
+
+//////////
+
 export interface RetError {
     code?: number,
     message?: string,
@@ -41,18 +65,28 @@ export interface RetCommon {
 
 //////////
 
+export interface VipInfo {
+    user_id?: number,
+    nickname?: string,
+    level?: number,
+    level_speed?: number,
+    vip_level?: number,
+    vip_growth_speed?: number,
+    vip_growth_total?: string,
+}
+
 export interface StrangerInfo {
     user_id?: number,
     nickname?: string,
     sex?: string,
     age?: number,
     area?: string,
+    signature?: string,
+    description?: string,
     group_id?: number,
 }
 export interface FriendInfo extends StrangerInfo {
-    remark?: string,
-    signature?: string,
-    description?: string,
+    remark?: string
 }
 export interface GroupInfo {
     group_id?: number,
@@ -94,6 +128,8 @@ export interface MessageId {
     message_id: string
 }
 
+//////////
+
 export interface RetStrangerList extends RetCommon {
     data: Map<number, StrangerInfo>
 }
@@ -117,6 +153,12 @@ export interface RetMemberInfo extends RetCommon {
 }
 export interface RetSendMsg extends RetCommon {
     data: MessageId | null
+}
+export interface RetStatus extends RetCommon {
+    data: Status
+}
+export interface RetLoginInfo extends RetCommon {
+    data: LoginInfo
 }
 
 //////////
@@ -196,7 +238,7 @@ export class Client extends events.EventEmitter {
 
     private constructor();
     logger: log4js.Logger;
-    login(password?: Buffer | string): void;
+    login(password?: Buffer | string): void; //密码支持明文和md5
     captchaLogin(captcha: string): void;
     terminate(): void; //直接关闭连接
     logout(): Promise<void>; //先下线再关闭连接
@@ -227,7 +269,7 @@ export class Client extends events.EventEmitter {
     setGroupKick(group_id: Uin, user_id: Uin, reject_add_request?: boolean): Promise<RetCommon>;
     setGroupBan(group_id: Uin, user_id: Uin, duration?: number): Promise<RetCommon>;
     setGroupLeave(group_id: Uin, is_dismiss?: boolean): Promise<RetCommon>;
-    sendGroupPoke(group_id: Uin, user_id: Uin): Promise<RetCommon>;
+    sendGroupPoke(group_id: Uin, user_id: Uin): Promise<RetCommon>; //group_id是好友时可以私聊戳一戳
 
     setFriendAddRequest(flag: string, approve?: boolean, remark?: string, block?: boolean): Promise<RetCommon>;
     setGroupAddRequest(flag: string, approve?: boolean, reason?: string, block?: boolean): Promise<RetCommon>;
@@ -247,12 +289,12 @@ export class Client extends events.EventEmitter {
 
     getCookies(domain?: string): Promise<RetCommon>;
     getCsrfToken(): Promise<RetCommon>;
-    cleanCache(type?: string): Promise<RetCommon>;
+    cleanCache(type?: string): Promise<RetCommon>; //type: "image" or "record" or undefined
     canSendImage(): RetCommon;
     canSendRecord(): RetCommon;
-    getVersionInfo(): RetCommon;
-    getStatus(): RetCommon;
-    getLoginInfo(): RetCommon;
+    getVersionInfo(): RetCommon; //暂时为返回package.json中的信息
+    getStatus(): RetStatus;
+    getLoginInfo(): RetLoginInfo;
 
     once(event: "system" | "request" | "message" | "notice", listener: (data: EventData) => void): this;
     on(event: "system" | "request" | "message" | "notice", listener: (data: EventData) => void): this;
