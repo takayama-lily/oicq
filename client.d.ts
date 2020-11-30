@@ -258,6 +258,7 @@ export class Client extends events.EventEmitter {
     sendGroupMsg(group_id: Uin, message: MessageElem[] | string, auto_escape?: boolean): Promise<RetSendMsg>;
     sendDiscussMsg(discuss_id: Uin, message: MessageElem[] | string, auto_escape?: boolean): Promise<RetCommon>;
     deleteMsg(message_id: string): Promise<RetCommon>;
+    getMsg(message_id: string): Promise<RetCommon>;
 
     sendGroupNotice(group_id: Uin, content: string): Promise<RetCommon>;
     setGroupName(group_id: Uin, group_name: string): Promise<RetCommon>;

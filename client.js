@@ -515,6 +515,9 @@ class AndroidClient extends Client {
     async deleteMsg(message_id) {
         return await this.useProtocol(chat.recallMsg, arguments);
     }
+    async getMsg(message_id) {
+        return await this.useProtocol(chat.getHistoryMsg, arguments);
+    }
 
     ///////////////////////////////////////////////////
 
