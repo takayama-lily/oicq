@@ -5,11 +5,11 @@
 
 ----
 
-|[消息]|文字和表情|长消息|图片|语音|合并转发|分享|匿名|
-|-|-|-|-|-|-|-|-|
-|好友|◯|◯|◯|◯|<s>◯</s>|◯||
-|群聊|◯|◯|◯|◯|<s>◯</s>|◯|◯|
-|讨论组|◯|◯|◯|◯|<s>◯</s>|||
+|[消息]|文字和表情|长消息|图片|语音|合并转发|匿名|
+|-|-|-|-|-|-|-|
+|好友|◯|◯|◯|◯|◯||
+|群聊|◯|◯|◯|◯|◯|◯|
+|讨论组|◯|◯|◯|◯|◯||
 |临时会话|◯|◯|◯|||||
 
 ----
@@ -89,12 +89,12 @@ CQ码是指字符串格式下用于表示多媒体内容的方式，形如：
 |file|◯|✕|群文件|
 |music|json|◯|[CQ:music,type=qq,id=xxxxxx]<br>[CQ:music,type=163,id=xxxxxx]|
 |location|json|◯|[CQ:location,address=江西省九江市修水县,lat=29.063940,lng=114.339610]|
-|reply|◯|◯|[CQ:reply,id=xxxxxx] 通过消息id回复
+|reply|◯|◯|[CQ:reply,id=xxxxxx]
 |shake|◯|◯|[CQ:shake]
 |poke|◯|◯|[CQ:poke,type=6] 暂时支持0~6，可以在群里发
 |xml&json|◯|◯|可用于接收群公告等消息。封杀比较严重，不推荐发原生。
 |share|xml|◯|链接分享
 |video|✕|✕|
-|<s>node</s>|✕|◯|<s>[CQ:node,uin=123456789,name=昵称,content=消息内容,time=时间戳]<br>time可省略，暂时只支持纯文本/s>|
+|node|✕|◯|合并转发[CQ:node,id=xxxxxx][CQ:node,id=xxxxxx]<br>关于自定义转发内容，由于可以达到伪造消息的效果，可能有一定争议，暂不实现|
 
 有不明白的参考[此文档](https://github.com/howmanybots/onebot/blob/master/v11/specs/message/segment.md)

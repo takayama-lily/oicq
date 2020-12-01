@@ -90,6 +90,7 @@ message可以使用 `Array` 格式或 `String` 格式，支持CQ码
   + 返回值 *`message_id`* \<String>
 + async `client.sendDiscussMsg(discuss_id, user_id, message[, auto_escape])`
 + async `client.deleteMsg(message_id)`
++ async `client.getMsg(message_id)`
 
   > auto_escape参数：是否原样输出CQ码(既不解析)，默认false
 

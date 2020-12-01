@@ -1,9 +1,10 @@
 {
   "name": "oicq",
-  "version": "1.10.13",
-  "upday": "2020/11/26",
+  "version": "1.11.0",
+  "upday": "2020/12/01",
   "description": "QQ protocol!",
   "main": "client.js",
+  "types": "client.d.ts",
   "scripts": {
     "test": "node ./test.js"
   },
@@ -18,10 +19,11 @@
     "qq",
     "oicq",
     "protocol",
-    "android"
+    "android",
+    "bot"
   ],
   "author": "takayama",
-  "license": "AGPL-3.0",
+  "license": "Apache-2.0",
   "bugs": {
     "url": "https://github.com/takayama-lily/oicq/issues"
   },
