@@ -13,7 +13,7 @@ export interface ConfBot {
     platform?: number, //1手机 2平板(默认) 3手表(不支持部分群事件)
     kickoff?: boolean, //被挤下线是否在3秒后反挤对方，默认false
     ignore_self?: boolean,//群聊是否无视自己的发言，默认true
-    resend?: boolean, //被风控时是否尝试用另一种方式强行发送，默认true
+    resend?: boolean, //被风控时是否尝试用分片发送，默认true
     data_dir?: string, //数据存储文件夹，需要可写权限，默认主目录下的data文件夹
 
     //网络原因导致的断线重连间隔秒数，默认5秒，不建议设置低于3秒
