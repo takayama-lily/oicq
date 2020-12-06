@@ -59,4 +59,5 @@ bot.login(password);
 
 [功能实现程度](./docs/project.md)  
 [API](./docs/api.md)  
-[事件](./docs/event.md)
+[事件](./docs/event.md)  
+[消息ID规则](./docs/msgid.md)
