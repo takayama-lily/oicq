@@ -1,6 +1,7 @@
 "use strict";
 const indi = require("./lib/individual");
 const troop = require("./lib/troop");
+const chat = require("./lib/message/chat");
 
 const exceptions = new Map([
     [troop.kickMember, {
@@ -21,7 +22,11 @@ const exceptions = new Map([
         2: "对方拒绝被添加",
         3: "需要正确回答问题(暂不支持)",
         101: "已经是好友"
-    }]
+    }],
+    [chat.sendMsg, {
+        10: "发送失败，消息太长",
+        120: "发送失败，在该群被禁言"
+    }],
 ]);
 
 /**

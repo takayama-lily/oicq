@@ -465,6 +465,7 @@ class AndroidClient extends Client {
         this.sync_finished = false;
         const success = await resource.initFL.call(this);
         this.sync_finished = true;
+        core.getMsg.call(this);
         return buildApiRet(success?0:102);
     }
     async reloadGroupList() {
@@ -473,6 +474,7 @@ class AndroidClient extends Client {
         this.sync_finished = false;
         const success = await resource.initGL.call(this);
         this.sync_finished = true;
+        core.getMsg.call(this);
         return buildApiRet(success?0:102);
     }
 
@@ -482,9 +484,11 @@ class AndroidClient extends Client {
         group_id = parseInt(group_id);
         if (!checkUin(group_id))
             return buildApiRet(100);
-        if (!this.gml.has(group_id) || no_cache)
-            this.gml.set(group_id, resource.getGML.call(this, group_id));
         let mlist = this.gml.get(group_id);
+        if (!mlist || (no_cache && mlist instanceof Map)) {
+            mlist = resource.getGML.call(this, group_id);
+            this.gml.set(group_id, mlist);
+        }
         if (mlist instanceof Promise)
             mlist = await mlist;
         if (mlist)
