@@ -29,16 +29,23 @@ const exceptions = new Map([
     }],
 ]);
 
+class TimeoutError extends Error {}
+
 /**
  * @param {Function} fn 
  * @param {Number} code 
  * @returns {String}
  */
-module.exports.getErrorMessage = function(fn, code) {
+function getErrorMessage(fn, code) {
     if (!exceptions.has(fn))
         return "unknown";
     const e = exceptions.get(fn);
     if (!e[code])
         return "unknown";
     return e[code];
-};
+}
+
+
+module.exports = {
+    getErrorMessage, TimeoutError
+}
