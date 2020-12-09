@@ -2,6 +2,7 @@
 
 [![npm version](https://img.shields.io/npm/v/oicq.svg?logo=npm)](https://www.npmjs.com/package/oicq)
 [![node engine](https://img.shields.io/node/v/oicq.svg)](https://nodejs.org)
+[![Gitter](https://badges.gitter.im/takayama-lily/oicq.svg)](https://gitter.im/takayama-lily/oicq?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
 
 * QQ(安卓)协议的nodejs实现。也参考了一些其他开源仓库如mirai、miraiGo等。  
 * 以高效和稳定为第一目的，在此基础上不断完善，将会逐步支持手机协议的大部分功能。
