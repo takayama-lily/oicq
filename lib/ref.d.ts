@@ -83,6 +83,7 @@ export interface HighwayUploadObject {
 //////////
 
 export class Client extends oicq.Client {
+    logining: boolean;
     config: oicq.ConfBot;
     status: Symbol;
 

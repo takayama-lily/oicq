@@ -13,12 +13,12 @@ export interface ConfBot {
     platform?: number, //1手机 2平板(默认) 3手表(不支持部分群事件)
     kickoff?: boolean, //被挤下线是否在3秒后反挤对方，默认false
     ignore_self?: boolean,//群聊是否无视自己的发言，默认true
-    resend?: boolean, //被风控时是否尝试用分片发送，默认true
+    resend?: boolean, //被风控时是否尝试用分片发送，默认true (分片消息暂不支持撤回等操作)
     data_dir?: string, //数据存储文件夹，需要可写权限，默认主目录下的data文件夹
 
-    //网络原因导致的断线重连间隔秒数，默认5秒，不建议设置低于3秒
-    //你需要明白这并不是简单的连接断开，通常你的机器真的没有网络的时候才会发生
-    //设置为0则不会自动重连，然后你可以监听 system.offline.network 事件自己处理(比如重新调用login函数)；设置为大于0，上述的事件则不会触发
+    //触发system.offline.network事件后的重连间隔秒数，默认5(秒)，不建议设置低于3(秒)
+    //瞬间的断线重连不会触发此事件，通常你的机器真的没有网络而导致断线时才会触发
+    //设置为0则不会自动重连，然后你可以监听此事件自己处理
     reconn_interval?: number,
 
     //手动指定ip和port

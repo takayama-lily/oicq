@@ -7,16 +7,16 @@ const os = require("os");
 const {exec} = require("child_process");
 const {randomBytes} = require("crypto");
 const log4js = require("log4js");
-const device = require("./device");
+const {getApkInfo, getDeviceInfo} = require("./device");
 const {checkUin, timestamp, md5} = require("./lib/common");
 const core = require("./lib/core");
-const resource = require("./lib/resource");
+const frdlst = require("./lib/friendlist");
 const sysmsg = require("./lib/sysmsg");
 const wt = require("./lib/wtlogin/wt");
 const chat = require("./lib/message/chat");
 const indi = require("./lib/individual");
 const troop = require("./lib/troop");
-const {getErrorMessage} = require("./exception");
+const {getErrorMessage, TimeoutError} = require("./exception");
 const BUF0 = Buffer.alloc(0);
 
 function buildApiRet(retcode, data = null, error = null) {
@@ -28,14 +28,13 @@ function buildApiRet(retcode, data = null, error = null) {
     };
 }
 
-class TimeoutError extends Error {}
-
 class Client extends net.Socket {
     static OFFLINE = Symbol("OFFLINE");
     static INIT = Symbol("INIT");
     static ONLINE = Symbol("ONLINE");
 }
 class AndroidClient extends Client {
+    logining = false;
     status = Client.OFFLINE;
     nickname = "";
     age = 0;
@@ -110,8 +109,8 @@ class AndroidClient extends Client {
         const filepath = path.join(this.dir, `device-${uin}.json`);
         if (!fs.existsSync(filepath))
             this.logger.info("创建了新的设备文件：" + filepath);
-        this.device = device.getDeviceInfo(filepath);
-        this.apk = device.getApkInfo(config.platform);
+        this.device = getDeviceInfo(filepath);
+        this.apk = getApkInfo(config.platform);
         if (config.platform == 3)
             this.apk.subid = 537061176;
         this.ksid = Buffer.from(`|${this.device.imei}|` + this.apk.name);
@@ -128,14 +127,13 @@ class AndroidClient extends Client {
                 return this.emit("internal.wt.failed", "网络不通畅。");
             } else if (this.status === Client.ONLINE) {
                 ++this.stat.lost_times;
+                this.logining = true;
                 setTimeout(()=>{
                     this._connect(this.register.bind(this));
-                }, 500);
+                }, 50);
             }
             this.status = Client.OFFLINE;
         });
-
-        // 在这里拆分包
         this.on("readable", ()=>{
             while (this.readableLength > 4) {
                 let len_buf = this.read(4);
@@ -159,14 +157,13 @@ class AndroidClient extends Client {
 
         this.on("internal.login", async()=>{
             this.logger.info(`Welcome, ${this.nickname} ! 开始初始化资源...`);
-            this.sync_cookie = null;
             this.sync_finished = false;
             await this.register();
             if (!this.isOnline())
                 return;
             await Promise.all([
-                resource.initFL.call(this),
-                resource.initGL.call(this)
+                frdlst.initFL.call(this),
+                frdlst.initGL.call(this)
             ]);
             this.logger.info(`加载了${this.fl.size}个好友，${this.gl.size}个群。`);
             this.sync_finished = true;
@@ -176,13 +173,14 @@ class AndroidClient extends Client {
         });
 
         this.on("internal.wt.failed", (message)=>{
-            if (this.config.reconn_interval >= 1) {
-                this.logger.warn(message + " " + this.config.reconn_interval + "秒后重新连接。");
-                return setTimeout(this.login.bind(this), this.config.reconn_interval * 1000);
-            }
+            this.logining = false;
             this.logger.error(message);
             if (this.status !== Client.OFFLINE)
                 this.terminate();
+            if (this.config.reconn_interval >= 1) {
+                this.logger.warn(message + " " + this.config.reconn_interval + "秒后重新连接。");
+                setTimeout(this.login.bind(this), this.config.reconn_interval * 1000);
+            }
             this.em("system.offline.network", {message});
         });
     }
@@ -212,7 +210,7 @@ class AndroidClient extends Client {
         return this.seq_id;
     }
 
-    async send(packet, timeout = 3000) {
+    async send(packet, timeout = 5000) {
         ++this.stat.sent_pkt_cnt;
         const seq_id = this.seq_id;
         return new Promise((resolve, reject)=>{
@@ -248,6 +246,7 @@ class AndroidClient extends Client {
                 await wt.heartbeat.call(this);
                 if (Date.now() - this.send_timestamp >= 59000) {
                     if (!await core.getMsg.call(this)) {
+                        this.logger.warn("GetMsg timeout!");
                         if (!await core.getMsg.call(this) && this.isOnline())
                             this.destroy();
                     }
@@ -258,7 +257,7 @@ class AndroidClient extends Client {
                     await wt.heartbeat.call(this);
                 } catch {
                     this.logger.warn("Heartbeat timeout!");
-                    if (Date.now() - this.recv_timestamp > 5000 && this.isOnline())
+                    if (Date.now() - this.recv_timestamp > 6000 && this.isOnline())
                         this.destroy();
                 }
             }
@@ -270,6 +269,7 @@ class AndroidClient extends Client {
     }
 
     async register() {
+        this.logining = true;
         try {
             if (!await wt.register.call(this))
                 throw new Error();
@@ -277,6 +277,7 @@ class AndroidClient extends Client {
             return this.emit("internal.wt.failed", "register失败。");
         }
         this.status = Client.ONLINE;
+        this.logining = false;
         if (!this.online_status)
             this.online_status = 11;
         this.setOnlineStatus(this.online_status);
@@ -399,7 +400,7 @@ class AndroidClient extends Client {
     // 以下是public方法 ----------------------------------------------------------------------------------------------------
 
     login(password) {
-        if (this.isOnline())
+        if (this.isOnline() || this.logining)
             return;
         if (password || !this.password_md5) {
             if (password === undefined)
@@ -460,45 +461,29 @@ class AndroidClient extends Client {
     }
 
     async reloadFriendList() {
-        if (!this.isOnline() || !this.sync_finished)
-            return buildApiRet(104, null, {code: -1, message: "bot not online"});
-        this.sync_finished = false;
-        const success = await resource.initFL.call(this);
+        const ret = await this.useProtocol(frdlst.initFL, arguments);
         this.sync_finished = true;
-        return buildApiRet(success?0:102);
+        core.getMsg.call(this);
+        return ret;
     }
     async reloadGroupList() {
-        if (!this.isOnline() || !this.sync_finished)
-            return buildApiRet(104, null, {code: -1, message: "bot not online"});
-        this.sync_finished = false;
-        const success = await resource.initGL.call(this);
+        const ret = await this.useProtocol(frdlst.initGL, arguments);
         this.sync_finished = true;
-        return buildApiRet(success?0:102);
+        core.getMsg.call(this);
+        return ret;
     }
 
     async getGroupMemberList(group_id, no_cache = false) {
-        if (!this.isOnline() || !this.sync_finished)
-            return buildApiRet(104, null, {code: -1, message: "bot not online"});
-        group_id = parseInt(group_id);
-        if (!checkUin(group_id))
-            return buildApiRet(100);
-        if (!this.gml.has(group_id) || no_cache)
-            this.gml.set(group_id, resource.getGML.call(this, group_id));
-        let mlist = this.gml.get(group_id);
-        if (mlist instanceof Promise)
-            mlist = await mlist;
-        if (mlist)
-            return buildApiRet(0, mlist);
-        return buildApiRet(102);
+        return await this.useProtocol(frdlst.getGML, arguments);
     }
     async getStrangerInfo(user_id, no_cache = false) {
-        return await this.useProtocol(resource.getSI, arguments);
+        return await this.useProtocol(frdlst.getSI, arguments);
     }
     async getGroupInfo(group_id, no_cache = false) {
-        return await this.useProtocol(resource.getGI, arguments);
+        return await this.useProtocol(frdlst.getGI, arguments);
     }
     async getGroupMemberInfo(group_id, user_id, no_cache = false) {
-        return await this.useProtocol(resource.getGMI, arguments);
+        return await this.useProtocol(frdlst.getGMI, arguments);
     }
 
     ///////////////////////////////////////////////////
@@ -706,6 +691,7 @@ process.OICQ = {
 
 console.log(`
 ###########################################################################
+#     Open Source License: Apache-2.0                                     #
 #     Package Version: oicq@${version.version} (Release on ${version.upday})
 #     View Changelogs：https://github.com/takayama-lily/oicq/releases     #
 ###########################################################################
@@ -742,8 +728,6 @@ function createClient(uin, config = {}) {
     uin = parseInt(uin);
     if (!checkUin(uin))
         throw new Error("Argument uin is not an OICQ account.");
-    if (typeof config !== "object" || config === null)
-        throw new Error("Argument config is illegal.");
     return new AndroidClient(uin, config);
 }
 
