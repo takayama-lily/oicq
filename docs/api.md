@@ -1,7 +1,3 @@
-# 请参照头文件 [client.d.ts](../client.d.ts)
-
-----
-
 # API
 
 + [启动-创建实例](#createclientuinconfig)
@@ -13,6 +9,8 @@
   + [好友操作](#加群加好友删好友邀请好友点赞)
   + [设置状态和资料](#设置状态和资料)
   + [其他](#其他)
+
+**可以直接照头文件 [client.d.ts](../client.d.ts)**
 
 ----
 
@@ -43,15 +41,15 @@ const client = oicq.createClient(uin, config);
 
 + *`captcha`* \<string> 4个字母
 
-### `client.logout()` 安全下线
+### `client.logout()` 先下线再关闭连接
 
-### `client.terminate()` 直接关闭连接(不推荐使用)
+### `client.terminate()` 直接关闭连接
 
 ----
 
 ## 应用类API
 
-所有API都会返回以下格式的JSON对象，之后额外标注的返回值都是data中的字段
+所有API都会返回以下格式的JSON对象
 
 ```js
 {
@@ -84,10 +82,8 @@ const client = oicq.createClient(uin, config);
 message可以使用 `Array` 格式或 `String` 格式，支持CQ码  
 参考 [消息段类型](https://github.com/howmanybots/onebot/blob/master/v11/specs/message/segment.md)
 
-+ async `client.sendPrivateMsg(user_id, message[, auto_escape])` 
-  + 返回值 *`message_id`* \<String>
-+ async `client.sendGroupMsg(group_id, user_id, message[, auto_escape])`
-  + 返回值 *`message_id`* \<String>
++ async `client.sendPrivateMsg(user_id, message[, auto_escape])` 返回message_id
++ async `client.sendGroupMsg(group_id, user_id, message[, auto_escape])` 返回message_id
 + async `client.sendDiscussMsg(discuss_id, user_id, message[, auto_escape])`
 + async `client.deleteMsg(message_id)`
 + async `client.getMsg(message_id)`

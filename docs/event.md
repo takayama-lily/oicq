@@ -12,11 +12,14 @@
 实例化client后，使用 `client.on()` 来监听一个事件：
 
 ```js
+//examples:
 client.on("system.login.captcha", (data)=>console.log(data)); //监听登陆时的验证码事件
 client.on("message", (data)=>console.log(data)); //监听所有的消息事件
 client.on("message.group", (data)=>console.log(data)); //监听群消息事件
 client.on("request", (data)=>console.log(data)); //监听所有的请求事件
+client.on("request.group.invite", (data)=>console.log(data)); //监听群邀请事件
 client.on("notice", (data)=>console.log(data)); //监听所有的通知事件
+client.on("notice.group.increase", (data)=>console.log(data)); //监听成员入群事件
 ```
 
 事件为冒泡传递，例如 `request.group.add` 事件，若未监听会沿着二级分类 `request.group` 传递到一级分类 `request`  
@@ -34,28 +37,32 @@ client.on("notice", (data)=>console.log(data)); //监听所有的通知事件
 
 ## Event: `system`
 
+系统类事件
+
 + `system.login`
-  + `system.login.captcha` 收到验证码
-    + *`image`* 图片数据(Buffer)
+  + `system.login.captcha` 收到验证码事件
+    + *`image`* Buffer 图片字节集
   + `system.login.device` 需要解设备锁
-    + *`url`* 设备锁验证地址(string)
+    + *`url`* string 设备锁验证地址
   + `system.login.error` 其他原因导致登陆失败
-    + *`message`* "密码错误"等(string)
-    + *`code`* 错误码
+    + *`message`* string "密码错误"等
+    + *`code`* number 错误码
 
 + `system.online` 上线事件，可以开始处理消息
 
 + `system.offline` 下线事件
-  + `system.offline.network` 网络断线 (见相关配置 `reconn_interval`)
-  + `system.offline.kickoff` 另一处登陆或被其他客户端要求下线 (将配置中的`kickoff`设置为true会在3秒后重新登陆，并且不触发此事件)
-  + `system.offline.frozen` 被冻结
+  + `system.offline.network` 网络断线事件 (见相关配置 `reconn_interval`)
+  + `system.offline.kickoff` 被踢下线 (将配置中的`kickoff`设置为true会在3秒后重新登陆，并且不触发此事件)
+  + `system.offline.frozen` 被冻结事件
   + `system.offline.device` 由于开启设备锁，需要重新验证
   + `system.offline.unknown` 未知事件，可以过几秒后尝试重新login (目前尚未遇到过，如果你遇到了请告诉我)
-    + *`message`* 下线原因(string)
+    + *`message`* string 下线原因
 
 ----
 
 ## Event: `message`
+
+消息类事件
 
 + **message.private**
 
@@ -118,6 +125,8 @@ client.on("notice", (data)=>console.log(data)); //监听所有的通知事件
 
 ## Event: `request`
 
+请求类事件
+
 + **request.friend**
 
   + `request.friend.add` 好友请求
@@ -152,7 +161,9 @@ client.on("notice", (data)=>console.log(data)); //监听所有的通知事件
 
 ## Event: `notice`
 
-为了统一风格，notice事件的命名和原版cqhttp有一定出入
+通知类事件
+
+> 为了统一风格，notice事件的命名和原版cqhttp有一定出入
 
 + **notice.friend**
 
