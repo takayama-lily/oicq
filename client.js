@@ -178,7 +178,7 @@ class AndroidClient extends Client {
             if (this.status !== Client.OFFLINE)
                 this.terminate();
             if (this.config.reconn_interval >= 1) {
-                this.logger.warn(message + " " + this.config.reconn_interval + "秒后重新连接。");
+                this.logger.warn(this.config.reconn_interval + "秒后重新连接。");
                 setTimeout(this.login.bind(this), this.config.reconn_interval * 1000);
             }
             this.em("system.offline.network", {message});
