@@ -1,7 +1,7 @@
 {
   "name": "oicq",
-  "version": "1.11.3",
-  "upday": "2020/12/08",
+  "version": "1.11.4",
+  "upday": "2020/12/12",
   "description": "QQ protocol!",
   "main": "client.js",
   "types": "client.d.ts",
