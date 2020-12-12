@@ -29,13 +29,13 @@ export interface ConfBot {
 }
 
 export interface Statistics {
-    start_time: number,
-    lost_times: number,
-    recv_pkt_cnt: number,
-    sent_pkt_cnt: number,
-    lost_pkt_cnt: number, //超时未响应的包
-    recv_msg_cnt: number,
-    sent_msg_cnt: number,
+    readonly start_time: number,
+    readonly lost_times: number,
+    readonly recv_pkt_cnt: number,
+    readonly sent_pkt_cnt: number,
+    readonly lost_pkt_cnt: number, //超时未响应的包
+    readonly recv_msg_cnt: number,
+    readonly sent_msg_cnt: number,
 }
 
 export interface Status {
@@ -66,63 +66,63 @@ export interface RetCommon {
 //////////
 
 export interface VipInfo {
-    user_id?: number,
-    nickname?: string,
-    level?: number,
-    level_speed?: number,
-    vip_level?: number,
-    vip_growth_speed?: number,
-    vip_growth_total?: string,
+    readonly user_id?: number,
+    readonly nickname?: string,
+    readonly level?: number,
+    readonly level_speed?: number,
+    readonly vip_level?: number,
+    readonly vip_growth_speed?: number,
+    readonly vip_growth_total?: string,
 }
 
 export interface StrangerInfo {
-    user_id?: number,
-    nickname?: string,
-    sex?: string,
-    age?: number,
-    area?: string,
-    signature?: string,
-    description?: string,
-    group_id?: number,
+    readonly user_id?: number,
+    readonly nickname?: string,
+    readonly sex?: string,
+    readonly age?: number,
+    readonly area?: string,
+    readonly signature?: string,
+    readonly description?: string,
+    readonly group_id?: number,
 }
 export interface FriendInfo extends StrangerInfo {
-    remark?: string
+    readonly remark?: string
 }
 export interface GroupInfo {
-    group_id?: number,
-    group_name?: string,
-    member_count?: number,
-    max_member_count?: number,
-    owner_id?: number,
-    last_join_time?: number,
-    last_sent_time?: number,
-    shutup_time_whole?: number, //全员禁言到期时间
-    shutup_time_me?: number, //我的禁言到期时间
-    create_time?: number,
-    grade?: number,
-    max_admin_count?: number,
-    active_member_count?: number,
-    update_time?: number, //当前群资料的最后更新时间
+    readonly group_id?: number,
+    readonly group_name?: string,
+    readonly member_count?: number,
+    readonly max_member_count?: number,
+    readonly owner_id?: number,
+    readonly last_join_time?: number,
+    readonly last_sent_time?: number,
+    readonly shutup_time_whole?: number, //全员禁言到期时间
+    readonly shutup_time_me?: number, //我的禁言到期时间
+    readonly create_time?: number,
+    readonly grade?: number,
+    readonly max_admin_count?: number,
+    readonly active_member_count?: number,
+    readonly update_time?: number, //当前群资料的最后更新时间
 }
 export interface MemberInfo {
-    group_id?: number,
-    user_id?: number,
-    nickname?: string,
-    card?: string,
-    sex?: string,
-    age?: number,
-    area?: string,
-    join_time?: number,
-    last_sent_time?: number,
-    level?: number,
-    rank?: string,
-    role?: string,
-    unfriendly?: boolean,
-    title?: string,
-    title_expire_time?: number,
-    card_changeable?: boolean,
-    shutup_time?: number, //禁言到期时间
-    update_time?: number, //此群员资料的最后更新时间
+    readonly group_id?: number,
+    readonly user_id?: number,
+    readonly nickname?: string,
+    readonly card?: string,
+    readonly sex?: string,
+    readonly age?: number,
+    readonly area?: string,
+    readonly join_time?: number,
+    readonly last_sent_time?: number,
+    readonly level?: number,
+    readonly rank?: string,
+    readonly role?: string,
+    readonly unfriendly?: boolean,
+    readonly title?: string,
+    readonly title_expire_time?: number,
+    readonly card_changeable?: boolean,
+    readonly shutup_time?: number, //禁言到期时间
+    readonly update_time?: number, //此群员资料的最后更新时间
 }
 export interface MessageId {
     message_id: string
@@ -131,16 +131,16 @@ export interface MessageId {
 //////////
 
 export interface RetStrangerList extends RetCommon {
-    data: Map<number, StrangerInfo>
+    data: ReadonlyMap<number, StrangerInfo>
 }
 export interface RetFriendList extends RetCommon {
-    data: Map<number, FriendInfo>
+    data: ReadonlyMap<number, FriendInfo>
 }
 export interface RetGroupList extends RetCommon {
-    data: Map<number, GroupInfo>
+    data: ReadonlyMap<number, GroupInfo>
 }
 export interface RetMemberList extends RetCommon {
-    data: Map<number, MemberInfo> | null
+    data: ReadonlyMap<number, MemberInfo> | null
 }
 export interface RetStrangerInfo extends RetCommon {
     data: StrangerInfo | null
@@ -237,7 +237,22 @@ export interface EventData {
 export class Client extends events.EventEmitter {
 
     private constructor();
-    logger: log4js.Logger;
+
+    readonly uin: number;
+    readonly password_md5: Buffer;
+    readonly nickname: string;
+    readonly sex: string;
+    readonly age: number;
+    readonly online_status: number;
+    readonly fl: ReadonlyMap<number, FriendInfo>;
+    readonly sl: ReadonlyMap<number, StrangerInfo>;
+    readonly gl: ReadonlyMap<number, GroupInfo>;
+    readonly gml: ReadonlyMap<number, ReadonlyMap<number, MemberInfo>>;
+    readonly logger: log4js.Logger;
+    readonly dir: string;
+    readonly config: ConfBot;
+    readonly stat: Statistics;
+
     login(password?: Buffer | string): void; //密码支持明文和md5
     captchaLogin(captcha: string): void;
     terminate(): void; //直接关闭连接

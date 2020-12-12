@@ -84,23 +84,11 @@ export interface HighwayUploadObject {
 
 export class Client extends oicq.Client {
     logining: boolean;
-    config: oicq.ConfBot;
     status: Symbol;
 
     apk: ApkInfo;
     ksid: string | Buffer;
     device: Device;
-    
-    uin: number;
-    password_md5: Buffer;
-    nickname: string;
-    age: number;
-    sex: string;
-    online_status: number;
-    fl: Map<number, oicq.FriendInfo>;
-    sl: Map<number, oicq.StrangerInfo>;
-    gl: Map<number, oicq.GroupInfo>;
-    gml: Map<number, Map<number, oicq.MemberInfo>>;
 
     recv_timestamp: number;
     send_timestamp: number;
@@ -122,10 +110,8 @@ export class Client extends oicq.Client {
     const2: number;
     const3: number;
 
-    dir: string;
     sig: Sig;
     cookies: object;
-    stat: oicq.Statistics;
 
     nextSeq(): number;
     send(): Promise<Buffer>;
