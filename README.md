@@ -8,6 +8,7 @@
 * 以高效和稳定为第一目的，在此基础上不断完善，将会逐步支持手机协议的大部分功能。
 * 使用 [CQHTTP](https://cqhttp.cc) 风格的API、事件和参数，并且原生支持经典的CQ码。  
 * 请使用 `Nodejs 12.16` 以上版本。有bug请告诉我。
+* 内核已完全稳定，希望更多热爱JS/TS的玩家一同来完善社区和生态。
 
 ----
 
@@ -46,7 +47,8 @@ bot.login(password);
 
 **跨进程通信可直接使用：**
 
-[http-api](https://github.com/takayama-lily/onebot)
+[http-api](https://github.com/takayama-lily/onebot)  
+[开发中的大型框架](https://github.com/takayama-lily/xbots)
 
 **使用内置的控制台进行调试：**
 
