@@ -111,8 +111,6 @@ class AndroidClient extends Client {
             this.logger.info("创建了新的设备文件：" + filepath);
         this.device = getDeviceInfo(filepath);
         this.apk = getApkInfo(config.platform);
-        if (config.platform == 3)
-            this.apk.subid = 537061176;
         this.ksid = Buffer.from(`|${this.device.imei}|` + this.apk.name);
 
         this.on("error", (err)=>{

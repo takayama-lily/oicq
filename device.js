@@ -112,6 +112,7 @@ function getDeviceInfo(filepath) {
 };
 
 const apk = {
+    //android phone
     1: {
         id: "com.tencent.mobileqq",
         name: "A8.4.1.2703aac4",
@@ -125,6 +126,8 @@ const apk = {
         sigmap: 34869472,
         sdkver: "6.0.0.2428",
     },
+
+    //apad
     2: {
         id: "com.tencent.minihd.qq",
         name: "A5.8.9.3460",
@@ -139,6 +142,18 @@ const apk = {
         sdkver: "6.0.0.2433",
     }
 }
+
+//android watch
+apk[3] = {...apk[1]};
+apk[3].subid = 537061176;
+
+//mac (experimental)
+apk[4] = {...apk[2]};
+apk[4].subid = 537064315;
+
+//ipad (experimental)
+apk[5] = {...apk[2]};
+apk[5].subid = 537065739;
 
 /**
  * @param {Number} platform 
