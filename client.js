@@ -241,15 +241,19 @@ class AndroidClient extends Client {
         this.heartbeat = setInterval(async()=>{
             this.doCircle();
             try {
+                if (!this.isOnline())
+                    return;
                 await wt.heartbeat.call(this);
                 if (Date.now() - this.send_timestamp >= 59000) {
-                    if (!await core.getMsg.call(this)) {
+                    if (!await core.getMsg.call(this) && this.isOnline()) {
                         this.logger.warn("GetMsg timeout!");
                         if (!await core.getMsg.call(this) && this.isOnline())
                             this.destroy();
                     }
                 }
             } catch {
+                if (!this.isOnline())
+                    return;
                 core.getMsg.call(this);
                 try {
                     await wt.heartbeat.call(this);
