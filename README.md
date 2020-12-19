@@ -27,6 +27,7 @@ const {createClient} = require("oicq");
 const uin = 123456789; // your account
 const bot = createClient(uin);
 
+//监听并输入验证码
 bot.on("system.login.captcha", ()=>{
   process.stdin.once("data", input=>{
     bot.captchaLogin(input);
@@ -45,10 +46,11 @@ const password = "password";  // your password or password_md5
 bot.login(password);
 ```
 
+> 更详细的例子可以参考 [demo.js](docs/demo.js)
+
 **跨进程通信可直接使用：**
 
 [http-api](https://github.com/takayama-lily/onebot)  
-[开发中的大型框架](https://github.com/takayama-lily/xbots)
 
 **使用内置的控制台进行调试：**
 
