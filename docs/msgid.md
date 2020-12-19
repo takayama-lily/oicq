@@ -6,10 +6,10 @@
 ## 群消息id规则
 
 ```md
-群消息id总共20字节，使用base64编码保存
+群消息id总共21字节，使用base64编码保存
 
-| 群号(int32) | 发送者QQ(int32) | 消息编号(int32) | 随机数(int32) | 时间戳(int32) |
-      gid           uid              seqid           random         timestamp
+| 群号(int32) | 发送者QQ(int32) | 消息编号(int32) | 随机数(int32) | 时间戳(int32) | 分片数(int8) |
+      gid           uid              seqid           random         timestamp       pktnum
 ```
 
 ## 私聊消息id规则

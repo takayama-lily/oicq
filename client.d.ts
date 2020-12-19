@@ -13,7 +13,7 @@ export interface ConfBot {
     platform?: number, //1:安卓手机 2:aPad(默认) 3:安卓手表 4:Mac(实验性)
     kickoff?: boolean, //被挤下线是否在3秒后反挤对方，默认false
     ignore_self?: boolean,//群聊是否无视自己的发言，默认true
-    resend?: boolean, //被风控时是否尝试用分片发送，默认true (分片消息暂不支持撤回等操作)
+    resend?: boolean, //被风控时是否尝试用分片发送，默认true (一种古老的消息，暂不支持分片重组)
     data_dir?: string, //数据存储文件夹，需要可写权限，默认主目录下的data文件夹
 
     //触发system.offline.network事件后的重连间隔秒数，默认5(秒)，不建议设置低于3(秒)
