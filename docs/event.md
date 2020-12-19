@@ -55,7 +55,7 @@ client.on("notice.group.increase", (data)=>console.log(data)); //监听成员入
   + `system.offline.kickoff` 被踢下线 (将配置中的`kickoff`设置为true会在3秒后重新登陆)
   + `system.offline.frozen` 被冻结事件
   + `system.offline.device` 由于开启设备锁，需要重新验证
-  + `system.offline.unknown` 未知事件，可以过几秒后尝试重新login (目前尚未遇到过，如果你遇到了请告诉我)
+  + `system.offline.unknown` 未知事件(目前尚未遇到过，如果你遇到了请告诉我)
     + *`message`* string 下线原因
 
 > 一般情况下，掉线后内部会自动完成重连或重新登录，开发者无需自己处理，但仍然会上报`offline`事件  

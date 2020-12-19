@@ -306,7 +306,8 @@ class AndroidClient extends Client {
                     this.terminate();
                 } else {
                     sub_type = "unknown";
-                    this.terminate();
+                    this.logger.warn("3秒后重新连接..");
+                    setTimeout(this.login.bind(this), 3000);
                 }
                 this.em("system.offline." + sub_type, {message: data.info});
             });
