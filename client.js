@@ -293,8 +293,8 @@ class AndroidClient extends Client {
                 if (data.info.includes("一台")) {
                     sub_type = "kickoff";
                     if (this.config.kickoff) {
-                        this.logger.info("3秒后重新连接..");
-                        return setTimeout(this.login.bind(this), 3000);
+                        this.logger.warn("3秒后重新连接..");
+                        setTimeout(this.login.bind(this), 3000);
                     } else {
                         this.terminate();
                     }
