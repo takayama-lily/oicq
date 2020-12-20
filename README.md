@@ -12,8 +12,6 @@
 
 ----
 
-> API简洁友好，开箱即用，推荐直接引入依赖进行开发。
-
 **Install:**
 
 ```bash
@@ -46,18 +44,9 @@ const password = "password";  // your password or password_md5
 bot.login(password);
 ```
 
-> 更详细的例子可以参考 [demo.js](docs/demo.js)
-
-**跨进程通信可直接使用：**
-
-[http-api](https://github.com/takayama-lily/onebot)  
-
-**使用内置的控制台进行调试：**
-
-```bash
-# npm i
-# npm test
-```
+> 更详细的例子可以参考 [demo.js](docs/demo.js)  
+> API简洁友好，开箱即用，熟悉Nodejs者建议直接引入依赖进行开发。  
+> 其他语言的使用者可以用 [http-api](https://github.com/takayama-lily/onebot) 搭建环境。
 
 **相关文档：**
 
