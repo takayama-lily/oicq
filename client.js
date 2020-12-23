@@ -76,6 +76,7 @@ class AndroidClient extends Client {
     const1 = randomBytes(4).readUInt32BE();
     const2 = randomBytes(4).readUInt32BE();
     const3 = randomBytes(1)[0];
+    var4 = 0;
 
     stat = {
         start_time: timestamp(),
@@ -338,6 +339,7 @@ class AndroidClient extends Client {
         } catch (e) {
             if (e instanceof TimeoutError)
                 return buildApiRet(103, null, {code: -1, message: "packet timeout"});
+            this.logger.debug(e);
             return buildApiRet(100, null, {code: -1, message: e.message});
         }
     }
@@ -382,6 +384,10 @@ class AndroidClient extends Client {
     }
     doCircle() {
         wt.exchangeEMP.call(this);
+        if (this.config.platform != 2 && this.config.platform != 3 &&this.var4++ > 10) {
+            this.setOnlineStatus(this.online_status);
+            this.var4 = 0;
+        }
         for (let time of this.seq_cache.keys()) {
             if (timestamp() - time >= 60)
                 this.seq_cache.delete(time);
@@ -509,7 +515,9 @@ class AndroidClient extends Client {
 
     ///////////////////////////////////////////////////
 
-    // async setGroupAnonymousBan(group_id, anonymous_flag, duration = 1800) {}
+    async setGroupAnonymousBan(group_id, flag, duration = 1800) {
+        return await this.useProtocol(troop.muteAnonymous, arguments);
+    }
     async setGroupAnonymous(group_id, enable = true) {
         return await this.useProtocol(troop.setAnonymous, arguments);
     }

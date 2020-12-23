@@ -112,6 +112,7 @@ message可以使用 `Array` 格式或 `String` 格式，支持CQ码
 + async `client.sendGroupPoke(group_id, user_id)`
 + async `client.setGroupAnonymous(group_id[, enable])`
 + async `client.setGroupWholeBan(group_id[, enable])`
++ async `client.setGroupAnonymousBan(group_id, flag[, duration])`
 
 ----
 
