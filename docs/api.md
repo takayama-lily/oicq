@@ -12,6 +12,8 @@
 
 **可以直接照头文件 [client.d.ts](../client.d.ts)**
 
+> 使用 VScode 编辑器可以获得完整的智能提示
+
 ----
 
 ## `createClient(uin[,config])`

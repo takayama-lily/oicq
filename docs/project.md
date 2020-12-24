@@ -97,4 +97,7 @@ CQ码是指字符串格式下用于表示多媒体内容的方式，形如：
 |video|✕|✕|
 |node|✕|◯|合并转发[CQ:node,id=xxxxxx][CQ:node,id=xxxxxx]<br>关于自定义转发内容，由于可以达到伪造消息的效果，可能有一定争议，暂不实现|
 
-有不明白的参考[此文档](https://github.com/howmanybots/onebot/blob/master/v11/specs/message/segment.md)
+完整内容可参考[此文档](https://github.com/howmanybots/onebot/blob/master/v11/specs/message/segment.md)
+
+> 另可参考头文件 [client.d.ts](../client.d.ts)  
+> 使用 VScode 编辑器可以获得完整的智能提示

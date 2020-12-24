@@ -3,6 +3,7 @@
 /// <reference types="node" />
 
 import * as events from 'events';
+import { OutgoingHttpHeaders } from 'http';
 import * as log4js from 'log4js';
 
 export type Uin = string | number;
@@ -50,6 +51,9 @@ export interface Status {
 
 export type LoginInfo = StrangerInfo & VipInfo;
 
+export type GroupRole = "owner" | "admin" | "member";
+export type Gender = "male" | "female" | "unknown";
+
 //////////
 
 export interface RetError {
@@ -57,10 +61,10 @@ export interface RetError {
     message?: string,
 }
 export interface RetCommon {
-    retcode: number, //0ok 1async 100error 102failed 103timeout 104offline
-    status: string, //"ok", "async", "failed"
-    data: object | null,
-    error?: RetError | null,
+    retcode: 0 | 1 | 100 | 102 | 103 | 104, //0ok 1async 100error 102failed 103timeout 104offline
+    status: "ok" | "async" | "failed",
+    data: any,
+    error: RetError | null,
 }
 
 //////////
@@ -78,7 +82,7 @@ export interface VipInfo {
 export interface StrangerInfo {
     readonly user_id?: number,
     readonly nickname?: string,
-    readonly sex?: string,
+    readonly sex?: Gender,
     readonly age?: number,
     readonly area?: string,
     readonly signature?: string,
@@ -109,23 +113,20 @@ export interface MemberInfo {
     readonly user_id?: number,
     readonly nickname?: string,
     readonly card?: string,
-    readonly sex?: string,
+    readonly sex?: Gender,
     readonly age?: number,
     readonly area?: string,
     readonly join_time?: number,
     readonly last_sent_time?: number,
     readonly level?: number,
     readonly rank?: string,
-    readonly role?: string,
+    readonly role?: GroupRole,
     readonly unfriendly?: boolean,
     readonly title?: string,
     readonly title_expire_time?: number,
     readonly card_changeable?: boolean,
     readonly shutup_time?: number, //禁言到期时间
     readonly update_time?: number, //此群员资料的最后更新时间
-}
-export interface MessageId {
-    message_id: string
 }
 
 //////////
@@ -152,7 +153,10 @@ export interface RetMemberInfo extends RetCommon {
     data: MemberInfo | null
 }
 export interface RetSendMsg extends RetCommon {
-    data: MessageId | null
+    data: { message_id: string } | null
+}
+export interface RetGetMsg extends RetCommon {
+    data: PrivateMessageEventData | GroupMessageEventData | null
 }
 export interface RetStatus extends RetCommon {
     data: Status
@@ -160,66 +164,299 @@ export interface RetStatus extends RetCommon {
 export interface RetLoginInfo extends RetCommon {
     data: LoginInfo
 }
+export interface RetCookies extends RetCommon {
+    data: { cookies: string } | null
+}
+export interface RetCsrfToken extends RetCommon {
+    data: { token: number }
+}
 
-//////////
+////////// Message Elements
+
+export type EnableFlag = 1 | 0 | "1" | "0";
 
 /**
  * @see https://github.com/howmanybots/onebot/blob/master/v11/specs/message/segment.md
  */
 export interface MessageElem {
     type: string,
-    data?: object,
+    data: any,
 }
 
+export interface TextElem extends MessageElem {
+    type: "text",
+    data: {
+        text: string
+    }
+}
+
+export interface AtElem extends MessageElem {
+    type: "at",
+    data: {
+        qq: Uin,
+        text?: string,
+        dummy?: EnableFlag,
+    }
+}
+
+export interface FaceElem extends MessageElem {
+    type: "face" | "sface",
+    data: {
+        id: number | string,
+        text?: string
+    }
+}
+
+export interface BfaceElem extends MessageElem {
+    type: "bface",
+    data: {
+        file: string,
+        text: string
+    }
+}
+
+export interface MfaceElem extends MessageElem {
+    type: "rps" | "dice",
+    data: {
+        id: number | string,
+    }
+}
+
+export interface ImgPttElem extends MessageElem {
+    type: "image" | "flash" | "record",
+    data: {
+        file: string | Buffer | Uint8Array,
+        cache?: EnableFlag,
+        proxy?: EnableFlag,
+        timeout?: number,
+        url?: string,
+        headers?: OutgoingHttpHeaders | string,
+        type?: "flash" | "show",
+        magic?: EnableFlag,
+    }
+}
+
+export interface LocationElem extends MessageElem {
+    type: "location",
+    data: {
+        address: string,
+        lat: number | string,
+        lng: number | string,
+        name?: string,
+        id?: string,
+    }
+}
+
+export interface MusicElem extends MessageElem {
+    type: "music",
+    data: {
+        type: "qq" | "163" | 163,
+        id: number | string,
+    }
+}
+
+export interface ShareElem extends MessageElem {
+    type: "share",
+    data: {
+        url: string,
+        title: string,
+        content?: string,
+        image?: string,
+    }
+}
+
+export interface JsonElem extends MessageElem {
+    type: "json",
+    data: {
+        data: any,
+        // data: { [k: string | number ]: any } | string
+    }
+}
+
+export interface XmlElem extends MessageElem {
+    type: "xml",
+    data: {
+        data: string,
+        type?: number | string,
+    }
+}
+
+export interface AnonymousElem extends MessageElem {
+    type: "anonymous",
+    data: {
+        ignore?: EnableFlag,
+    }
+}
+
+export interface ReplyElem extends MessageElem {
+    type: "reply",
+    data: {
+        id: string,
+    }
+}
+
+export interface NodeElem extends MessageElem {
+    type: "node",
+    data: {
+        id: string,
+    }
+}
+
+export interface ShakeElem extends MessageElem {
+    type: "shake",
+}
+
+export interface PokeElem extends MessageElem {
+    type: "poke",
+    data: {
+        type: number | string,
+        id?: number | string,
+    }
+}
+
+////////// Events
+
+export interface CommonEventData {
+    self_id: number,
+    time: number,
+    post_type: "system" | "request" | "message" | "notice",
+    system_type?: "login" | "online" | "offline",
+    request_type?: "friend" | "group",
+    message_type?: "private" | "group" | "discuss",
+    notice_type?: "friend" | "group",
+    sub_type?: string,
+}
+
+export interface CaptchaEventData extends CommonEventData {
+    image: Buffer
+}
+export interface DeviceEventData extends CommonEventData {
+    url: string
+}
+export interface LoginErrorEventData extends CommonEventData {
+    code: number,
+    message: string,
+}
+export interface OfflineEventData extends CommonEventData {
+    message: string,
+}
+
+interface RequestEventData extends CommonEventData {
+    user_id: number,
+    nickname: string,
+    flag: string,
+}
+export interface FriendAddEventData extends RequestEventData {
+    comment: string,
+    source: string,
+    age: number,
+    sex: Gender,
+}
+export interface GroupAddEventData extends RequestEventData {
+    group_id: number,
+    group_name: string,
+    comment: string,
+    inviter_id?: number,
+}
+export interface GroupInviteEventData extends RequestEventData {
+    group_id: number,
+    group_name: string,
+    role: GroupRole,
+}
+
+interface MessageEventData extends CommonEventData {
+    message: MessageElem[] | string,
+    raw_message: string,
+    message_id: string,
+    user_id: number,
+    font: string,
+}
+export interface PrivateMessageEventData extends MessageEventData {
+    sender: FriendInfo,
+    auto_reply: boolean,
+}
+export interface GroupMessageEventData extends MessageEventData {
+    group_id: number,
+    group_name: string,
+    anonymous: Anonymous | null,
+    sender: MemberInfo,
+}
 export interface Anonymous {
     id: number,
     name: string,
     flag: string,
 }
+export interface DiscussMessageEventData extends MessageEventData {
+    discuss_id: number,
+    discuss_name: string,
+    sender: {
+        user_id: number,
+        nickname: string,
+        card: string,
+    },
+}
 
-export interface EventData {
-    self_id: number,
-    time: number,
-    post_type: string,
-    system_type?: string,
-    request_type?: string,
-    message_type?: string,
-    notice_type?: string,
-    sub_type?: string,
-
-    image?: Buffer,
-    url?: string,
-
-    message?: MessageElem | string,
-    raw_message?: string,
-    message_id?: string,
-    user_id?: number,
+export interface FriendRecallEventData extends CommonEventData {
+    user_id: number,
+    message_id: string,
+}
+export interface FriendProfileEventData extends CommonEventData {
+    user_id: number,
     nickname?: string,
-    group_id?: number,
-    group_name?: string,
-    discuss_id?: number,
-    discuss_name?: string,
-    font?: string,
-    anonymous?: Anonymous | null,
-    sender?: FriendInfo & MemberInfo,
-    member?: MemberInfo,
-    auto_reply?: boolean,
-
-    flag?: string,
-    comment?: string,
-    source?: string,
-    role?: string,
-
-    inviter_id?: number,
-    operator_id?: number,
-    duration?: number,
-    set?: boolean,
-    dismiss?: boolean,
     signature?: string,
-    title?: string,
-    content?: string,
-    action?: string,
-    suffix?: string,
+}
+export interface FriendEventData extends CommonEventData {
+    user_id: number,
+    nickname: string,
+}
+export interface FriendPokeEventData extends FriendEventData {
+    action: string,
+    suffix: string
+}
+export interface GroupPokeEventData extends FriendPokeEventData {
+    group_id: number
+}
+export interface MemberIncreaseEventData extends FriendEventData {
+    group_id: number
+}
+export interface MemberDecreaseEventData extends CommonEventData {
+    group_id: number,
+    operator_id: number,
+    user_id: number,
+    dismiss: boolean,
+    member?: MemberInfo,
+}
+export interface GroupRecallEventData extends FriendEventData {
+    group_id: number,
+    operator_id: number
+}
+export interface GroupAdminEventData extends CommonEventData {
+    group_id: number,
+    user_id: number,
+    set: boolean,
+}
+export interface GroupMuteEventData extends CommonEventData {
+    group_id: number,
+    operator_id: number,
+    user_id: number,
+    nickname?: string,
+    duration: number,
+}
+export interface GroupTransferEventData extends CommonEventData {
+    group_id: number,
+    operator_id: number,
+    user_id: number,
+}
+export interface GroupTitleEventData extends CommonEventData {
+    group_id: number,
+    user_id: number,
+    nickname: string,
+    title: string,
+}
+
+export interface GroupSettingEventData extends CommonEventData {
+    group_id: number,
+    group_name?: string,
     enable_guest?: boolean,
     enable_anonymous?: boolean,
     enable_upload_album?: boolean,
@@ -232,6 +469,15 @@ export interface EventData {
     enable_confess?: boolean,
 }
 
+type FriendNoticeEventData = FriendEventData | FriendRecallEventData | FriendProfileEventData | FriendPokeEventData;
+type GroupNoticeEventData = GroupRecallEventData | GroupSettingEventData | GroupTitleEventData | GroupTransferEventData |
+    GroupMuteEventData | GroupAdminEventData | MemberIncreaseEventData | MemberDecreaseEventData;
+
+export type EventData = CaptchaEventData | DeviceEventData | LoginErrorEventData | OfflineEventData |
+    FriendAddEventData | GroupAddEventData | GroupInviteEventData |
+    PrivateMessageEventData | GroupMessageEventData | DiscussMessageEventData |
+    FriendNoticeEventData | GroupNoticeEventData;
+
 //////////
 
 export class Client extends events.EventEmitter {
@@ -241,7 +487,7 @@ export class Client extends events.EventEmitter {
     readonly uin: number;
     readonly password_md5: Buffer;
     readonly nickname: string;
-    readonly sex: string;
+    readonly sex: Gender;
     readonly age: number;
     readonly online_status: number;
     readonly fl: ReadonlyMap<number, FriendInfo>;
@@ -259,7 +505,7 @@ export class Client extends events.EventEmitter {
     logout(): Promise<void>; //先下线再关闭连接
     isOnline(): boolean;
 
-    setOnlineStatus(status: number): Promise<RetCommon>; //11我在线上 31离开 41隐身 50忙碌 60Q我吧 70请勿打扰
+    setOnlineStatus(status: 11 | 31 | 41 | 50 | 60 | 70): Promise<RetCommon>; //11我在线上 31离开 41隐身 50忙碌 60Q我吧 70请勿打扰
 
     getFriendList(): RetFriendList;
     getStrangerList(): RetStrangerList;
@@ -273,7 +519,7 @@ export class Client extends events.EventEmitter {
     sendGroupMsg(group_id: Uin, message: MessageElem[] | string, auto_escape?: boolean): Promise<RetSendMsg>;
     sendDiscussMsg(discuss_id: Uin, message: MessageElem[] | string, auto_escape?: boolean): Promise<RetCommon>;
     deleteMsg(message_id: string): Promise<RetCommon>;
-    getMsg(message_id: string): Promise<RetCommon>;
+    getMsg(message_id: string): Promise<RetGetMsg>;
 
     sendGroupNotice(group_id: Uin, content: string): Promise<RetCommon>;
     setGroupName(group_id: Uin, group_name: string): Promise<RetCommon>;
@@ -306,22 +552,55 @@ export class Client extends events.EventEmitter {
 
     getCookies(domain?: string): Promise<RetCommon>;
     getCsrfToken(): Promise<RetCommon>;
-    cleanCache(type?: string): Promise<RetCommon>; //type: "image" or "record" or undefined
+    cleanCache(type?: "image" | "record"): Promise<RetCommon>;
     canSendImage(): RetCommon;
     canSendRecord(): RetCommon;
     getVersionInfo(): RetCommon; //暂时为返回package.json中的信息
     getStatus(): RetStatus;
     getLoginInfo(): RetLoginInfo;
 
-    once(event: "system" | "request" | "message" | "notice", listener: (data: EventData) => void): this;
-    on(event: "system" | "request" | "message" | "notice", listener: (data: EventData) => void): this;
-    off(event: "system" | "request" | "message" | "notice", listener: (data: EventData) => void): this;
-    once(event: string, listener: (data: EventData) => void): this;
-    on(event: string, listener: (data: EventData) => void): this;
-    off(event: string, listener: (data: EventData) => void): this;
+    on(event: "system.login.captcha", listener: (this: Client, data: CaptchaEventData) => void): this;
+    on(event: "system.login.device", listener: (this: Client, data: DeviceEventData) => void): this;
+    on(event: "system.login.error", listener: (this: Client, data: LoginErrorEventData) => void): this;
+    on(event: "system.login", listener: (this: Client, data: CaptchaEventData | DeviceEventData | LoginErrorEventData) => void): this;
+    on(event: "system.online", listener: (this: Client, data: CommonEventData) => void): this;
+    on(event: "system.offline" | "system.offline.network" | "system.offline.kickoff" |
+        "system.offline.frozen" | "system.offline.device" | "system.offline.unknown", listener: (this: Client, data: OfflineEventData) => void): this;
+    on(event: "system", listener: (this: Client, data: CaptchaEventData | DeviceEventData | LoginErrorEventData | OfflineEventData) => void): this;
+
+    on(event: "request.friend" | "request.friend.add", listener: (this: Client, data: FriendAddEventData) => void): this;
+    on(event: "request.group.add", listener: (this: Client, data: GroupAddEventData) => void): this;
+    on(event: "request.group.invite", listener: (this: Client, data: GroupInviteEventData) => void): this;
+    on(event: "request.group", listener: (this: Client, data: GroupAddEventData | GroupInviteEventData) => void): this;
+    on(event: "request", listener: (this: Client, data: FriendAddEventData | GroupAddEventData | GroupInviteEventData) => void): this;
+
+    on(event: "message.private" | "message.private.friend" | "message.private.group" |
+        "message.private.single" | "message.private.other", listener: (this: Client, data: PrivateMessageEventData) => void): this;
+    on(event: "message.group" | "message.group.normal" | "message.group.anonymous", listener: (this: Client, data: GroupMessageEventData) => void): this;
+    on(event: "message.discuss", listener: (this: Client, data: DiscussMessageEventData) => void): this;
+    on(event: "message", listener: (this: Client, data: PrivateMessageEventData | GroupMessageEventData | DiscussMessageEventData) => void): this;
+
+    on(event: "notice.friend.increase" | "notice.friend.decrease", listener: (this: Client, data: FriendEventData) => void): this;
+    on(event: "notice.friend.recall", listener: (this: Client, data: FriendRecallEventData) => void): this;
+    on(event: "notice.friend.profile", listener: (this: Client, data: FriendProfileEventData) => void): this;
+    on(event: "notice.friend.poke", listener: (this: Client, data: FriendPokeEventData) => void): this;
+    on(event: "notice.group.increase", listener: (this: Client, data: MemberIncreaseEventData) => void): this;
+    on(event: "notice.group.decrease", listener: (this: Client, data: MemberDecreaseEventData) => void): this;
+    on(event: "notice.group.recall", listener: (this: Client, data: GroupRecallEventData) => void): this;
+    on(event: "notice.group.admin", listener: (this: Client, data: GroupAdminEventData) => void): this;
+    on(event: "notice.group.ban", listener: (this: Client, data: GroupMuteEventData) => void): this;
+    on(event: "notice.group.transfer", listener: (this: Client, data: GroupTransferEventData) => void): this;
+    on(event: "notice.group.title", listener: (this: Client, data: GroupTitleEventData) => void): this;
+    on(event: "notice.group.poke", listener: (this: Client, data: GroupPokeEventData) => void): this;
+    on(event: "notice.group.setting", listener: (this: Client, data: GroupSettingEventData) => void): this;
+    on(event: "notice.friend", listener: (this: Client, data: FriendNoticeEventData) => void): this;
+    on(event: "notice.group", listener: (this: Client, data: GroupNoticeEventData) => void): this;
+    on(event: "notice", listener: (this: Client, data: FriendNoticeEventData | GroupNoticeEventData) => void): this;
+
+    on(event: string | symbol, listener: (this: Client, ...args: any[]) => void): this;
 
     //重载完成之前bot不接受其他任何请求，也不会上报任何事件
-    reloadFriendList(): Promise<RetCommon>; 
+    reloadFriendList(): Promise<RetCommon>;
     reloadGroupList(): Promise<RetCommon>;
 }
 
