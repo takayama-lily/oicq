@@ -703,7 +703,7 @@ process.OICQ = {
 console.log(`
 ###########################################################################
 #     Open Source License: Apache-2.0                                     #
-#     Package Version: oicq@${version.version} (Release on ${version.upday})
+#     Package Version: oicq@${version.version} (Released on ${version.upday})
 #     View Changelogs：https://github.com/takayama-lily/oicq/releases     #
 ###########################################################################
 `);

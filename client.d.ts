@@ -108,7 +108,7 @@ export interface GroupInfo {
     readonly active_member_count: number,
     readonly update_time: number, //当前群资料的最后更新时间
 }
-interface MemberBaseInfo {
+export interface MemberBaseInfo {
     readonly user_id: number,
     readonly nickname: string,
     readonly card: string,
@@ -190,7 +190,7 @@ export type EnableFlag = 1 | 0 | "1" | "0";
  * @see https://github.com/howmanybots/onebot/blob/master/v11/specs/message/segment.md
  */
 export type MessageElem = TextElem | AtElem | FaceElem | BfaceElem | MfaceElem |
-    ImgPttElem | LocationElem | MusicElem | ShareElem | JsonElem |XmlElem |
+    ImgPttElem | LocationElem | MusicElem | ShareElem | JsonElem | XmlElem |
     AnonymousElem | ReplyElem | NodeElem | ShakeElem | PokeElem;
 
 export interface TextElem {
@@ -478,8 +478,8 @@ export interface GroupSettingEventData extends CommonEventData {
     enable_confess?: boolean,
 }
 
-type FriendNoticeEventData = FriendEventData | FriendRecallEventData | FriendProfileEventData | FriendPokeEventData;
-type GroupNoticeEventData = GroupRecallEventData | GroupSettingEventData | GroupTitleEventData | GroupTransferEventData |
+export type FriendNoticeEventData = FriendEventData | FriendRecallEventData | FriendProfileEventData | FriendPokeEventData;
+export type GroupNoticeEventData = GroupRecallEventData | GroupSettingEventData | GroupTitleEventData | GroupTransferEventData |
     GroupMuteEventData | GroupAdminEventData | MemberIncreaseEventData | MemberDecreaseEventData;
 
 export type EventData = CaptchaEventData | DeviceEventData | LoginErrorEventData | OfflineEventData |
