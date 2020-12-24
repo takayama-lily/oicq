@@ -12,13 +12,13 @@ export type Uin = string | number;
 export interface ConfBot {
     log_level?: "trace" | "debug" | "info" | "warn" | "error" | "fatal" | "off", //默认info
     platform?: number, //1:安卓手机 2:aPad(默认) 3:安卓手表 4:MacOS(实验性) 5:iPad(实验性)
-    kickoff?: boolean, //被挤下线是否在3秒后反挤对方，默认false
+    kickoff?: boolean, //被踢下线是否在3秒后重新登陆，默认false
     ignore_self?: boolean,//群聊是否无视自己的发言，默认true
     resend?: boolean, //被风控时是否尝试用分片发送，默认true (一种古老的消息，暂不支持分片重组)
     data_dir?: string, //数据存储文件夹，需要可写权限，默认主目录下的data文件夹
 
     //触发system.offline.network事件后的重连间隔秒数，默认5(秒)，不建议设置低于3(秒)
-    //瞬间的断线重连不会触发此事件，通常你的机器真的没有网络而导致断线时才会触发
+    //瞬间的断线重连不会触发此事件，通常你的机器真的没有网络或登陆无响应时才会触发
     //设置为0则不会自动重连，然后你可以监听此事件自己处理
     reconn_interval?: number,
 
@@ -63,7 +63,7 @@ export interface RetError {
 export interface RetCommon {
     retcode: 0 | 1 | 100 | 102 | 103 | 104, //0ok 1async 100error 102failed 103timeout 104offline
     status: "ok" | "async" | "failed",
-    data: any,
+    data: unknown | null,
     error: RetError | null,
 }
 
@@ -80,10 +80,10 @@ export interface VipInfo {
 }
 
 export interface StrangerInfo {
-    readonly user_id?: number,
-    readonly nickname?: string,
-    readonly sex?: Gender,
-    readonly age?: number,
+    readonly user_id: number,
+    readonly nickname: string,
+    readonly sex: Gender,
+    readonly age: number,
     readonly area?: string,
     readonly signature?: string,
     readonly description?: string,
@@ -93,40 +93,51 @@ export interface FriendInfo extends StrangerInfo {
     readonly remark?: string
 }
 export interface GroupInfo {
-    readonly group_id?: number,
-    readonly group_name?: string,
-    readonly member_count?: number,
-    readonly max_member_count?: number,
-    readonly owner_id?: number,
-    readonly last_join_time?: number,
-    readonly last_sent_time?: number,
-    readonly shutup_time_whole?: number, //全员禁言到期时间
-    readonly shutup_time_me?: number, //我的禁言到期时间
-    readonly create_time?: number,
-    readonly grade?: number,
-    readonly max_admin_count?: number,
-    readonly active_member_count?: number,
-    readonly update_time?: number, //当前群资料的最后更新时间
+    readonly group_id: number,
+    readonly group_name: string,
+    readonly member_count: number,
+    readonly max_member_count: number,
+    readonly owner_id: number,
+    readonly last_join_time: number,
+    readonly last_sent_time: number,
+    readonly shutup_time_whole: number, //全员禁言到期时间
+    readonly shutup_time_me: number, //我的禁言到期时间
+    readonly create_time: number,
+    readonly grade: number,
+    readonly max_admin_count: number,
+    readonly active_member_count: number,
+    readonly update_time: number, //当前群资料的最后更新时间
 }
-export interface MemberInfo {
-    readonly group_id?: number,
-    readonly user_id?: number,
-    readonly nickname?: string,
-    readonly card?: string,
-    readonly sex?: Gender,
-    readonly age?: number,
-    readonly area?: string,
-    readonly join_time?: number,
-    readonly last_sent_time?: number,
-    readonly level?: number,
-    readonly rank?: string,
-    readonly role?: GroupRole,
-    readonly unfriendly?: boolean,
-    readonly title?: string,
-    readonly title_expire_time?: number,
-    readonly card_changeable?: boolean,
-    readonly shutup_time?: number, //禁言到期时间
-    readonly update_time?: number, //此群员资料的最后更新时间
+interface MemberBaseInfo {
+    readonly user_id: number,
+    readonly nickname: string,
+    readonly card: string,
+    readonly sex: Gender,
+    readonly age: number,
+    readonly area: string,
+    readonly level: number,
+    readonly role: GroupRole,
+    readonly title: string,
+}
+export interface MemberInfo extends MemberBaseInfo {
+    readonly group_id: number,
+    // readonly user_id: number,
+    // readonly nickname: string,
+    // readonly card: string,
+    // readonly sex: Gender,
+    // readonly age: number,
+    // readonly area: string,
+    readonly join_time: number,
+    readonly last_sent_time: number,
+    // readonly level: number,
+    readonly rank: string,
+    // readonly role: GroupRole,
+    readonly unfriendly: boolean,
+    // readonly title: string,
+    readonly title_expire_time: number,
+    readonly card_changeable: boolean,
+    readonly shutup_time: number, //禁言到期时间
+    readonly update_time: number, //此群员资料的最后更新时间
 }
 
 //////////
@@ -178,19 +189,18 @@ export type EnableFlag = 1 | 0 | "1" | "0";
 /**
  * @see https://github.com/howmanybots/onebot/blob/master/v11/specs/message/segment.md
  */
-export interface MessageElem {
-    type: string,
-    data: any,
-}
+export type MessageElem = TextElem | AtElem | FaceElem | BfaceElem | MfaceElem |
+    ImgPttElem | LocationElem | MusicElem | ShareElem | JsonElem |XmlElem |
+    AnonymousElem | ReplyElem | NodeElem | ShakeElem | PokeElem;
 
-export interface TextElem extends MessageElem {
+export interface TextElem {
     type: "text",
     data: {
         text: string
     }
 }
 
-export interface AtElem extends MessageElem {
+export interface AtElem {
     type: "at",
     data: {
         qq: Uin,
@@ -199,7 +209,7 @@ export interface AtElem extends MessageElem {
     }
 }
 
-export interface FaceElem extends MessageElem {
+export interface FaceElem {
     type: "face" | "sface",
     data: {
         id: number | string,
@@ -207,7 +217,7 @@ export interface FaceElem extends MessageElem {
     }
 }
 
-export interface BfaceElem extends MessageElem {
+export interface BfaceElem {
     type: "bface",
     data: {
         file: string,
@@ -215,14 +225,14 @@ export interface BfaceElem extends MessageElem {
     }
 }
 
-export interface MfaceElem extends MessageElem {
+export interface MfaceElem {
     type: "rps" | "dice",
     data: {
         id: number | string,
     }
 }
 
-export interface ImgPttElem extends MessageElem {
+export interface ImgPttElem {
     type: "image" | "flash" | "record",
     data: {
         file: string | Buffer | Uint8Array,
@@ -236,7 +246,7 @@ export interface ImgPttElem extends MessageElem {
     }
 }
 
-export interface LocationElem extends MessageElem {
+export interface LocationElem {
     type: "location",
     data: {
         address: string,
@@ -247,15 +257,15 @@ export interface LocationElem extends MessageElem {
     }
 }
 
-export interface MusicElem extends MessageElem {
+export interface MusicElem {
     type: "music",
     data: {
-        type: "qq" | "163" | 163,
+        type: "qq" | "163",
         id: number | string,
     }
 }
 
-export interface ShareElem extends MessageElem {
+export interface ShareElem {
     type: "share",
     data: {
         url: string,
@@ -265,15 +275,14 @@ export interface ShareElem extends MessageElem {
     }
 }
 
-export interface JsonElem extends MessageElem {
+export interface JsonElem {
     type: "json",
     data: {
-        data: any,
-        // data: { [k: string | number ]: any } | string
+        data: any, // a json string or a json object
     }
 }
 
-export interface XmlElem extends MessageElem {
+export interface XmlElem {
     type: "xml",
     data: {
         data: string,
@@ -281,32 +290,32 @@ export interface XmlElem extends MessageElem {
     }
 }
 
-export interface AnonymousElem extends MessageElem {
+export interface AnonymousElem {
     type: "anonymous",
     data: {
         ignore?: EnableFlag,
     }
 }
 
-export interface ReplyElem extends MessageElem {
+export interface ReplyElem {
     type: "reply",
     data: {
         id: string,
     }
 }
 
-export interface NodeElem extends MessageElem {
+export interface NodeElem {
     type: "node",
     data: {
         id: string,
     }
 }
 
-export interface ShakeElem extends MessageElem {
+export interface ShakeElem {
     type: "shake",
 }
 
-export interface PokeElem extends MessageElem {
+export interface PokeElem {
     type: "poke",
     data: {
         type: number | string,
@@ -365,7 +374,7 @@ export interface GroupInviteEventData extends RequestEventData {
 }
 
 interface MessageEventData extends CommonEventData {
-    message: MessageElem[] | string,
+    message: MessageElem[],
     raw_message: string,
     message_id: string,
     user_id: number,
@@ -379,7 +388,7 @@ export interface GroupMessageEventData extends MessageEventData {
     group_id: number,
     group_name: string,
     anonymous: Anonymous | null,
-    sender: MemberInfo,
+    sender: MemberBaseInfo,
 }
 export interface Anonymous {
     id: number,
