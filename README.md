@@ -44,7 +44,7 @@ const password = "password";  // your password or password_md5
 bot.login(password);
 ```
 
-> 更详细的例子可以参考 [demo.js](docs/demo.js)  
+> 更详细的例子可以参考 [demo.js](docs/demo.js) (内有滑动验证码等处理细节)  
 > API简洁友好，开箱即用，熟悉Nodejs者建议直接引入依赖进行开发。  
 > 其他语言的使用者可以用 [http-api](https://github.com/takayama-lily/onebot) 搭建环境。
 
