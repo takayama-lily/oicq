@@ -24,7 +24,7 @@
 const {createClient} = require("oicq");
 const uin = 123456789; // your account
 const bot = createClient(uin, {
-  slider: true //打开滑动验证码
+  slider: true //打开滑动验证码 (新号不打开可能出现环境异常等问题)
 });
 
 //监听并输入滑动验证码ticket
