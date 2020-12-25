@@ -99,6 +99,7 @@ class AndroidClient extends Client {
             ignore_self:true,
             resend: true,
             reconn_interval: 5,
+            slider: false,
             data_dir: path.join(process.mainModule.path, "data"),
             ...config
         };
@@ -433,6 +434,12 @@ class AndroidClient extends Client {
             return this.logger.warn("未收到图片验证码或已过期，你不能调用captchaLogin函数。");
         this._connect(()=>{
             wt.captchaLogin.call(this, captcha);
+        });
+    }
+
+    sliderLogin(ticket) {
+        this._connect(()=>{
+            wt.sliderLogin.call(this, ticket);
         });
     }
 

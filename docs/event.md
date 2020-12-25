@@ -42,8 +42,10 @@ client.on("notice.group.increase", (data)=>console.log(data)); //监听成员入
 系统类事件
 
 + `system.login`
-  + `system.login.captcha` 收到验证码事件
+  + `system.login.captcha` 收到图片验证码事件
     + *`image`* Buffer 图片字节集
+  + `system.login.slider` 收到滑动验证码事件
+    + *`url`* string 滑动地址
   + `system.login.device` 需要解设备锁
     + *`url`* string 设备锁验证地址
   + `system.login.error` 其他原因导致登陆失败

@@ -19,8 +19,15 @@ function account() {
                 log_level: "debug", ignore_self: false
             });
 
-            //处理验证码事件
-            bot.on("system.login.captcha", async()=>{
+            //处理滑动验证码事件
+            bot.on("system.login.slider", ()=>{
+                process.stdin.once("data", (input)=>{
+                    bot.sliderLogin(input);
+                });
+            });
+
+            //处理图片验证码事件
+            bot.on("system.login.captcha", ()=>{
                 process.stdin.once("data", (input)=>{
                     bot.captchaLogin(input);
                 });

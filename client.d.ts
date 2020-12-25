@@ -17,6 +17,8 @@ export interface ConfBot {
     resend?: boolean, //被风控时是否尝试用分片发送，默认true (一种古老的消息，暂不支持分片重组)
     data_dir?: string, //数据存储文件夹，需要可写权限，默认主目录下的data文件夹
 
+    slider?: boolean, //启用滑动验证码，默认false
+
     //触发system.offline.network事件后的重连间隔秒数，默认5(秒)，不建议设置低于3(秒)
     //瞬间的断线重连不会触发此事件，通常你的机器真的没有网络或登陆无响应时才会触发
     //设置为0则不会自动重连，然后你可以监听此事件自己处理
@@ -510,6 +512,7 @@ export class Client extends events.EventEmitter {
 
     login(password?: Buffer | string): void; //密码支持明文和md5
     captchaLogin(captcha: string): void;
+    sliderLogin(ticket: string): void;
     terminate(): void; //直接关闭连接
     logout(): Promise<void>; //先下线再关闭连接
     isOnline(): boolean;
@@ -569,7 +572,7 @@ export class Client extends events.EventEmitter {
     getLoginInfo(): RetLoginInfo;
 
     on(event: "system.login.captcha", listener: (this: Client, data: CaptchaEventData) => void): this;
-    on(event: "system.login.device", listener: (this: Client, data: DeviceEventData) => void): this;
+    on(event: "system.login.device" | "system.login.slider", listener: (this: Client, data: DeviceEventData) => void): this;
     on(event: "system.login.error", listener: (this: Client, data: LoginErrorEventData) => void): this;
     on(event: "system.login", listener: (this: Client, data: CaptchaEventData | DeviceEventData | LoginErrorEventData) => void): this;
     on(event: "system.online", listener: (this: Client, data: CommonEventData) => void): this;

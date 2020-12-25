@@ -39,9 +39,13 @@ const client = oicq.createClient(uin, config);
 
 + *`password`* \<string|Buffer> 支持传递明文或md5后的密码
 
-### `client.captchaLogin(captcha)` 验证码登陆
+### `client.captchaLogin(captcha)` 提交图片验证码
 
 + *`captcha`* \<string> 4个字母
+
+### `client.sliderLogin(ticket)` 提交滑动验证码
+
++ *`ticket`* \<string> 在浏览器滑动后，响应结果中的ticket
 
 ### `client.logout()` 先下线再关闭连接
 
