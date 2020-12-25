@@ -23,9 +23,7 @@
 ```js
 const {createClient} = require("oicq");
 const uin = 123456789; // your account
-const bot = createClient(uin, {
-  slider: true //打开滑动验证码 (新号不打开可能出现环境异常等问题)
-});
+const bot = createClient(uin);
 
 //监听并输入滑动验证码ticket
 bot.on("system.login.slider", ()=>{
@@ -56,4 +54,3 @@ bot.login("password"); // your password or password_md5
 [API](./docs/api.md)  
 [事件](./docs/event.md)  
 [消息ID规则](./docs/msgid.md)  
-[常见问题](https://github.com/takayama-lily/onebot/issues/12)

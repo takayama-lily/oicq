@@ -17,7 +17,7 @@ export interface ConfBot {
     resend?: boolean, //被风控时是否尝试用分片发送，默认true (一种古老的消息，暂不支持分片重组)
     data_dir?: string, //数据存储文件夹，需要可写权限，默认主目录下的data文件夹
 
-    slider?: boolean, //启用滑动验证码，默认false
+    slider?: boolean, //启用滑动验证码，默认true
 
     //触发system.offline.network事件后的重连间隔秒数，默认5(秒)，不建议设置低于3(秒)
     //瞬间的断线重连不会触发此事件，通常你的机器真的没有网络或登陆无响应时才会触发

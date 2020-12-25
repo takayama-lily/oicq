@@ -10,10 +10,9 @@ const uin = 123456789;
 const bot = createClient(uin, {
     log_level: "debug", //日志级别设置为debug
     platform: 1, //登录设备选择为手机
-    slider: true, //打开滑动验证码
 });
 
-//监听并输入滑动验证码ticket
+//监听并输入滑动验证码ticket(同一地点只需验证一次)
 bot.on("system.login.slider", ()=>{
     process.stdin.once("data", (input)=>{
         bot.sliderLogin(input);

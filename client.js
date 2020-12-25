@@ -96,10 +96,10 @@ class AndroidClient extends Client {
             platform: 2,
             log_level: "info",
             kickoff: false,
-            ignore_self:true,
+            ignore_self: true,
             resend: true,
             reconn_interval: 5,
-            slider: false,
+            slider: true,
             data_dir: path.join(process.mainModule.path, "data"),
             ...config
         };
