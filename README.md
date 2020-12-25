@@ -23,12 +23,14 @@
 ```js
 const {createClient} = require("oicq");
 const uin = 123456789; // your account
-const bot = createClient(uin);
+const bot = createClient(uin, {
+  slider: true //打开滑动验证码
+});
 
-//监听并输入验证码
-bot.on("system.login.captcha", ()=>{
+//监听并输入滑动验证码ticket
+bot.on("system.login.slider", ()=>{
   process.stdin.once("data", input=>{
-    bot.captchaLogin(input);
+    bot.sliderLogin(input);
   });
 });
 
@@ -40,11 +42,11 @@ bot.on("message", data=>{
     bot.sendPrivateMsg(data.user_id, "hello");
 });
 
-const password = "password";  // your password or password_md5
-bot.login(password);
+bot.login("password"); // your password or password_md5
 ```
 
-> 更详细的例子可以参考 [demo.js](docs/demo.js) (内有滑动验证码等处理细节)  
+> [如何获得滑动验证码ticket](https://github.com/takayama-lily/onebot/issues/28)  
+> 更详细的例子可以参考 [demo.js](docs/demo.js)  
 > API简洁友好，开箱即用，熟悉Nodejs者建议直接引入依赖进行开发。  
 > 其他语言的使用者可以用 [http-api](https://github.com/takayama-lily/onebot) 搭建环境。
 
@@ -54,4 +56,4 @@ bot.login(password);
 [API](./docs/api.md)  
 [事件](./docs/event.md)  
 [消息ID规则](./docs/msgid.md)  
-[登陆失败常见问题](https://github.com/takayama-lily/onebot/issues/12)
+[常见问题](https://github.com/takayama-lily/onebot/issues/12)
