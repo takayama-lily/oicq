@@ -89,8 +89,8 @@ message可以使用 `Array` 格式或 `String` 格式，支持CQ码
 参考 [消息段类型](https://github.com/howmanybots/onebot/blob/master/v11/specs/message/segment.md)
 
 + async `client.sendPrivateMsg(user_id, message[, auto_escape])` 返回message_id
-+ async `client.sendGroupMsg(group_id, user_id, message[, auto_escape])` 返回message_id
-+ async `client.sendDiscussMsg(discuss_id, user_id, message[, auto_escape])`
++ async `client.sendGroupMsg(group_id, message[, auto_escape])` 返回message_id
++ async `client.sendDiscussMsg(discuss_id, message[, auto_escape])`
 + async `client.deleteMsg(message_id)`
 + async `client.getMsg(message_id)`
 
