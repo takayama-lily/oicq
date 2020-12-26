@@ -279,6 +279,7 @@ export interface JsonElem {
     type: "json",
     data: {
         data: any, // a json string or a json object
+        text?: string,
     }
 }
 
@@ -287,6 +288,7 @@ export interface XmlElem {
     data: {
         data: string,
         type?: number,
+        text?: string,
     }
 }
 
