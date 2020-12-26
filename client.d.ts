@@ -186,8 +186,6 @@ export interface RetCsrfToken extends RetCommon {
 
 ////////// Message Elements
 
-export type EnableFlag = 1 | 0 | "1" | "0";
-
 /**
  * @see https://github.com/howmanybots/onebot/blob/master/v11/specs/message/segment.md
  */
@@ -205,16 +203,16 @@ export interface TextElem {
 export interface AtElem {
     type: "at",
     data: {
-        qq: Uin,
+        qq: number | "all",
         text?: string,
-        dummy?: EnableFlag,
+        dummy?: boolean,
     }
 }
 
 export interface FaceElem {
     type: "face" | "sface",
     data: {
-        id: number | string,
+        id: number,
         text?: string
     }
 }
@@ -230,7 +228,7 @@ export interface BfaceElem {
 export interface MfaceElem {
     type: "rps" | "dice",
     data: {
-        id: number | string,
+        id: number,
     }
 }
 
@@ -238,13 +236,13 @@ export interface ImgPttElem {
     type: "image" | "flash" | "record",
     data: {
         file: string | Buffer | Uint8Array,
-        cache?: EnableFlag,
-        proxy?: EnableFlag,
+        cache?: boolean,
+        proxy?: boolean,
         timeout?: number,
         url?: string,
-        headers?: OutgoingHttpHeaders | string,
+        headers?: OutgoingHttpHeaders,
         type?: "flash" | "show",
-        magic?: EnableFlag,
+        magic?: boolean,
     }
 }
 
@@ -252,8 +250,8 @@ export interface LocationElem {
     type: "location",
     data: {
         address: string,
-        lat: number | string,
-        lng: number | string,
+        lat: number,
+        lng: number,
         name?: string,
         id?: string,
     }
@@ -263,7 +261,7 @@ export interface MusicElem {
     type: "music",
     data: {
         type: "qq" | "163",
-        id: number | string,
+        id: number,
     }
 }
 
@@ -288,14 +286,14 @@ export interface XmlElem {
     type: "xml",
     data: {
         data: string,
-        type?: number | string,
+        type?: number,
     }
 }
 
 export interface AnonymousElem {
     type: "anonymous",
-    data: {
-        ignore?: EnableFlag,
+    data?: {
+        ignore?: boolean,
     }
 }
 
@@ -320,8 +318,8 @@ export interface ShakeElem {
 export interface PokeElem {
     type: "poke",
     data: {
-        type: number | string,
-        id?: number | string,
+        type: number,
+        id?: number,
     }
 }
 
