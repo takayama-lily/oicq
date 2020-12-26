@@ -13,7 +13,7 @@
 
 ```js
 //examples:
-client.on("system.login.captcha", (data)=>console.log(data)); //监听登陆时的验证码事件
+client.on("system.login.slider", (data)=>console.log(data)); //监听登陆时的验证码事件
 client.on("message", (data)=>console.log(data)); //监听所有的消息事件
 client.on("message.group", (data)=>console.log(data)); //监听群消息事件
 client.on("request", (data)=>console.log(data)); //监听所有的请求事件
