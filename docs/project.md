@@ -78,7 +78,7 @@ CQ码是指字符串格式下用于表示多媒体内容的方式，形如：
 
 |[CQ码]|收|发|说明|
 |-|-|-|-|
-|at|◯|◯|[CQ:at,qq=123456,text=@ABC,dummy=0]<br>dummy设为1时假@|
+|at|◯|◯|[CQ:at,qq=123456]|
 |face|◯|◯|[CQ:face,id=104]|
 |bface|◯|◯|原创表情，[CQ:bface,file=xxxxxxxx,text=摸头]|
 |dice&rps|◯|◯|骰子和猜拳：<br>[CQ:dice,id=1]<br>[CQ:rps,id=1]|
