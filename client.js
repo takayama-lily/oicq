@@ -93,7 +93,7 @@ class AndroidClient extends Client {
         this.uin = uin;
 
         config = {
-            platform: 2,
+            platform: 1,
             log_level: "info",
             kickoff: false,
             ignore_self: true,
