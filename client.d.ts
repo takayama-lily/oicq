@@ -11,7 +11,7 @@ export type Uin = string | number;
 // 大多数情况下你无需关心这些配置项，因为默认配置就是最常用的，除非你需要一些与默认不同的规则
 export interface ConfBot {
     log_level?: "trace" | "debug" | "info" | "warn" | "error" | "fatal" | "off", //默认info
-    platform?: number, //1:安卓手机 2:aPad(默认) 3:安卓手表 4:MacOS(实验性) 5:iPad(实验性)
+    platform?: number, //1:安卓手机(默认) 2:aPad 3:安卓手表 4:MacOS(实验性) 5:iPad(实验性)
     kickoff?: boolean, //被踢下线是否在3秒后重新登陆，默认false
     ignore_self?: boolean,//群聊是否无视自己的发言，默认true
     resend?: boolean, //被风控时是否尝试用分片发送，默认true (一种古老的消息，暂不支持分片重组)
