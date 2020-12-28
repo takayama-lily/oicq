@@ -108,6 +108,11 @@ class AndroidClient extends Client {
         this.logger = log4js.getLogger(`[BOT:${uin}]`);
         this.logger.level = config.log_level;
 
+        this.logger.info(`----------`);
+        this.logger.info(`Package Version: oicq@${version.version} (Released on ${version.upday})`);
+        this.logger.info("View Changelogs：https://github.com/takayama-lily/oicq/releases");
+        this.logger.info(`----------`);
+
         const filepath = path.join(this.dir, `device-${uin}.json`);
         if (!fs.existsSync(filepath))
             this.logger.info("创建了新的设备文件：" + filepath);
@@ -706,14 +711,6 @@ logger.level = "info";
 process.OICQ = {
     logger
 };
-
-console.log(`
-###########################################################################
-#     Open Source License: Apache-2.0                                     #
-#     Package Version: oicq@${version.version} (Released on ${version.upday})
-#     View Changelogs：https://github.com/takayama-lily/oicq/releases     #
-###########################################################################
-`);
 
 function createDataDir(dir, uin) {
     if (!fs.existsSync(dir))
