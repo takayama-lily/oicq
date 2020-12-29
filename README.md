@@ -55,3 +55,4 @@ bot.login("password"); // your password or password_md5
 [事件](./docs/event.md)  
 [消息ID规则](./docs/msgid.md)  
 [新功能开发计划](https://github.com/takayama-lily/oicq/projects/1)  
+[常见问题(登录、风控、掉线等)](https://github.com/takayama-lily/onebot/issues/12)  
