@@ -443,6 +443,8 @@ class AndroidClient extends Client {
     }
 
     sliderLogin(ticket) {
+        if (!this.t104)
+            return this.logger.warn("未收到滑动验证码或已过期，你不能调用sliderLogin函数。");
         this._connect(()=>{
             wt.sliderLogin.call(this, ticket);
         });
