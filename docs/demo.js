@@ -62,4 +62,5 @@ bot.on("notice.group.increase", (data)=>{
 // login with your password or password_md5
 bot.login("password"); 
 
+//同一事件可以多次监听
 //更多api和事件请参考文档或client.d.ts文件
