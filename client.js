@@ -280,8 +280,10 @@ class AndroidClient extends Client {
     async register() {
         this.logining = true;
         try {
-            if (!await wt.register.call(this))
+            if (!await wt.register.call(this)) {
+                await fs.promises.unlink(path.join(this.dir, "token"));
                 throw new Error();
+            }
         } catch (e) {
             return this.emit("internal.wt.failed", "register失败。");
         }
