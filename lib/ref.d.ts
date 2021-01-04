@@ -94,7 +94,7 @@ export class Client extends oicq.Client {
     send_timestamp: number;
     heartbeat: NodeJS.Timeout | null;
     seq_id: number;
-    handlers: Map<number, (Buffer) => void>;
+    handlers: Map<number, (buf: Buffer) => void>;
     seq_cache: Map<number, Set<string>>;
 
     session_id: Buffer;
