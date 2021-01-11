@@ -352,7 +352,7 @@ class AndroidClient extends Client {
         }
     }
 
-    em(name, data = {}) {
+    em(name = "", data = {}) {
         const slice = name.split(".");
         const post_type = slice[0], sub_type = slice[2];
         const param = {
@@ -365,13 +365,10 @@ class AndroidClient extends Client {
         if (sub_type)
             param.sub_type = sub_type;
         Object.assign(param, data);
-        const lv2_event = post_type + "." + slice[1];
-        if (this.listenerCount(name))
-            this.emit(name, param);
-        else if (this.listenerCount(lv2_event))
-            this.emit(lv2_event, param);
-        else
-            this.emit(post_type, param);
+        while (slice.length > 0) {
+            this.emit(slice.join("."), param);
+            slice.pop();
+        }
     }
 
     msgExists(from, type, seq, time) {

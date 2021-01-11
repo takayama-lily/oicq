@@ -24,7 +24,9 @@ client.on("notice.group.increase", (data)=>console.log(data)); //监听成员入
 
 > 使用 VScode 编辑器可以获得完整的智能提示
 
-事件为冒泡传递，例如 `request.group.add` 事件，若未监听会沿着二级分类 `request.group` 传递到一级分类 `request`  
+事件为连续传递，例如触发 `request.group.add` 事件后，会按顺序触发 `request.group` 事件和 `request` 事件  
+任意监听都可以捕获该事件，事件可以重复监听 (继承 `EventEmitter`)  
+
 事件使用cqhttp风格命名和参数，所有事件数据都为json对象，并包含以下共通字段：
 
 + `post_type` 一级分类 system, message, request, notice
