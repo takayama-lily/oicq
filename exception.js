@@ -29,7 +29,7 @@ const exceptions = new Map([
     }],
 ]);
 
-class TimeoutError extends Error {}
+class TimeoutError extends Error { }
 
 /**
  * @param {Function} fn 
@@ -45,7 +45,6 @@ function getErrorMessage(fn, code) {
     return e[code];
 }
 
-
 module.exports = {
     getErrorMessage, TimeoutError
-}
+};

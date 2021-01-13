@@ -35,5 +35,9 @@
     "jce": "^0.1.7",
     "log4js": "^6.3.0",
     "protobufjs": "^6.10.1"
+  },
+  "devDependencies": {
+    "babel-eslint": "^10.1.0",
+    "eslint": "^7.17.0"
   }
 }

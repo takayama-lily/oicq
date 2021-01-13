@@ -4,11 +4,11 @@ const net = require("net");
 const fs = require("fs");
 const path = require("path");
 const os = require("os");
-const {exec} = require("child_process");
-const {randomBytes} = require("crypto");
+const { exec } = require("child_process");
+const { randomBytes } = require("crypto");
 const log4js = require("log4js");
-const {getApkInfo, getDeviceInfo} = require("./device");
-const {checkUin, timestamp, md5} = require("./lib/common");
+const { getApkInfo, getDeviceInfo } = require("./device");
+const { checkUin, timestamp, md5 } = require("./lib/common");
 const core = require("./lib/core");
 const frdlst = require("./lib/friendlist");
 const sysmsg = require("./lib/sysmsg");
@@ -16,13 +16,13 @@ const wt = require("./lib/wtlogin/wt");
 const chat = require("./lib/message/chat");
 const indi = require("./lib/individual");
 const troop = require("./lib/troop");
-const {getErrorMessage, TimeoutError} = require("./exception");
+const { getErrorMessage, TimeoutError } = require("./exception");
 const BUF0 = Buffer.alloc(0);
 
 function buildApiRet(retcode, data = null, error = null) {
     data = data ? data : null;
     error = error ? error : null;
-    const status = retcode ? (retcode===1?"async":"failed") : "ok";
+    const status = retcode ? (retcode === 1 ? "async" : "failed") : "ok";
     return {
         retcode, data, status, error
     };
@@ -108,10 +108,10 @@ class AndroidClient extends Client {
         this.logger = log4js.getLogger(`[BOT:${uin}]`);
         this.logger.level = config.log_level;
 
-        this.logger.info(`----------`);
+        this.logger.info("----------");
         this.logger.info(`Package Version: oicq@${version.version} (Released on ${version.upday})`);
         this.logger.info("View Changelogs：https://github.com/takayama-lily/oicq/releases");
-        this.logger.info(`----------`);
+        this.logger.info("----------");
 
         const filepath = path.join(this.dir, `device-${uin}.json`);
         if (!fs.existsSync(filepath))
@@ -120,10 +120,10 @@ class AndroidClient extends Client {
         this.apk = getApkInfo(config.platform);
         this.ksid = Buffer.from(`|${this.device.imei}|` + this.apk.name);
 
-        this.on("error", (err)=>{
+        this.on("error", (err) => {
             this.logger.error(err.message);
         });
-        this.on("close", ()=>{
+        this.on("close", () => {
             this.read();
             if (this.remoteAddress)
                 this.logger.info(`${this.remoteAddress}:${this.remotePort} closed`);
@@ -133,13 +133,13 @@ class AndroidClient extends Client {
             } else if (this.status === Client.ONLINE) {
                 ++this.stat.lost_times;
                 this.logining = true;
-                setTimeout(()=>{
+                setTimeout(() => {
                     this._connect(this.register.bind(this));
                 }, 50);
             }
             this.status = Client.OFFLINE;
         });
-        this.on("readable", ()=>{
+        this.on("readable", () => {
             while (this.readableLength > 4) {
                 let len_buf = this.read(4);
                 let len = len_buf.readInt32BE();
@@ -160,7 +160,7 @@ class AndroidClient extends Client {
             }
         });
 
-        this.on("internal.login", async()=>{
+        this.on("internal.login", async () => {
             this.logger.info(`Welcome, ${this.nickname} ! 开始初始化资源...`);
             this.sync_finished = false;
             await this.register();
@@ -177,7 +177,7 @@ class AndroidClient extends Client {
             this.em("system.online");
         });
 
-        this.on("internal.wt.failed", (message)=>{
+        this.on("internal.wt.failed", (message) => {
             this.logining = false;
             this.logger.error(message);
             if (this.status !== Client.OFFLINE)
@@ -186,11 +186,11 @@ class AndroidClient extends Client {
                 this.logger.warn(this.config.reconn_interval + "秒后重新连接。");
                 setTimeout(this.login.bind(this), this.config.reconn_interval * 1000);
             }
-            this.em("system.offline.network", {message});
+            this.em("system.offline.network", { message });
         });
     }
 
-    _connect(callback = ()=>{}) {
+    _connect(callback = () => { }) {
         if (this.status !== Client.OFFLINE) {
             return callback();
         }
@@ -201,7 +201,7 @@ class AndroidClient extends Client {
             port = this.config.remote_port;
         this.logger.info(`connecting to ${ip}:${port}`);
         this.removeAllListeners("connect");
-        this.connect(port, ip, ()=>{
+        this.connect(port, ip, () => {
             this.status = Client.INIT;
             this.logger.info(`${this.remoteAddress}:${this.remotePort} connected`);
             this.resume();
@@ -218,15 +218,15 @@ class AndroidClient extends Client {
     async send(packet, timeout = 5000) {
         ++this.stat.sent_pkt_cnt;
         const seq_id = this.seq_id;
-        return new Promise((resolve, reject)=>{
-            this.write(packet, ()=>{
-                const id = setTimeout(()=>{
+        return new Promise((resolve, reject) => {
+            this.write(packet, () => {
+                const id = setTimeout(() => {
                     this.handlers.delete(seq_id);
                     ++this.stat.lost_pkt_cnt;
                     reject(new TimeoutError());
-                    this.em("internal.timeout", {seq_id});
+                    this.em("internal.timeout", { seq_id });
                 }, timeout);
-                this.handlers.set(seq_id, (data)=>{
+                this.handlers.set(seq_id, (data) => {
                     clearTimeout(id);
                     this.handlers.delete(seq_id);
                     resolve(data);
@@ -245,7 +245,7 @@ class AndroidClient extends Client {
     startHeartbeat() {
         if (this.heartbeat)
             return;
-        this.heartbeat = setInterval(async()=>{
+        this.heartbeat = setInterval(async () => {
             this.doCircle();
             try {
                 if (!this.isOnline())
@@ -294,7 +294,7 @@ class AndroidClient extends Client {
         this.setOnlineStatus(this.online_status);
         this.startHeartbeat();
         if (!this.listenerCount("internal.kickoff")) {
-            this.once("internal.kickoff", (data)=>{
+            this.once("internal.kickoff", (data) => {
                 this.status = Client.INIT;
                 this.stopHeartbeat();
                 this.logger.warn(data.info);
@@ -318,7 +318,7 @@ class AndroidClient extends Client {
                     this.logger.warn("3秒后重新连接..");
                     setTimeout(this.login.bind(this), 3000);
                 }
-                this.em("system.offline." + sub_type, {message: data.info});
+                this.em("system.offline." + sub_type, { message: data.info });
             });
         }
         await core.getMsg.call(this);
@@ -330,7 +330,7 @@ class AndroidClient extends Client {
      */
     async useProtocol(fn, params) {
         if (!this.isOnline() || !this.sync_finished)
-            return buildApiRet(104, null, {code: -1, message: "bot not online"});
+            return buildApiRet(104, null, { code: -1, message: "bot not online" });
         try {
             const rsp = await fn.apply(this, params);
             if (!rsp)
@@ -339,16 +339,16 @@ class AndroidClient extends Client {
                 return buildApiRet(102, null,
                     {
                         code: rsp.result,
-                        message: rsp.emsg?rsp.emsg:getErrorMessage(fn, rsp.result)
+                        message: rsp.emsg ? rsp.emsg : getErrorMessage(fn, rsp.result)
                     }
                 );
             else
                 return buildApiRet(0, rsp.data);
         } catch (e) {
             if (e instanceof TimeoutError)
-                return buildApiRet(103, null, {code: -1, message: "packet timeout"});
+                return buildApiRet(103, null, { code: -1, message: "packet timeout" });
             this.logger.debug(e);
-            return buildApiRet(100, null, {code: -1, message: e.message});
+            return buildApiRet(100, null, { code: -1, message: e.message });
         }
     }
 
@@ -356,9 +356,9 @@ class AndroidClient extends Client {
         const slice = name.split(".");
         const post_type = slice[0], sub_type = slice[2];
         const param = {
-            self_id:    this.uin,
-            time:       timestamp(),
-            post_type:  post_type
+            self_id: this.uin,
+            time: timestamp(),
+            post_type: post_type
         };
         const type_name = slice[0] + "_type";
         param[type_name] = slice[1];
@@ -389,7 +389,7 @@ class AndroidClient extends Client {
     }
     doCircle() {
         wt.exchangeEMP.call(this);
-        if (this.config.platform != 2 && this.config.platform != 3 &&this.var4++ > 10) {
+        if (this.config.platform != 2 && this.config.platform != 3 && this.var4++ > 10) {
             this.setOnlineStatus(this.online_status);
             this.var4 = 0;
         }
@@ -428,7 +428,7 @@ class AndroidClient extends Client {
             else
                 this.password_md5 = md5(String(password));
         }
-        this._connect(()=>{
+        this._connect(() => {
             wt.passwordLogin.call(this);
         });
     }
@@ -436,7 +436,7 @@ class AndroidClient extends Client {
     captchaLogin(captcha) {
         if (!this.captcha_sign)
             return this.logger.warn("未收到图片验证码或已过期，你不能调用captchaLogin函数。");
-        this._connect(()=>{
+        this._connect(() => {
             wt.captchaLogin.call(this, captcha);
         });
     }
@@ -444,7 +444,7 @@ class AndroidClient extends Client {
     sliderLogin(ticket) {
         if (!this.t104)
             return this.logger.warn("未收到滑动验证码或已过期，你不能调用sliderLogin函数。");
-        this._connect(()=>{
+        this._connect(() => {
             wt.sliderLogin.call(this, ticket);
         });
     }
@@ -459,7 +459,7 @@ class AndroidClient extends Client {
         if (this.isOnline()) {
             try {
                 await wt.register.call(this, true);
-            } catch {}
+            } catch { }
         }
         this.terminate();
     }
@@ -535,7 +535,7 @@ class AndroidClient extends Client {
         return await this.useProtocol(troop.setAnonymous, arguments);
     }
     async setGroupWholeBan(group_id, enable = true) {
-        return await this.setGroupSetting(group_id, "shutupTime", enable?0xffffffff:0);
+        return await this.setGroupSetting(group_id, "shutupTime", enable ? 0xffffffff : 0);
     }
     async setGroupName(group_id, group_name) {
         return await this.setGroupSetting(group_id, "ingGroupName", String(group_name));
@@ -601,7 +601,7 @@ class AndroidClient extends Client {
     }
     async setGender(gender) {
         gender = parseInt(gender);
-        if (![0,1,2].includes(gender))
+        if (![0, 1, 2].includes(gender))
             return buildApiRet(100);
         return await this.useProtocol(indi.setProfile, [0x14E29, Buffer.from([gender])]);
     }
@@ -632,11 +632,11 @@ class AndroidClient extends Client {
     async getCookies(domain) {
         await wt.exchangeEMP.call(this);
         if (domain && !this.cookies[domain])
-            return buildApiRet(100, null, {code: -1, message: "unknown domain"});
+            return buildApiRet(100, null, { code: -1, message: "unknown domain" });
         let cookies = `uin=o${this.uin}; skey=${this.sig.skey};`;
         if (domain)
             cookies = `${cookies} p_uin=o${this.uin}; p_skey=${this.cookies[domain]};`;
-        return buildApiRet(0, {cookies});
+        return buildApiRet(0, { cookies });
     }
 
     async getCsrfToken() {
@@ -645,7 +645,7 @@ class AndroidClient extends Client {
         for (let v of this.sig.skey)
             token = token + (token << 5) + v;
         token &= 2147483647;
-        return buildApiRet(0, {token});
+        return buildApiRet(0, { token });
     }
 
     /**
@@ -653,33 +653,33 @@ class AndroidClient extends Client {
      */
     async cleanCache(type = "") {
         switch (type) {
-            case "image":
-            case "record":
-                const file = path.join(this.dir, "..", type, "*");
-                const cmd = os.platform().includes("win") ? `del /q ` : `rm -f `;
-                exec(cmd + file, (err, stdout, stderr)=>{
-                    if (err)
-                        return this.logger.error(err);
-                    if (stderr)
-                        return this.logger.error(stderr);
-                    this.logger.info(type + " cache clear");
-                });
-                break;
-            case "":
-                this.cleanCache("image");
-                this.cleanCache("record");
-                break;
-            default:
-                return buildApiRet(100, null, {code:-1, message:"unknown type (image, record, or undefined)"});
+        case "image":
+        case "record":
+            const file = path.join(this.dir, "..", type, "*");
+            const cmd = os.platform().includes("win") ? "del /q " : "rm -f ";
+            exec(cmd + file, (err, stdout, stderr) => {
+                if (err)
+                    return this.logger.error(err);
+                if (stderr)
+                    return this.logger.error(stderr);
+                this.logger.info(type + " cache clear");
+            });
+            break;
+        case "":
+            this.cleanCache("image");
+            this.cleanCache("record");
+            break;
+        default:
+            return buildApiRet(100, null, { code: -1, message: "unknown type (image, record, or undefined)" });
         }
         return buildApiRet(1);
     }
 
     canSendImage() {
-        return buildApiRet(0, {yes: true});
+        return buildApiRet(0, { yes: true });
     }
     canSendRecord() {
-        return buildApiRet(0, {yes: true});
+        return buildApiRet(0, { yes: true });
     }
     getVersionInfo() {
         return buildApiRet(0, version);
@@ -693,14 +693,14 @@ class AndroidClient extends Client {
             msg_cnt_per_min: this.calcMsgCnt(),
             statistics: this.stat,
             config: this.config
-        })
+        });
     }
     getLoginInfo() {
         return buildApiRet(0, {
             user_id: this.uin,
             nickname: this.nickname,
             age: this.age, sex: this.sex
-        })
+        });
     }
 }
 
@@ -715,7 +715,7 @@ process.OICQ = {
 
 function createDataDir(dir, uin) {
     if (!fs.existsSync(dir))
-        fs.mkdirSync(dir, {mode: 0o755, recursive: true});
+        fs.mkdirSync(dir, { mode: 0o755, recursive: true });
     const img_path = path.join(dir, "image");
     const ptt_path = path.join(dir, "record");
     const uin_path = path.join(dir, String(uin));
@@ -724,14 +724,14 @@ function createDataDir(dir, uin) {
     if (!fs.existsSync(ptt_path))
         fs.mkdirSync(ptt_path);
     if (!fs.existsSync(uin_path))
-        fs.mkdirSync(uin_path, {mode: 0o755});
+        fs.mkdirSync(uin_path, { mode: 0o755 });
     return uin_path;
 }
 
 /**
  * @deprecated
  */
-function setGlobalConfig() {}
+function setGlobalConfig() { }
 
 //----------------------------------------------------------------------------------------------------
 

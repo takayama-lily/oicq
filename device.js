@@ -3,12 +3,12 @@ const fs = require("fs");
 const path = require("path");
 const os = require("os");
 const crypto = require("crypto");
-const {uuid, md5} = require("./lib/common");
+const { uuid, md5 } = require("./lib/common");
 
 function rand(n = 9) {
-    const max = 10**n - n;
-    const min = 10**(n-1) + n;
-    return parseInt(Math.random()*(max-min)+min);
+    const max = 10 ** n - n;
+    const min = 10 ** (n - 1) + n;
+    return parseInt(Math.random() * (max - min) + min);
 }
 
 function getMac() {
@@ -61,7 +61,7 @@ function genDevice(filepath) {
 }`;
     const dir = path.dirname(filepath);
     if (!fs.existsSync(dir))
-        fs.mkdirSync(dir, {recursive: true, mode: 0o755});
+        fs.mkdirSync(dir, { recursive: true, mode: 0o755 });
     fs.writeFileSync(filepath, device);
     return JSON.parse(device);
 }
@@ -78,38 +78,38 @@ function getDeviceInfo(filepath) {
         d = genDevice(filepath);
     }
     const device = {
-        display:      d.android_id,
-        product:      d.product,
-        device:       d.device,
-        board:        d.board,
-        brand:        d.brand,
-        model:        d.model,
-        bootloader:   d.bootloader,
-        fingerprint:  `${d.brand}/${d.product}/${d.device}:10/${d.android_id}/${d.incremental}:user/release-keys`,
-        boot_id:      d.boot_id,
+        display: d.android_id,
+        product: d.product,
+        device: d.device,
+        board: d.board,
+        brand: d.brand,
+        model: d.model,
+        bootloader: d.bootloader,
+        fingerprint: `${d.brand}/${d.product}/${d.device}:10/${d.android_id}/${d.incremental}:user/release-keys`,
+        boot_id: d.boot_id,
         proc_version: d.proc_version,
-        baseband:     "",
-        sim:          "T-Mobile",
-        os_type:      "android",
-        mac_address:  d.mac_address,
-        ip_address:   d.ip_address,
-        wifi_bssid:   d.mac_address,
-        wifi_ssid:    d.wifi_ssid,
-        imei:         d.imei,
-        android_id:   d.android_id,
-        apn:          "wifi",
+        baseband: "",
+        sim: "T-Mobile",
+        os_type: "android",
+        mac_address: d.mac_address,
+        ip_address: d.ip_address,
+        wifi_bssid: d.mac_address,
+        wifi_ssid: d.wifi_ssid,
+        imei: d.imei,
+        android_id: d.android_id,
+        apn: "wifi",
         version: {
             incremental: d.incremental,
-            release:     "10",
-            codename:    "REL",
-            sdk:         29
+            release: "10",
+            codename: "REL",
+            sdk: 29
         }
     };
     device.imsi = crypto.randomBytes(16);
     device.tgtgt = crypto.randomBytes(16);
     device.guid = md5(Buffer.concat([Buffer.from(device.imei), Buffer.from(device.mac_address)]));
     return device;
-};
+}
 
 const apk = {
     //android phone
@@ -141,18 +141,18 @@ const apk = {
         sigmap: 1970400,
         sdkver: "6.0.0.2433",
     }
-}
+};
 
 //android watch
-apk[3] = {...apk[1]};
+apk[3] = { ...apk[1] };
 apk[3].subid = 537061176;
 
 //mac (experimental)
-apk[4] = {...apk[2]};
+apk[4] = { ...apk[2] };
 apk[4].subid = 537064315;
 
 //ipad (experimental)
-apk[5] = {...apk[2]};
+apk[5] = { ...apk[2] };
 apk[5].subid = 537065739;
 
 /**
@@ -165,4 +165,4 @@ function getApkInfo(platform) {
 
 module.exports = {
     getDeviceInfo, getApkInfo
-}
+};

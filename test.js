@@ -1,6 +1,4 @@
 "use strict";
-const fs = require("fs");
-const path = require("path");
 const crypto = require("crypto");
 const oicq = require("./client");
 
@@ -58,7 +56,7 @@ function account() {
 
             bot.on("internal.timeout", (data)=>{
                 console.log(data);
-            })
+            });
 
             bot.on("request", (data)=>{
                 console.log("收到request事件", data);
@@ -74,7 +72,7 @@ function account() {
             return account();
         }
         password();
-    })
+    });
 }
 function password() {
     console.log("请输入密码：");
@@ -82,7 +80,7 @@ function password() {
         input = input.toString().trim();
         const password_md5 = crypto.createHash("md5").update(input).digest();
         bot.login(password_md5);
-    })
+    });
 }
 function loop() {
     const help = `※友情提示：将log_level设为trace可获得详细的收发包信息。
@@ -95,36 +93,36 @@ function loop() {
         const cmd = input.split(" ")[0];
         const param = input.replace(cmd, "").trim();
         switch (cmd) {
-            case "bye":
-                bot.logout();
-                process.stdin.destroy();
-                break;
-            case "send":
-                const abc = param.split(" ");
-                const target = parseInt(abc[0]);
-                let res;
-                if (bot.gl.has(target))
-                    res = await bot.sendGroupMsg(target, abc[1]);
-                else
-                    res = await bot.sendPrivateMsg(target, abc[1]);
-                console.log("发送消息结果", res);
-                break;
-            case "eval":
-                try {
-                    let res = eval(param);
-                    if (res instanceof Promise)
-                        res = await res;
-                    console.log("执行结果", res);
-                } catch (e) {
-                    console.log(e.stack);
-                }
-                break;
-            default:
-                console.log("指令错误。");
-                console.log(help);
-                break;
+        case "bye":
+            bot.logout();
+            process.stdin.destroy();
+            break;
+        case "send":
+            const abc = param.split(" ");
+            const target = parseInt(abc[0]);
+            let res;
+            if (bot.gl.has(target))
+                res = await bot.sendGroupMsg(target, abc[1]);
+            else
+                res = await bot.sendPrivateMsg(target, abc[1]);
+            console.log("发送消息结果", res);
+            break;
+        case "eval":
+            try {
+                let res = eval(param);
+                if (res instanceof Promise)
+                    res = await res;
+                console.log("执行结果", res);
+            } catch (e) {
+                console.log(e.stack);
+            }
+            break;
+        default:
+            console.log("指令错误。");
+            console.log(help);
+            break;
         }
-    }
+    };
     process.stdin.on("data", listener);
 }
 
