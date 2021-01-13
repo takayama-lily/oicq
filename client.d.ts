@@ -6,7 +6,7 @@ import * as events from 'events';
 import { OutgoingHttpHeaders } from 'http';
 import * as log4js from 'log4js';
 
-export type Uin = string | number;
+export type Uin = number;
 
 // 大多数情况下你无需关心这些配置项，因为默认配置就是最常用的，除非你需要一些与默认不同的规则
 export interface ConfBot {
