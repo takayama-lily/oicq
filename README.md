@@ -56,3 +56,9 @@ bot.login("password"); // your password or password_md5
 [消息ID规则](./docs/msgid.md)  
 [新功能开发计划](https://github.com/takayama-lily/oicq/projects/1)  
 [常见问题(登录、风控、掉线等)](https://github.com/takayama-lily/onebot/issues/12)  
+
+**性能和稳定性测试：**
+
+通过Http-Api进行测试，测试账号平均每分钟消息数300+  
+内存占用140-160M，CPU占用可忽略不计  
+连续挂机天数近50天(截至2021/1/13) [数据统计图](https://user-images.githubusercontent.com/12014361/104422747-821db980-55c0-11eb-8deb-91977e37cc3c.PNG)
