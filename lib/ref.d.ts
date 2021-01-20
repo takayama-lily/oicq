@@ -93,6 +93,7 @@ export interface Msg extends Proto {
 
 export interface MsgHead extends Proto {
     1: number, //uin
+    3: number, //type
     5: number, //seqid
     6: number, //time
     // 8: Routing,
