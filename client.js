@@ -14,7 +14,6 @@ const frdlst = require("./lib/friendlist");
 const sysmsg = require("./lib/sysmsg");
 const wt = require("./lib/wtlogin/wt");
 const chat = require("./lib/message/chat");
-const indi = require("./lib/individual");
 const troop = require("./lib/troop");
 const { getErrorMessage, TimeoutError } = require("./exception");
 const BUF0 = Buffer.alloc(0);
@@ -469,7 +468,7 @@ class AndroidClient extends Client {
     }
 
     async setOnlineStatus(status) {
-        return await this.useProtocol(indi.setStatus, arguments);
+        return await this.useProtocol(troop.setStatus, arguments);
     }
 
     getFriendList() {
@@ -581,29 +580,29 @@ class AndroidClient extends Client {
         return await this.useProtocol(troop.addGroup, arguments);
     }
     async addFriend(group_id, user_id, comment = "") {
-        return await this.useProtocol(indi.addFriend, arguments);
+        return await this.useProtocol(troop.addFriend, arguments);
     }
     async deleteFriend(user_id, block = true) {
-        return await this.useProtocol(indi.delFriend, arguments);
+        return await this.useProtocol(troop.delFriend, arguments);
     }
     async inviteFriend(group_id, user_id) {
         return await this.useProtocol(troop.inviteFriend, arguments);
     }
 
     async sendLike(user_id, times = 1) {
-        return await this.useProtocol(indi.sendLike, arguments);
+        return await this.useProtocol(troop.sendLike, arguments);
     }
     async setNickname(nickname) {
-        return await this.useProtocol(indi.setProfile, [0x14E22, String(nickname)]);
+        return await this.useProtocol(troop.setProfile, [0x14E22, String(nickname)]);
     }
     async setDescription(description = "") {
-        return await this.useProtocol(indi.setProfile, [0x14E33, String(description)]);
+        return await this.useProtocol(troop.setProfile, [0x14E33, String(description)]);
     }
     async setGender(gender) {
         gender = parseInt(gender);
         if (![0, 1, 2].includes(gender))
             return buildApiRet(100);
-        return await this.useProtocol(indi.setProfile, [0x14E29, Buffer.from([gender])]);
+        return await this.useProtocol(troop.setProfile, [0x14E29, Buffer.from([gender])]);
     }
     async setBirthday(birthday) {
         try {
@@ -612,19 +611,19 @@ class AndroidClient extends Client {
             buf.writeUInt16BE(parseInt(birthday.substr(0, 4)));
             buf.writeUInt8(parseInt(birthday.substr(4, 2)), 2);
             buf.writeUInt8(parseInt(birthday.substr(6, 2)), 3);
-            return await this.useProtocol(indi.setProfile, [0x16593, buf]);
+            return await this.useProtocol(troop.setProfile, [0x16593, buf]);
         } catch (e) {
             return buildApiRet(100);
         }
     }
     async setSignature(signature = "") {
-        return await this.useProtocol(indi.setSign, arguments);
+        return await this.useProtocol(troop.setSign, arguments);
     }
     async setPortrait(file) {
-        return await this.useProtocol(indi.setPortrait, arguments);
+        return await this.useProtocol(troop.setPortrait, arguments);
     }
     async setGroupPortrait(group_id, file) {
-        return await this.useProtocol(indi.setGroupPortrait, arguments);
+        return await this.useProtocol(troop.setGroupPortrait, arguments);
     }
 
     ///////////////////////////////////////////////////

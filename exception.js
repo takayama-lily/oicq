@@ -1,5 +1,4 @@
 "use strict";
-const indi = require("./lib/individual");
 const troop = require("./lib/troop");
 const chat = require("./lib/message/chat");
 
@@ -18,7 +17,7 @@ const exceptions = new Map([
     [troop.setCard, {
         1: "权限不足"
     }],
-    [indi.addFriend, {
+    [troop.addFriend, {
         2: "对方拒绝被添加",
         3: "需要正确回答问题(暂不支持)",
         101: "已经是好友"
