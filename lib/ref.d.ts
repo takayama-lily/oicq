@@ -80,6 +80,49 @@ export interface HighwayUploadObject {
     key: Buffer,
 }
 
+export interface Proto {
+    [k: number]: Proto,
+    raw: Buffer,
+}
+
+export interface Msg extends Proto {
+    1: MsgHead,
+    2: MsgContent,
+    3: MsgBody,
+}
+
+export interface MsgHead extends Proto {
+    1: number, //uin
+    5: number, //seqid
+    6: number, //time
+    // 8: Routing,
+    // 9: Group,
+    // 13: Discuss,
+}
+
+export interface MsgContent extends Proto {
+    1: number, //pkt index
+    2: number, //pkt cnt
+    3: number, //div
+    4: number, //auto reply
+}
+
+export interface MsgBody extends Proto {
+    1: RichMsg,
+    // 2: FileMsg,
+}
+
+export interface RichMsg extends Proto {
+    1: MsgAttr,
+    2: Proto[], //common
+    4: Proto, //ptt
+}
+
+export interface MsgAttr extends Proto {
+    3: number, //random integer
+    9: Proto, //font
+}
+
 //////////
 
 export class Client extends oicq.Client {
