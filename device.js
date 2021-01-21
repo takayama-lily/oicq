@@ -62,7 +62,7 @@ function genDevice(filepath) {
     const dir = path.dirname(filepath);
     if (!fs.existsSync(dir))
         fs.mkdirSync(dir, { recursive: true, mode: 0o755 });
-    fs.writeFileSync(filepath, device);
+    fs.writeFileSync(filepath, device, { mode: 0o600 });
     return JSON.parse(device);
 }
 
@@ -72,9 +72,9 @@ function genDevice(filepath) {
  */
 function getDeviceInfo(filepath) {
     var d;
-    if (fs.existsSync(filepath)) {
-        d = JSON.parse(fs.readFileSync(filepath));
-    } else {
+    try {
+        d = JSON.parse(fs.readFileSync(filepath, { encoding: "utf-8" }));
+    } catch {
         d = genDevice(filepath);
     }
     const device = {

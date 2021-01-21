@@ -387,8 +387,8 @@ class AndroidClient extends Client {
         }
     }
     doCircle() {
-        wt.exchangeEMP.call(this);
         if (this.config.platform != 2 && this.config.platform != 3 && this.var4++ > 10) {
+            wt.exchangeEMP.call(this);
             this.setOnlineStatus(this.online_status);
             this.var4 = 0;
         }
