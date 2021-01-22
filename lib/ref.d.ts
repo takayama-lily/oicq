@@ -92,18 +92,21 @@ export interface Msg extends Proto {
 }
 
 export interface MsgHead extends Proto {
-    1: number, //uin
+    1: number, //from uin
+    2: number, //to uin
     3: number, //type
+    4: bigint, //uuid
     5: number, //seqid
     6: number, //time
     // 8: Routing,
     // 9: Group,
+    10: number, //appid
     // 13: Discuss,
 }
 
 export interface MsgContent extends Proto {
-    1: number, //pkt index
-    2: number, //pkt cnt
+    1: number, //pkt cnt
+    2: number, //pkt index
     3: number, //div
     4: number, //auto reply
 }
