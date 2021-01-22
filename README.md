@@ -4,7 +4,7 @@
 [![node engine](https://img.shields.io/node/v/oicq.svg)](https://nodejs.org)
 [![Gitter](https://badges.gitter.im/takayama-lily/oicq.svg)](https://gitter.im/takayama-lily/oicq?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
 
-* QQ(安卓)协议的nodejs实现。也参考了一些其他开源仓库如mirai、miraiGo等。  
+* QQ(安卓)协议的nodejs实现。也参考了一些其他开源仓库如[mirai](https://github.com/mamoe/mirai)、[miraiGo](https://github.com/Mrs4s/MiraiGo)等。  
 * 以高效和稳定为第一目的，在此基础上不断完善，将会逐步支持手机协议的大部分功能。
 * 使用 [CQHTTP](https://cqhttp.cc) 风格的API、事件和参数，并且原生支持经典的CQ码。  
 * 请使用 `Nodejs 12.16` 以上版本。有bug请告诉我。
@@ -21,19 +21,18 @@
 **Example:**
 
 ```js
-const {createClient} = require("oicq");
+const { createClient } = require("oicq");
 const uin = 123456789; // your account
 const bot = createClient(uin);
 
 //监听并输入滑动验证码ticket
-bot.on("system.login.slider", ()=>{
-  process.stdin.once("data", input=>{
+bot.on("system.login.slider", (data) => {
+  process.stdin.once("data", (input) => {
     bot.sliderLogin(input);
   });
 });
 
-bot.on("message", data=>{
-  console.log(data);
+bot.on("message", (data) => {
   if (data.group_id > 0)
     bot.sendGroupMsg(data.group_id, "hello");
   else

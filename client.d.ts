@@ -14,7 +14,7 @@ export interface ConfBot {
     platform?: number, //1:安卓手机(默认) 2:aPad 3:安卓手表 4:MacOS(实验性) 5:iPad(实验性)
     kickoff?: boolean, //被踢下线是否在3秒后重新登陆，默认false
     ignore_self?: boolean,//群聊是否无视自己的发言，默认true
-    resend?: boolean, //被风控时是否尝试用分片发送，默认true (一种古老的消息，暂不支持分片重组)
+    resend?: boolean, //被风控时是否尝试用分片发送，默认true
     data_dir?: string, //数据存储文件夹，需要可写权限，默认主目录下的data文件夹
 
     slider?: boolean, //启用滑动验证码，默认true
