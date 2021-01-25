@@ -148,6 +148,7 @@ export class Client extends oicq.Client {
     random_key: Buffer;
     captcha_sign?: Buffer;
     t104?: Buffer;
+    t106: Buffer;
     t402?: Buffer;
     t403?: Buffer;
 

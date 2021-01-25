@@ -68,6 +68,7 @@ class AndroidClient extends Client {
         device_token: BUF0,
         emp_time: timestamp(),
     };
+    t106 = BUF0;
     cookies = {};
 
     sync_finished = false;
