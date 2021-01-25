@@ -1,5 +1,8 @@
 "use strict";
 const version = require("./package.json");
+version.app_name = version.name;
+version.app_version = version.version;
+version.protocol_version = "v11";
 const net = require("net");
 const fs = require("fs");
 const path = require("path");
