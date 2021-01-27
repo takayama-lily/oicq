@@ -61,3 +61,7 @@ bot.login("password"); // your password or password_md5
 通过Http-Api进行测试，测试账号平均每分钟消息数300+  
 内存占用140-160M，CPU占用可忽略不计  
 连续挂机天数近50天(截至2021/1/13) [数据统计图](https://user-images.githubusercontent.com/12014361/104422747-821db980-55c0-11eb-8deb-91977e37cc3c.PNG)
+
+**Bug反馈群：**
+
+236172566
