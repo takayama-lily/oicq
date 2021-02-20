@@ -168,4 +168,5 @@ export class Client extends oicq.Client {
     useProtocol(fn: Function, params: any[]): oicq.RetCommon;
     em(name: string, data: object): void;
     msgExists(from: number, type: number, seq: number, time: number): boolean;
+    buildSyncCookie(): Buffer;
 }

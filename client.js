@@ -10,6 +10,7 @@ const os = require("os");
 const { exec } = require("child_process");
 const { randomBytes } = require("crypto");
 const log4js = require("log4js");
+const pb = require("./lib/pb");
 const { getApkInfo, getDeviceInfo } = require("./device");
 const { checkUin, timestamp, md5 } = require("./lib/common");
 const core = require("./lib/core");
@@ -412,6 +413,21 @@ class AndroidClient extends Client {
                 cnt += set.size;
         }
         return cnt;
+    }
+    buildSyncCookie() {
+        const time = timestamp();
+        return pb.encode({
+            1: time,
+            2: time,
+            3: this.const1,
+            4: this.const2,
+            5: randomBytes(4).readUInt32BE(),
+            9: randomBytes(4).readUInt32BE(),
+            11: randomBytes(4).readUInt32BE(),
+            12: this.const3,
+            13: time,
+            14: 0,
+        });
     }
 
     // 以下是public方法 ----------------------------------------------------------------------------------------------------

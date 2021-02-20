@@ -533,11 +533,12 @@ export class Client extends events.EventEmitter {
     setPortrait(file: Buffer | string): Promise<RetCommon>; //图片CQ码中file相同格式
     setGroupPortrait(group_id: number, file: Buffer | string): Promise<RetCommon>;
 
-    getFile(fileid: string, busid?: string): Promise<RetCommon<FileElem["data"]>>; //用于下载链接失效后重新获取
-    getHistoryMsgs(message_id: string, num?: number): Promise<RetCommon<PrivateMessageEventData[] | GroupMessageEventData[]>>; //获取msgid往前的num条消息
-    uploadC2CImages(user_id: number, images: ImgPttElem["data"][]): Promise<RetCommon<ImgPttElem["data"][]>>; //上传好友图以备发送
-    uploadGroupImages(group_id: number, images: ImgPttElem["data"][]): Promise<RetCommon<ImgPttElem["data"][]>>; //上传群图以备发送
-    getSummaryCard(user_id): Promise<RetCommon<unknown>>; //查看用户资料
+    // getFile(fileid: string, busid?: string): Promise<RetCommon<FileElem["data"]>>; //用于下载链接失效后重新获取
+    // getHistoryMsgs(message_id: string, num?: number): Promise<RetCommon<PrivateMessageEventData[] | GroupMessageEventData[]>>; //获取msgid往前的num条消息
+    // uploadC2CImages(user_id: number, images: ImgPttElem["data"][]): Promise<RetCommon<ImgPttElem["data"][]>>; //上传好友图以备发送
+    // uploadGroupImages(group_id: number, images: ImgPttElem["data"][]): Promise<RetCommon<ImgPttElem["data"][]>>; //上传群图以备发送
+    // getSummaryCard(user_id: number): Promise<RetCommon<unknown>>; //查看用户资料
+    // getForwardMsg(resid: string): Promise<RetCommon<unknown>>;
 
     getCookies(domain?: string): Promise<RetCommon<{ cookies: string }>>;
     getCsrfToken(): Promise<RetCommon<{ token: number }>>;
