@@ -48,8 +48,6 @@ class AndroidClient extends Client {
     gl = new Map; //groupList
     gml = new Map; //groupMemberList
 
-    recv_timestamp = 0;
-    send_timestamp = 0xffffffff;
     heartbeat = null;
     seq_id = 0;
     handlers = new Map;
@@ -148,7 +146,6 @@ class AndroidClient extends Client {
                 let len_buf = this.read(4);
                 let len = len_buf.readInt32BE();
                 if (this.readableLength >= len - 4) {
-                    this.recv_timestamp = Date.now();
                     const packet = this.read(len - 4);
                     ++this.stat.recv_pkt_cnt;
                     try {
@@ -251,29 +248,12 @@ class AndroidClient extends Client {
             return;
         this.heartbeat = setInterval(async () => {
             this.doCircle();
-            try {
-                if (!this.isOnline())
-                    return;
-                await wt.heartbeat.call(this);
-                if (Date.now() - this.send_timestamp >= 59000) {
-                    if (!await core.getMsg.call(this) && this.isOnline()) {
-                        this.logger.warn("GetMsg timeout!");
-                        if (!await core.getMsg.call(this) && this.isOnline())
-                            this.destroy();
-                    }
-                }
-            } catch {
-                if (!this.isOnline())
-                    return;
-                core.getMsg.call(this);
-                try {
-                    await wt.heartbeat.call(this);
-                } catch {
-                    this.logger.warn("Heartbeat timeout!");
-                    if (Date.now() - this.recv_timestamp > 6000 && this.isOnline())
-                        this.destroy();
-                }
+            if (!await core.getMsg.call(this) && this.isOnline()) {
+                this.logger.warn("GetMsg timeout!");
+                if (!await core.getMsg.call(this) && this.isOnline())
+                    this.destroy();
             }
+            wt.heartbeat.call(this);
         }, 30000);
     }
     stopHeartbeat() {
@@ -392,9 +372,10 @@ class AndroidClient extends Client {
         }
     }
     doCircle() {
-        if (this.config.platform != 2 && this.config.platform != 3 && this.var4++ > 10) {
+        if (this.var4++ > 10) {
             wt.exchangeEMP.call(this);
-            this.setOnlineStatus(this.online_status);
+            if (this.config.platform != 2 && this.config.platform != 3)
+                this.setOnlineStatus(this.online_status);
             this.var4 = 0;
         }
         for (let time of this.seq_cache.keys()) {

@@ -137,8 +137,6 @@ export class Client extends oicq.Client {
     ksid: string | Buffer;
     device: Device;
 
-    recv_timestamp: number;
-    send_timestamp: number;
     heartbeat: NodeJS.Timeout | null;
     seq_id: number;
     handlers: Map<number, (buf: Buffer) => void>;
