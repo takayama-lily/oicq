@@ -161,8 +161,9 @@ export class Client extends oicq.Client {
 
     nextSeq(): number;
     send(): Promise<Buffer>;
-    sendUNI(cmd: string, body: Buffer, seq?: number): Promise<Buffer>;
-    writeUNI(cmd: string, body: Buffer, seq?: number): void;
+    sendOidb(cmd: string, body: Buffer): Promise<Buffer>;
+    sendUni(cmd: string, body: Buffer, seq?: number): Promise<Buffer>;
+    writeUni(cmd: string, body: Buffer, seq?: number): void;
     useProtocol(fn: Function, params: any[]): oicq.RetCommon;
     em(name: string, data: object): void;
     msgExists(from: number, type: number, seq: number, time: number): boolean;

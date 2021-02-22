@@ -235,12 +235,16 @@ class AndroidClient extends Client {
             });
         });
     }
-    writeUNI(cmd, body, seq) {
+    writeUni(cmd, body, seq) {
         ++this.stat.sent_pkt_cnt;
         this.write(wt.build0x0BPacket.apply(this, arguments));
     }
-    async sendUNI(cmd, body, seq) {
+    async sendUni(cmd, body, seq) {
         return await this.send(wt.build0x0BPacket.apply(this, arguments));
+    }
+    async sendOidb(cmd, body) {
+        body = pb.encodeOIDB.call(this, cmd, body);
+        return await this.sendUni(cmd, body);
     }
 
     startHeartbeat() {
