@@ -149,7 +149,7 @@ export interface MemberInfo extends MemberBaseInfo {
  */
 export type MessageElem = TextElem | AtElem | FaceElem | BfaceElem | MfaceElem |
     ImgPttElem | LocationElem | MusicElem | ShareElem | JsonElem | XmlElem |
-    AnonymousElem | ReplyElem | NodeElem | ShakeElem | PokeElem | FileElem;
+    AnonymousElem | ReplyElem | NodeElem | ShakeElem | PokeElem | FileElem | VideoElem;
 
 export interface TextElem {
     type: "text",
@@ -201,6 +201,14 @@ export interface ImgPttElem {
         headers?: OutgoingHttpHeaders,
         type?: "flash" | "show",
         magic?: boolean,
+    }
+}
+
+export interface VideoElem {
+    type: "video",
+    data: {
+        file: string,
+        url?: string,
     }
 }
 
