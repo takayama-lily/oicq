@@ -1,0 +1,5 @@
+blank_issues_enabled: true
+contact_links:
+  - name: 查看wiki
+    url: https://github.com/takayama-lily/oicq/wiki
+    about: 获取常见问题的解答，以及详细的Api文档
