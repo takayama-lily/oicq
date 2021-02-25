@@ -39,5 +39,13 @@
   "devDependencies": {
     "babel-eslint": "^10.1.0",
     "eslint": "^7.17.0"
-  }
+  },
+  "files": [
+    "/lib",
+    "/client.js",
+    "/device.js",
+    "/exception.js",
+    "/client.d.ts",
+    "/test.js"
+  ]
 }
