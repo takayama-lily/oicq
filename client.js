@@ -101,7 +101,6 @@ class AndroidClient extends Client {
             ignore_self: true,
             resend: true,
             reconn_interval: 5,
-            slider: true,
             data_dir: path.join(process.mainModule.path, "data"),
             ...config
         };
@@ -110,14 +109,14 @@ class AndroidClient extends Client {
         this.logger = log4js.getLogger(`[BOT:${uin}]`);
         this.logger.level = config.log_level;
 
-        this.logger.info("----------");
-        this.logger.info(`Package Version: oicq@${version.version} (Released on ${version.upday})`);
-        this.logger.info("View Changelogs：https://github.com/takayama-lily/oicq/releases");
-        this.logger.info("----------");
+        this.logger.mark("----------");
+        this.logger.mark(`Package Version: oicq@${version.version} (Released on ${version.upday})`);
+        this.logger.mark("View Changelogs：https://github.com/takayama-lily/oicq/releases");
+        this.logger.mark("----------");
 
         const filepath = path.join(this.dir, `device-${uin}.json`);
         if (!fs.existsSync(filepath))
-            this.logger.info("创建了新的设备文件：" + filepath);
+            this.logger.mark("创建了新的设备文件：" + filepath);
         this.device = getDeviceInfo(filepath);
         this.apk = getApkInfo(config.platform);
         this.ksid = Buffer.from(`|${this.device.imei}|` + this.apk.name);
@@ -128,7 +127,7 @@ class AndroidClient extends Client {
         this.on("close", () => {
             this.read();
             if (this.remoteAddress)
-                this.logger.info(`${this.remoteAddress}:${this.remotePort} closed`);
+                this.logger.mark(`${this.remoteAddress}:${this.remotePort} closed`);
             this.stopHeartbeat();
             if (this.status === Client.OFFLINE) {
                 return this.emit("internal.wt.failed", "网络不通畅。");
@@ -162,7 +161,7 @@ class AndroidClient extends Client {
         });
 
         this.on("internal.login", async () => {
-            this.logger.info(`Welcome, ${this.nickname} ! 开始初始化资源...`);
+            this.logger.mark(`Welcome, ${this.nickname} ! 初始化资源...`);
             this.sync_finished = false;
             await this.register();
             if (!this.isOnline())
@@ -171,9 +170,9 @@ class AndroidClient extends Client {
                 frdlst.initFL.call(this),
                 frdlst.initGL.call(this)
             ]);
-            this.logger.info(`加载了${this.fl.size}个好友，${this.gl.size}个群。`);
+            this.logger.mark(`加载了${this.fl.size}个好友，${this.gl.size}个群。`);
             this.sync_finished = true;
-            this.logger.info("初始化完毕，开始处理消息。");
+            this.logger.mark("初始化完毕，开始处理消息。");
             core.getMsg.call(this);
             this.em("system.online");
         });
@@ -200,11 +199,11 @@ class AndroidClient extends Client {
             ip = this.config.remote_ip;
         if (this.config.remote_port > 0 && this.config.remote_port < 65536)
             port = this.config.remote_port;
-        this.logger.info(`connecting to ${ip}:${port}`);
+        this.logger.mark(`connecting to ${ip}:${port}`);
         this.removeAllListeners("connect");
         this.connect(port, ip, () => {
             this.status = Client.INIT;
-            this.logger.info(`${this.remoteAddress}:${this.remotePort} connected`);
+            this.logger.mark(`${this.remoteAddress}:${this.remotePort} connected`);
             this.resume();
             callback();
         });

@@ -10,14 +10,24 @@ export type Uin = number;
 
 // 大多数情况下你无需关心这些配置项，因为默认配置就是最常用的，除非你需要一些与默认不同的规则
 export interface ConfBot {
-    log_level?: "trace" | "debug" | "info" | "warn" | "error" | "fatal" | "off", //默认info
-    platform?: number, //1:安卓手机(默认) 2:aPad 3:安卓手表 4:MacOS(实验性) 5:iPad(实验性)
-    kickoff?: boolean, //被踢下线是否在3秒后重新登陆，默认false
-    ignore_self?: boolean,//群聊是否无视自己的发言，默认true
-    resend?: boolean, //被风控时是否尝试用分片发送，默认true
-    data_dir?: string, //数据存储文件夹，需要可写权限，默认主目录下的data文件夹
 
-    slider?: boolean, //启用滑动验证码，默认true
+    //日志等级，默认info，若消息量巨大可设置为"warn"屏蔽一般消息日志
+    log_level?: "trace" | "debug" | "info" | "warn" | "error" | "fatal" | "mark" | "off",
+
+    //1:安卓手机(默认) 2:aPad 3:安卓手表 4:MacOS(实验性) 5:iPad(实验性)
+    platform?: number,
+
+    //被踢下线是否在3秒后重新登陆，默认false
+    kickoff?: boolean,
+
+    //群聊是否无视自己的发言，默认true
+    ignore_self?: boolean,
+
+    //被风控时是否尝试用分片发送，默认true
+    resend?: boolean,
+
+    //数据存储文件夹，需要可写权限，默认主目录下的data文件夹
+    data_dir?: string,
 
     //触发system.offline.network事件后的重连间隔秒数，默认5(秒)，不建议设置低于3(秒)
     //瞬间的断线重连不会触发此事件，通常你的机器真的没有网络或登陆无响应时才会触发
@@ -542,11 +552,12 @@ export class Client extends events.EventEmitter {
     setGroupPortrait(group_id: number, file: Buffer | string): Promise<RetCommon>;
 
     // getFile(fileid: string, busid?: string): Promise<RetCommon<FileElem["data"]>>; //用于下载链接失效后重新获取
-    // getHistoryMsgs(message_id: string, num?: number): Promise<RetCommon<PrivateMessageEventData[] | GroupMessageEventData[]>>; //获取msgid往前的num条消息
+    // getChatHistory(message_id: string, num?: number): Promise<RetCommon<PrivateMessageEventData[] | GroupMessageEventData[]>>; //获取msgid往前的num条消息
     // uploadC2CImages(user_id: number, images: ImgPttElem["data"][]): Promise<RetCommon<ImgPttElem["data"][]>>; //上传好友图以备发送
     // uploadGroupImages(group_id: number, images: ImgPttElem["data"][]): Promise<RetCommon<ImgPttElem["data"][]>>; //上传群图以备发送
     // getSummaryCard(user_id: number): Promise<RetCommon<unknown>>; //查看用户资料
     // getForwardMsg(resid: string): Promise<RetCommon<unknown>>;
+    // getSystemMsg(): Promise<RetCommon<Array<FriendAddEventData | GroupAddEventData | GroupInviteEventData>>>;
 
     getCookies(domain?: string): Promise<RetCommon<{ cookies: string }>>;
     getCsrfToken(): Promise<RetCommon<{ token: number }>>;
