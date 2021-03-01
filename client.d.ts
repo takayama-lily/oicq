@@ -11,10 +11,11 @@ export type Uin = number;
 // 大多数情况下你无需关心这些配置项，因为默认配置就是最常用的，除非你需要一些与默认不同的规则
 export interface ConfBot {
 
-    //日志等级，默认info，若消息量巨大可设置为"warn"屏蔽一般消息日志
+    //日志等级，默认info
+    //往屏幕打印日志会降低性能，若消息量巨大建议重定向或设置为"warn"屏蔽一般消息日志
     log_level?: "trace" | "debug" | "info" | "warn" | "error" | "fatal" | "mark" | "off",
 
-    //1:安卓手机(默认) 2:aPad 3:安卓手表 4:MacOS(实验性) 5:iPad(实验性)
+    //1:安卓手机(默认) 2:aPad 3:安卓手表 4:MacOS 5:iPad
     platform?: number,
 
     //被踢下线是否在3秒后重新登陆，默认false
