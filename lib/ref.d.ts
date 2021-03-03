@@ -133,6 +133,11 @@ export class Client extends oicq.Client {
     logining: boolean;
     status: Symbol;
 
+    fl: Map<number, oicq.FriendInfo>;
+    sl: Map<number, oicq.StrangerInfo>;
+    gl: Map<number, oicq.GroupInfo>;
+    gml: Map<number, Map<number, oicq.MemberInfo>>;
+
     apk: ApkInfo;
     ksid: string | Buffer;
     device: Device;
