@@ -98,10 +98,20 @@ export interface MsgHead extends Proto {
     4: bigint, //uuid
     5: number, //seqid
     6: number, //time
-    // 8: Routing,
-    // 9: Group,
+    8: { //routing
+        4: number //group_id
+    },
+    9: {
+        1: number, //group_id
+        4: Proto, //card
+        8: Proto, //group_name
+    },
     10: number, //appid
-    // 13: Discuss,
+    13: {
+        1: number, //disscus_id
+        4: Proto, //card
+        5: Proto, //disscus_name
+    },
 }
 
 export interface MsgContent extends Proto {
@@ -113,7 +123,7 @@ export interface MsgContent extends Proto {
 
 export interface MsgBody extends Proto {
     1: RichMsg,
-    // 2: FileMsg,
+    2: Proto, //离线文件
 }
 
 export interface RichMsg extends Proto {

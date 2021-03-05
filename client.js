@@ -98,6 +98,7 @@ class AndroidClient extends Client {
             platform: 1,
             log_level: "info",
             kickoff: false,
+            brief: false,
             ignore_self: true,
             resend: true,
             reconn_interval: 5,
