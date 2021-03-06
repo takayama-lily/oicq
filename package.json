@@ -47,6 +47,7 @@
     "/device.js",
     "/exception.js",
     "/client.d.ts",
-    "/test.js"
+    "/test.js",
+    "/util.js"
   ]
 }

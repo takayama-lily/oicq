@@ -1,5 +1,5 @@
 "use strict";
-const { genCQMsg } = require("./lib/message/recv");
+const { genCQMsg } = require("./lib/message/parser");
 const cq = {};
 const cqStr = {};
 

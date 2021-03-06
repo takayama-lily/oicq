@@ -665,7 +665,7 @@ export namespace cqStr {
     function ptt(file: Buffer | Uint8Array | string, cache?: boolean, timeout?: number, headers: OutgoingHttpHeaders, proxy?: boolean): string;
     function location(lat: number, lng: number, address: string, id?: string): string;
     function music(type: "qq" | "163", id: number): string;
-    function json(data: any): string;
+    function json(data: string): string;
     function xml(data: string, type?: number): string;
     function share(url: string, title: string, image?: string, content?: string): string;
     function shake(): string;
