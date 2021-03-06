@@ -20,6 +20,7 @@ const wt = require("./lib/wtlogin/wt");
 const chat = require("./lib/message/chat");
 const troop = require("./lib/troop");
 const { getErrorMessage, TimeoutError } = require("./exception");
+const { cq, cqStr } = require("./util");
 const BUF0 = Buffer.alloc(0);
 
 function buildApiRet(retcode, data = null, error = null) {
@@ -752,5 +753,6 @@ function createClient(uin, config = {}) {
 }
 
 module.exports = {
-    createClient, setGlobalConfig
+    createClient, setGlobalConfig,
+    cq, cqStr,
 };

@@ -27,6 +27,9 @@ export interface ConfBot {
     //被风控时是否尝试用分片发送，默认true
     resend?: boolean,
 
+    //raw_message里不使用CQ码字符串，而是使用简短易读的形式(如："[图片][表情]")，可以加快解析速度，默认false
+    brief?: boolean,
+
     //数据存储文件夹，需要可写权限，默认主目录下的data文件夹
     data_dir?: string,
 
@@ -615,3 +618,59 @@ export class Client extends events.EventEmitter {
 }
 
 export function createClient(uin: number, config?: ConfBot): Client;
+
+/**
+ * 生成消息元素的快捷函数
+ */
+export namespace cq {
+    function text(text: string): TextElem;
+    function at(qq: number, text?: string, dummy?: boolean): AtElem;
+    function face(id: number, text?: string): FaceElem; //经典表情
+    function sface(id: number, text?: string): FaceElem;
+    function bface(file: string): BfaceElem; //原创表情
+    function rps(id?: number): MfaceElem; //猜拳
+    function dice(id?: number): MfaceElem; //骰子
+    function image(file: Buffer | Uint8Array | string, cache?: boolean, timeout?: number, headers: OutgoingHttpHeaders, proxy?: boolean): ImgPttElem; //图片
+    function flash(file: Buffer | Uint8Array | string, cache?: boolean, timeout?: number, headers: OutgoingHttpHeaders, proxy?: boolean): ImgPttElem; //闪照
+    function ptt(file: Buffer | Uint8Array | string, cache?: boolean, timeout?: number, headers: OutgoingHttpHeaders, proxy?: boolean): ImgPttElem; //语音
+    function location(lat: number, lng: number, address: string, id?: string): LocationElem; //位置分享
+    function music(type: "qq" | "163", id: number): MusicElem;
+    function json(data: any): JsonElem;
+    function xml(data: string, type?: number): XmlElem;
+    function share(url: string, title: string, image?: string, content?: string): ShareElem; //内容分享
+    function shake(): ShakeElem; //抖动
+    function poke(type: number, id?: number): PokeElem; //戳一戳
+    function reply(id: string): ReplyElem; //引用回复
+    function node(id: string): NodeElem; //转发节点
+    function anonymous(ignore?: boolean): AnonymousElem; //匿名
+
+    //转换到CQ码字符串
+    function toString(elem: MessageElem): string;
+    function toString(elems: MessageElem[]): string;
+}
+
+/**
+ * 生成CQ码字符串的快捷函数
+ */
+export namespace cqStr {
+    function text(text: string): string;
+    function at(qq: number, text?: string, dummy?: boolean): string;
+    function face(id: number, text?: string): string;
+    function sface(id: number, text?: string): string;
+    function bface(file: string): string;
+    function rps(id?: number): string;
+    function dice(id?: number): string;
+    function image(file: Buffer | Uint8Array | string, cache?: boolean, timeout?: number, headers: OutgoingHttpHeaders, proxy?: boolean): string;
+    function flash(file: Buffer | Uint8Array | string, cache?: boolean, timeout?: number, headers: OutgoingHttpHeaders, proxy?: boolean): string;
+    function ptt(file: Buffer | Uint8Array | string, cache?: boolean, timeout?: number, headers: OutgoingHttpHeaders, proxy?: boolean): string;
+    function location(lat: number, lng: number, address: string, id?: string): string;
+    function music(type: "qq" | "163", id: number): string;
+    function json(data: any): string;
+    function xml(data: string, type?: number): string;
+    function share(url: string, title: string, image?: string, content?: string): string;
+    function shake(): string;
+    function poke(type: number, id?: number): string;
+    function reply(id: string): string;
+    function node(id: string): string;
+    function anonymous(ignore?: boolean): string;
+}

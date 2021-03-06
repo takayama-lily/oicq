@@ -28,6 +28,7 @@
     "url": "https://github.com/takayama-lily/oicq/issues"
   },
   "homepage": "https://github.com/takayama-lily/oicq#readme",
+  "changelogs": "https://github.com/takayama-lily/oicq/releases",
   "dependencies": {
     "crypto-tea": "^0.2.0",
     "https-proxy-agent": "^5.0.0",
