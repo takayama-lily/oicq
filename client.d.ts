@@ -374,6 +374,7 @@ interface MessageEventData extends CommonEventData {
     message_id: string,
     user_id: number,
     font: string,
+    reply: (message: string | MessageElem[], auto_escape?: boolean) => Promise<RetCommon<{ message_id: string }>>,
 }
 export interface PrivateMessageEventData extends MessageEventData {
     sender: FriendInfo,

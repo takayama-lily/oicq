@@ -26,18 +26,14 @@ const uin = 123456789; // your account
 const bot = createClient(uin);
 
 //监听并输入滑动验证码ticket
-bot.on("system.login.slider", (data) => {
+bot.on("system.login.slider", () => {
   process.stdin.once("data", (input) => {
     bot.sliderLogin(input);
   });
 });
 
-bot.on("message", (data) => {
-  if (data.group_id > 0)
-    bot.sendGroupMsg(data.group_id, "hello");
-  else
-    bot.sendPrivateMsg(data.user_id, "hello");
-});
+//回复消息
+bot.on("message", (data) => data.reply("hello world"));
 
 bot.login("password"); // your password or password_md5
 ```
