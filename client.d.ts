@@ -374,7 +374,7 @@ interface MessageEventData extends CommonEventData {
     message_id: string,
     user_id: number,
     font: string,
-    reply: (message: string | MessageElem[], auto_escape?: boolean) => Promise<RetCommon<{ message_id: string }>>,
+    reply: (message: MessageElem | Iterable<MessageElem> | string, auto_escape?: boolean) => Promise<RetCommon<{ message_id: string }>>,
 }
 export interface PrivateMessageEventData extends MessageEventData {
     sender: FriendInfo,
@@ -521,9 +521,10 @@ export class Client extends events.EventEmitter {
     getGroupInfo(group_id: number, no_cache?: boolean): Promise<RetCommon<GroupInfo>>;
     getGroupMemberInfo(group_id: number, user_id: number, no_cache?: boolean): Promise<RetCommon<MemberInfo>>;
 
-    sendPrivateMsg(user_id: number, message: MessageElem[] | string, auto_escape?: boolean): Promise<RetCommon<{ message_id: string }>>;
-    sendGroupMsg(group_id: number, message: MessageElem[] | string, auto_escape?: boolean): Promise<RetCommon<{ message_id: string }>>;
-    sendDiscussMsg(discuss_id: number, message: MessageElem[] | string, auto_escape?: boolean): Promise<RetCommon>;
+    sendPrivateMsg(user_id: number, message: MessageElem | Iterable<MessageElem> | string, auto_escape?: boolean): Promise<RetCommon<{ message_id: string }>>;
+    sendGroupMsg(group_id: number, message: MessageElem | Iterable<MessageElem> | string, auto_escape?: boolean): Promise<RetCommon<{ message_id: string }>>;
+    sendTempMsg(group_id: number, user_id: number, message: MessageElem | Iterable<MessageElem> | string, auto_escape?: boolean): Promise<RetCommon<{ message_id: string }>>;
+    sendDiscussMsg(discuss_id: number, message: MessageElem | Iterable<MessageElem> | string, auto_escape?: boolean): Promise<RetCommon>;
     deleteMsg(message_id: string): Promise<RetCommon>;
     getMsg(message_id: string): Promise<RetCommon<PrivateMessageEventData | GroupMessageEventData>>;
 
@@ -647,7 +648,7 @@ export namespace cq {
 
     //转换到CQ码字符串
     function toString(elem: MessageElem): string;
-    function toString(elems: MessageElem[]): string;
+    function toString(elems: Iterable<MessageElem>): string;
 }
 
 /**
@@ -661,9 +662,9 @@ export namespace cqStr {
     function bface(file: string): string;
     function rps(id?: number): string;
     function dice(id?: number): string;
-    function image(file: Buffer | Uint8Array | string, cache?: boolean, timeout?: number, headers: OutgoingHttpHeaders, proxy?: boolean): string;
-    function flash(file: Buffer | Uint8Array | string, cache?: boolean, timeout?: number, headers: OutgoingHttpHeaders, proxy?: boolean): string;
-    function ptt(file: Buffer | Uint8Array | string, cache?: boolean, timeout?: number, headers: OutgoingHttpHeaders, proxy?: boolean): string;
+    function image(file: string, cache?: boolean, timeout?: number, headers: string, proxy?: boolean): string;
+    function flash(file: string, cache?: boolean, timeout?: number, headers: string, proxy?: boolean): string;
+    function ptt(file: string, cache?: boolean, timeout?: number, headers: string, proxy?: boolean): string;
     function location(lat: number, lng: number, address: string, id?: string): string;
     function music(type: "qq" | "163", id: number): string;
     function json(data: string): string;

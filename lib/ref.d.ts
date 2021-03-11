@@ -184,3 +184,5 @@ export class Client extends oicq.Client {
     msgExists(from: number, type: number, seq: number, time: number): boolean;
     buildSyncCookie(): Buffer;
 }
+
+export * from '../client';

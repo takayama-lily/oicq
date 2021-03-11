@@ -524,6 +524,9 @@ class AndroidClient extends Client {
     async sendDiscussMsg(discuss_id, message = "", auto_escape = false) {
         return await this.useProtocol(chat.sendMsg, [discuss_id, message, auto_escape, 2]);
     }
+    async sendTempMsg(group_id, user_id, message = "", auto_escape = false) {
+        return await this.useProtocol(chat.sendTempMsg, arguments);
+    }
     async deleteMsg(message_id) {
         return await this.useProtocol(chat.recallMsg, arguments);
     }
