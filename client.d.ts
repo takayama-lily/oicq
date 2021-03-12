@@ -528,6 +528,8 @@ export class Client extends events.EventEmitter {
     sendDiscussMsg(discuss_id: number, message: MessageElem | Iterable<MessageElem> | string, auto_escape?: boolean): Promise<RetCommon>;
     deleteMsg(message_id: string): Promise<RetCommon>;
     getMsg(message_id: string): Promise<RetCommon<PrivateMessageEventData | GroupMessageEventData>>;
+    getChatHistory(message_id: string, count?: number): Promise<RetCommon<PrivateMessageEventData[] | GroupMessageEventData[]>>; //获取msgid(包括自身)往前的count条消息
+    getForwardMsg(resid: string): Promise<RetCommon<any[]>>;
 
     sendGroupNotice(group_id: number, content: string): Promise<RetCommon>;
     setGroupName(group_id: number, group_name: string): Promise<RetCommon>;
@@ -544,6 +546,7 @@ export class Client extends events.EventEmitter {
 
     setFriendAddRequest(flag: string, approve?: boolean, remark?: string, block?: boolean): Promise<RetCommon>;
     setGroupAddRequest(flag: string, approve?: boolean, reason?: string, block?: boolean): Promise<RetCommon>;
+    getSystemMsg(): Promise<RetCommon<Array<FriendAddEventData | GroupAddEventData | GroupInviteEventData>>>;
 
     addGroup(group_id: number, comment?: string): Promise<RetCommon>;
     addFriend(group_id: number, user_id: number, comment?: string): Promise<RetCommon>;
@@ -559,12 +562,9 @@ export class Client extends events.EventEmitter {
     setGroupPortrait(group_id: number, file: Buffer | string): Promise<RetCommon>;
 
     // getFile(fileid: string, busid?: string): Promise<RetCommon<FileElem["data"]>>; //用于下载链接失效后重新获取
-    // getChatHistory(message_id: string, num?: number): Promise<RetCommon<PrivateMessageEventData[] | GroupMessageEventData[]>>; //获取msgid往前的num条消息
     // uploadC2CImages(user_id: number, images: ImgPttElem["data"][]): Promise<RetCommon<ImgPttElem["data"][]>>; //上传好友图以备发送
     // uploadGroupImages(group_id: number, images: ImgPttElem["data"][]): Promise<RetCommon<ImgPttElem["data"][]>>; //上传群图以备发送
     // getSummaryCard(user_id: number): Promise<RetCommon<unknown>>; //查看用户资料
-    // getForwardMsg(resid: string): Promise<RetCommon<unknown>>;
-    getSystemMsg(): Promise<RetCommon<Array<FriendAddEventData | GroupAddEventData | GroupInviteEventData>>>;
 
     getCookies(domain?: string): Promise<RetCommon<{ cookies: string }>>;
     getCsrfToken(): Promise<RetCommon<{ token: number }>>;
