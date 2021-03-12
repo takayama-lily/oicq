@@ -341,23 +341,29 @@ class AndroidClient extends Client {
         }
     }
 
-    em(name = "", data = {}) {
+    parseEventType(name = "") {
         const slice = name.split(".");
         const post_type = slice[0], sub_type = slice[2];
-        const param = {
+        const data = {
             self_id: this.uin,
             time: timestamp(),
-            post_type: post_type
+            post_type: post_type,
         };
         const type_name = slice[0] + "_type";
-        param[type_name] = slice[1];
+        data[type_name] = slice[1];
         if (sub_type)
-            param.sub_type = sub_type;
-        Object.assign(param, data);
-        while (slice.length > 0) {
-            this.emit(slice.join("."), param);
-            slice.pop();
+            data.sub_type = sub_type;
+        return data;
+    }
+
+    em(name = "", data = {}) {
+        data = Object.assign(this.parseEventType(name), data);
+        let i = name.lastIndexOf(".");
+        while (i > -1) {
+            this.emit(name, data);
+            name = name.slice(0, i);
         }
+        this.emit(name, data);
     }
 
     msgExists(from, type, seq, time) {
@@ -583,6 +589,9 @@ class AndroidClient extends Client {
     }
     async setGroupAddRequest(flag, approve = true, reason = "", block = false) {
         return await this.useProtocol(sysmsg.groupAction, arguments);
+    }
+    async getSystemMsg() {
+        return await this.useProtocol(sysmsg.getSysMsg, arguments);
     }
 
     async addGroup(group_id, comment = "") {

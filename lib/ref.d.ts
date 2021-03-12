@@ -183,6 +183,7 @@ export class Client extends oicq.Client {
     em(name: string, data: object): void;
     msgExists(from: number, type: number, seq: number, time: number): boolean;
     buildSyncCookie(): Buffer;
+    parseEventType(name: string): oicq.CommonEventData;
 }
 
 export * from '../client';

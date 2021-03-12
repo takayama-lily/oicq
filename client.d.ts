@@ -360,12 +360,13 @@ export interface GroupAddEventData extends RequestEventData {
     group_id: number,
     group_name: string,
     comment: string,
-    inviter_id?: number,
+    inviter_id?: number, //邀请人
+    actor_id?: number, //处理人
 }
 export interface GroupInviteEventData extends RequestEventData {
     group_id: number,
     group_name: string,
-    role: GroupRole,
+    role: GroupRole, //邀请者权限
 }
 
 interface MessageEventData extends CommonEventData {
@@ -563,7 +564,7 @@ export class Client extends events.EventEmitter {
     // uploadGroupImages(group_id: number, images: ImgPttElem["data"][]): Promise<RetCommon<ImgPttElem["data"][]>>; //上传群图以备发送
     // getSummaryCard(user_id: number): Promise<RetCommon<unknown>>; //查看用户资料
     // getForwardMsg(resid: string): Promise<RetCommon<unknown>>;
-    // getSystemMsg(): Promise<RetCommon<Array<FriendAddEventData | GroupAddEventData | GroupInviteEventData>>>;
+    getSystemMsg(): Promise<RetCommon<Array<FriendAddEventData | GroupAddEventData | GroupInviteEventData>>>;
 
     getCookies(domain?: string): Promise<RetCommon<{ cookies: string }>>;
     getCsrfToken(): Promise<RetCommon<{ token: number }>>;
