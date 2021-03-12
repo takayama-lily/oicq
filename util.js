@@ -1,7 +1,7 @@
 "use strict";
 const { genCQMsg } = require("./lib/message/parser");
-const cq = {};
-const cqStr = {};
+const segment = {};
+const cqcode = {};
 
 const elem_map = {
     text: ["text"],
@@ -27,7 +27,7 @@ const elem_map = {
 };
 
 for (const [type, params] of Object.entries(elem_map)) {
-    cq[type] = (...args) => {
+    segment[type] = (...args) => {
         const data = {};
         for (let i = 0; i < params.length; ++i) {
             if (Reflect.has(args, i)) {
@@ -38,15 +38,15 @@ for (const [type, params] of Object.entries(elem_map)) {
             type, data,
         };
     };
-    cqStr[type] = (...args) => {
-        return genCQMsg(cq[type](...args));
+    cqcode[type] = (...args) => {
+        return genCQMsg(segment[type](...args));
     };
 }
 
 /**
  * @param {import("./client").MessageElem | import("./client").MessageElem[]} arg 
  */
-cq.toString = (arg) => {
+segment.toCqcode = (arg) => {
     if (typeof arg === "string")
         return arg;
     if (typeof arg[Symbol.iterator] === "function") {
@@ -61,22 +61,22 @@ cq.toString = (arg) => {
 };
 
 // function test() {
-//     console.log(cq.text("aaa"));
-//     console.log(cqStr.text("aaa"));
+//     console.log(segment.text("aaa"));
+//     console.log(cqcode.text("aaa"));
 
-//     console.log(cq.image("/aaa/bbb"));
-//     console.log(cqStr.image("/aaa/bbb"));
+//     console.log(segment.image("/aaa/bbb"));
+//     console.log(cqcode.image("/aaa/bbb"));
 
-//     console.log(cq.image("/aaa/bbb",1));
-//     console.log(cqStr.image("/aaa/bbb",true));
+//     console.log(segment.image("/aaa/bbb",1));
+//     console.log(cqcode.image("/aaa/bbb",true));
 
-//     console.log(cq.music("qq",123));
-//     console.log(cqStr.music("163"));
+//     console.log(segment.music("qq",123));
+//     console.log(cqcode.music("163"));
 
-//     console.log(cq.json({"a": 1}));
-//     console.log(cqStr.json("{\"a\": 1}"));
+//     console.log(segment.json({"a": 1}));
+//     console.log(cqcode.json("{\"a\": 1}"));
 
-//     console.log(cq.toString({
+//     console.log(segment.toCqcode({
 //         type: "at",
 //         data: {
 //             qq: "all",
@@ -84,7 +84,7 @@ cq.toString = (arg) => {
 //         }
 //     }));
 
-//     console.log(cq.toString([
+//     console.log(segment.toCqcode([
 //         {
 //             type: "at",
 //             data: {
@@ -103,5 +103,5 @@ cq.toString = (arg) => {
 // test();
 
 module.exports = {
-    cq, cqStr,
+    segment, cqcode,
 };

@@ -625,7 +625,7 @@ export function createClient(uin: number, config?: ConfBot): Client;
 /**
  * 生成消息元素的快捷函数
  */
-export namespace cq {
+export namespace segment {
     function text(text: string): TextElem;
     function at(qq: number, text?: string, dummy?: boolean): AtElem;
     function face(id: number, text?: string): FaceElem; //经典表情
@@ -647,15 +647,15 @@ export namespace cq {
     function node(id: string): NodeElem; //转发节点
     function anonymous(ignore?: boolean): AnonymousElem; //匿名
 
-    //转换到CQ码字符串
-    function toString(elem: MessageElem): string;
-    function toString(elems: Iterable<MessageElem>): string;
+    //将元素转换到CQ码字符串 (CQ码字符串无法逆转换到元素，因为类型会丢失)
+    function toCqcode(elem: MessageElem): string;
+    function toCqcode(elems: Iterable<MessageElem>): string;
 }
 
 /**
  * 生成CQ码字符串的快捷函数
  */
-export namespace cqStr {
+export namespace cqcode {
     function text(text: string): string;
     function at(qq: number, text?: string, dummy?: boolean): string;
     function face(id: number, text?: string): string;
