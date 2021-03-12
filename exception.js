@@ -1,7 +1,13 @@
+/**
+ * 错误码和错误消息
+ */
 "use strict";
 const troop = require("./lib/troop");
 const chat = require("./lib/message/chat");
 
+/**
+ * @type {Map<Function, {[k: number]: string}>}
+ */
 const exceptions = new Map([
     [troop.kickMember, {
         2: "权限不足"
@@ -32,8 +38,7 @@ class TimeoutError extends Error { }
 
 /**
  * @param {Function} fn 
- * @param {Number} code 
- * @returns {String}
+ * @param {number} code 
  */
 function getErrorMessage(fn, code) {
     if (!exceptions.has(fn))

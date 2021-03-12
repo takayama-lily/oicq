@@ -1,3 +1,6 @@
+/**
+ * 设备文件和协议
+ */
 "use strict";
 const fs = require("fs");
 const path = require("path");
@@ -40,6 +43,9 @@ function genIMEI() {
     return imei + calcSP(imei);
 }
 
+/**
+ * @param {string} filepath 
+ */
 function genDevice(filepath) {
     const device = `{
     "--begin--":    "修改后可能需要重新验证设备。",
@@ -67,7 +73,7 @@ function genDevice(filepath) {
 }
 
 /**
- * @param {String} filepath 
+ * @param {string} filepath 
  * @returns {import("./lib/ref").Device}
  */
 function getDeviceInfo(filepath) {
@@ -111,6 +117,9 @@ function getDeviceInfo(filepath) {
     return device;
 }
 
+/**
+ * @type {{[k: number]: import("./lib/ref").ApkInfo}}
+ */
 const apk = {
     //android phone
     1: {
@@ -156,8 +165,7 @@ apk[5] = { ...apk[2] };
 apk[5].subid = 537065739;
 
 /**
- * @param {Number} platform 
- * @returns {import("./lib/ref").ApkInfo}
+ * @param {number} platform 
  */
 function getApkInfo(platform) {
     return apk[platform] ? apk[platform] : apk[2];

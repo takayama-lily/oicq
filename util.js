@@ -1,8 +1,14 @@
+/**
+ * 常用工具包
+ */
 "use strict";
 const { genCQMsg } = require("./lib/message/parser");
 const segment = {};
 const cqcode = {};
 
+/**
+ * @type {{[k: string]: string[]}}
+ */
 const elem_map = {
     text: ["text"],
     at: ["qq", "text", "dummy"],

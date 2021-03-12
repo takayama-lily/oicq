@@ -1,3 +1,7 @@
+/**
+ * 网络层(断线重连、心跳)
+ * api入口
+ */
 "use strict";
 const version = require("./package.json");
 version.app_name = version.name;
