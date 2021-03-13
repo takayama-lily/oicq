@@ -14,7 +14,7 @@ function rand(n = 9) {
     return parseInt(Math.random() * (max - min) + min);
 }
 
-function getMac() {
+function _getMac() {
     const o = os.networkInterfaces();
     for (let k in o) {
         for (let v of o[k]) {
@@ -25,7 +25,7 @@ function getMac() {
     return `00:50:A${rand(1)}:${rand(1)}D:${rand(1)}B:C${rand(1)}`;
 }
 
-function genIMEI() {
+function _genIMEI() {
     let imei = Math.random() > 0.5 ? "86" : "35";
     imei += rand(4) + "0" + rand(7);
     function calcSP(imei) {
@@ -46,7 +46,7 @@ function genIMEI() {
 /**
  * @param {string} filepath 
  */
-function genDevice(filepath) {
+function _genDevice(filepath) {
     const device = `{
     "--begin--":    "修改后可能需要重新验证设备。",
     "product":      "iarim",
@@ -60,9 +60,9 @@ function genDevice(filepath) {
     "android_id":   "BRAND.${rand(6)}.${rand(3)}",
     "boot_id":      "${uuid()}",
     "proc_version": "Linux version 4.19.71-${rand(5)} (oicq@takayama.github.com)",
-    "mac_address":  "${getMac()}",
+    "mac_address":  "${_getMac()}",
     "ip_address":   "10.0.${rand(2)}.${rand(2)}",
-    "imei":         "${genIMEI()}",
+    "imei":         "${_genIMEI()}",
     "incremental":  "${rand(7)}"
 }`;
     const dir = path.dirname(filepath);
@@ -81,7 +81,7 @@ function getDeviceInfo(filepath) {
     try {
         d = JSON.parse(fs.readFileSync(filepath, { encoding: "utf-8" }));
     } catch {
-        d = genDevice(filepath);
+        d = _genDevice(filepath);
     }
     const device = {
         display: d.android_id,

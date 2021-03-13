@@ -40,8 +40,6 @@ class Client extends net.Socket {
     static OFFLINE = Symbol("OFFLINE");
     static INIT = Symbol("INIT");
     static ONLINE = Symbol("ONLINE");
-}
-class AndroidClient extends Client {
     logining = false;
     status = Client.OFFLINE;
     nickname = "";
@@ -766,16 +764,16 @@ function setGlobalConfig() { }
 /**
  * @param {number} uin 
  * @param {import("./client").ConfBot} config 
- * @returns {AndroidClient}
+ * @returns {Client}
  */
 function createClient(uin, config = {}) {
     uin = parseInt(uin);
     if (!checkUin(uin))
         throw new Error("Argument uin is not an OICQ account.");
-    return new AndroidClient(uin, config);
+    return new Client(uin, config);
 }
 
 module.exports = {
-    createClient, setGlobalConfig, Client: AndroidClient,
+    createClient, setGlobalConfig, Client,
     segment, cqcode,
 };

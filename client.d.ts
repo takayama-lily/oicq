@@ -2,7 +2,7 @@
 
 /// <reference types="node" />
 
-import * as events from 'events';
+import { EventEmitter } from 'events';
 import { OutgoingHttpHeaders } from 'http';
 import * as log4js from 'log4js';
 
@@ -76,12 +76,13 @@ export interface RetError {
     code?: number,
     message?: string,
 }
-export interface RetCommon<T = null> {
+export interface Ret<T = null> {
     retcode: 0 | 1 | 100 | 102 | 103 | 104, //0ok 1async 100error 102failed 103timeout 104offline
     status: "ok" | "async" | "failed",
     data: T | null,
     error: RetError | null,
 }
+export type RetCommon = Ret;
 
 //////////
 
@@ -375,7 +376,7 @@ interface MessageEventData extends CommonEventData {
     message_id: string,
     user_id: number,
     font: string,
-    reply: (message: MessageElem | Iterable<MessageElem> | string, auto_escape?: boolean) => Promise<RetCommon<{ message_id: string }>>,
+    reply: (message: MessageElem | Iterable<MessageElem> | string, auto_escape?: boolean) => Promise<Ret<{ message_id: string }>>,
 }
 export interface PrivateMessageEventData extends MessageEventData {
     sender: FriendInfo,
@@ -486,7 +487,7 @@ export type EventData = CaptchaEventData | DeviceEventData | LoginErrorEventData
 
 //////////
 
-export class Client extends events.EventEmitter {
+export class Client extends EventEmitter {
 
     private constructor();
 
@@ -512,40 +513,40 @@ export class Client extends events.EventEmitter {
     logout(): Promise<void>; //先下线再关闭连接
     isOnline(): boolean;
 
-    setOnlineStatus(status: 11 | 31 | 41 | 50 | 60 | 70): Promise<RetCommon>; //11我在线上 31离开 41隐身 50忙碌 60Q我吧 70请勿打扰
+    setOnlineStatus(status: 11 | 31 | 41 | 50 | 60 | 70): Promise<Ret>; //11我在线上 31离开 41隐身 50忙碌 60Q我吧 70请勿打扰
 
-    getFriendList(): RetCommon<ReadonlyMap<number, FriendInfo>>;
-    getStrangerList(): RetCommon<ReadonlyMap<number, StrangerInfo>>;
-    getGroupList(): RetCommon<ReadonlyMap<number, GroupInfo>>;
-    getGroupMemberList(group_id: number, no_cache?: boolean): Promise<RetCommon<ReadonlyMap<number, MemberInfo>>>;
-    getStrangerInfo(user_id: number, no_cache?: boolean): Promise<RetCommon<StrangerInfo>>;
-    getGroupInfo(group_id: number, no_cache?: boolean): Promise<RetCommon<GroupInfo>>;
-    getGroupMemberInfo(group_id: number, user_id: number, no_cache?: boolean): Promise<RetCommon<MemberInfo>>;
+    getFriendList(): Ret<Client["fl"]>;
+    getStrangerList(): Ret<Client["sl"]>;
+    getGroupList(): Ret<Client["gl"]>;
+    getGroupMemberList(group_id: number, no_cache?: boolean): Promise<Ret<Client["gml"]>>;
+    getStrangerInfo(user_id: number, no_cache?: boolean): Promise<Ret<StrangerInfo>>;
+    getGroupInfo(group_id: number, no_cache?: boolean): Promise<Ret<GroupInfo>>;
+    getGroupMemberInfo(group_id: number, user_id: number, no_cache?: boolean): Promise<Ret<MemberInfo>>;
 
-    sendPrivateMsg(user_id: number, message: MessageElem | Iterable<MessageElem> | string, auto_escape?: boolean): Promise<RetCommon<{ message_id: string }>>;
-    sendGroupMsg(group_id: number, message: MessageElem | Iterable<MessageElem> | string, auto_escape?: boolean): Promise<RetCommon<{ message_id: string }>>;
-    sendTempMsg(group_id: number, user_id: number, message: MessageElem | Iterable<MessageElem> | string, auto_escape?: boolean): Promise<RetCommon<{ message_id: string }>>;
-    sendDiscussMsg(discuss_id: number, message: MessageElem | Iterable<MessageElem> | string, auto_escape?: boolean): Promise<RetCommon>;
-    deleteMsg(message_id: string): Promise<RetCommon>;
+    sendPrivateMsg(user_id: number, message: MessageElem | Iterable<MessageElem> | string, auto_escape?: boolean): Promise<Ret<{ message_id: string }>>;
+    sendGroupMsg(group_id: number, message: MessageElem | Iterable<MessageElem> | string, auto_escape?: boolean): Promise<Ret<{ message_id: string }>>;
+    sendTempMsg(group_id: number, user_id: number, message: MessageElem | Iterable<MessageElem> | string, auto_escape?: boolean): Promise<Ret<{ message_id: string }>>;
+    sendDiscussMsg(discuss_id: number, message: MessageElem | Iterable<MessageElem> | string, auto_escape?: boolean): Promise<Ret>;
+    deleteMsg(message_id: string): Promise<Ret>;
 
     /**
      * 获取一条消息
      * 无法获取被撤回的消息
      */
-    getMsg(message_id: string): Promise<RetCommon<PrivateMessageEventData | GroupMessageEventData>>;
+    getMsg(message_id: string): Promise<Ret<PrivateMessageEventData | GroupMessageEventData>>;
 
     /**
      * 获取message_id往前的count条消息(包括自身)
      * 无法获取被撤回的消息，因此返回的数量并不一定为count
      * count默认为20，不能超过20
      */
-    getChatHistory(message_id: string, count?: number): Promise<RetCommon<PrivateMessageEventData[] | GroupMessageEventData[]>>;
+    getChatHistory(message_id: string, count?: number): Promise<Ret<PrivateMessageEventData[] | GroupMessageEventData[]>>;
 
     /**
      * 获取转发消息
      * resid在xml消息中，需要自行解析xml获得
      */
-    getForwardMsg(resid: string): Promise<RetCommon<Array<{
+    getForwardMsg(resid: string): Promise<Ret<Array<{
         group_id?: number,
         user_id: number,
         nickname: number,
@@ -554,49 +555,49 @@ export class Client extends events.EventEmitter {
         raw_message: string,
     }>>>;
 
-    sendGroupNotice(group_id: number, content: string): Promise<RetCommon>;
-    setGroupName(group_id: number, group_name: string): Promise<RetCommon>;
-    setGroupAnonymous(group_id: number, enable?: boolean): Promise<RetCommon>;
-    setGroupWholeBan(group_id: number, enable?: boolean): Promise<RetCommon>;
-    setGroupAdmin(group_id: number, user_id: number, enable?: boolean): Promise<RetCommon>;
-    setGroupSpecialTitle(group_id: number, user_id: number, special_title?: string, duration?: number): Promise<RetCommon>;
-    setGroupCard(group_id: number, user_id: number, card?: string): Promise<RetCommon>;
-    setGroupKick(group_id: number, user_id: number, reject_add_request?: boolean): Promise<RetCommon>;
-    setGroupBan(group_id: number, user_id: number, duration?: number): Promise<RetCommon>;
-    setGroupAnonymousBan(group_id: number, flag: string, duration?: number): Promise<RetCommon>;
-    setGroupLeave(group_id: number, is_dismiss?: boolean): Promise<RetCommon>;
-    sendGroupPoke(group_id: number, user_id: number): Promise<RetCommon>; //group_id是好友时可以私聊戳一戳(命名可能会在之后改进)
+    sendGroupNotice(group_id: number, content: string): Promise<Ret>;
+    setGroupName(group_id: number, group_name: string): Promise<Ret>;
+    setGroupAnonymous(group_id: number, enable?: boolean): Promise<Ret>;
+    setGroupWholeBan(group_id: number, enable?: boolean): Promise<Ret>;
+    setGroupAdmin(group_id: number, user_id: number, enable?: boolean): Promise<Ret>;
+    setGroupSpecialTitle(group_id: number, user_id: number, special_title?: string, duration?: number): Promise<Ret>;
+    setGroupCard(group_id: number, user_id: number, card?: string): Promise<Ret>;
+    setGroupKick(group_id: number, user_id: number, reject_add_request?: boolean): Promise<Ret>;
+    setGroupBan(group_id: number, user_id: number, duration?: number): Promise<Ret>;
+    setGroupAnonymousBan(group_id: number, flag: string, duration?: number): Promise<Ret>;
+    setGroupLeave(group_id: number, is_dismiss?: boolean): Promise<Ret>;
+    sendGroupPoke(group_id: number, user_id: number): Promise<Ret>; //group_id是好友时可以私聊戳一戳(命名可能会在之后改进)
 
-    setFriendAddRequest(flag: string, approve?: boolean, remark?: string, block?: boolean): Promise<RetCommon>;
-    setGroupAddRequest(flag: string, approve?: boolean, reason?: string, block?: boolean): Promise<RetCommon>;
-    getSystemMsg(): Promise<RetCommon<Array<FriendAddEventData | GroupAddEventData | GroupInviteEventData>>>;
+    setFriendAddRequest(flag: string, approve?: boolean, remark?: string, block?: boolean): Promise<Ret>;
+    setGroupAddRequest(flag: string, approve?: boolean, reason?: string, block?: boolean): Promise<Ret>;
+    getSystemMsg(): Promise<Ret<Array<FriendAddEventData | GroupAddEventData | GroupInviteEventData>>>;
 
-    addGroup(group_id: number, comment?: string): Promise<RetCommon>;
-    addFriend(group_id: number, user_id: number, comment?: string): Promise<RetCommon>;
-    deleteFriend(user_id: number, block?: boolean): Promise<RetCommon>;
-    inviteFriend(group_id: number, user_id: number): Promise<RetCommon>;
-    sendLike(user_id: number, times?: number): Promise<RetCommon>;
-    setNickname(nickname: string): Promise<RetCommon>;
-    setGender(gender: 0 | 1 | 2): Promise<RetCommon>; //0未知 1男 2女
-    setBirthday(birthday: string | number): Promise<RetCommon>; //20110202的形式
-    setDescription(description?: string): Promise<RetCommon>;
-    setSignature(signature?: string): Promise<RetCommon>;
-    setPortrait(file: Buffer | string): Promise<RetCommon>; //图片CQ码中file相同格式
-    setGroupPortrait(group_id: number, file: Buffer | string): Promise<RetCommon>;
+    addGroup(group_id: number, comment?: string): Promise<Ret>;
+    addFriend(group_id: number, user_id: number, comment?: string): Promise<Ret>;
+    deleteFriend(user_id: number, block?: boolean): Promise<Ret>;
+    inviteFriend(group_id: number, user_id: number): Promise<Ret>;
+    sendLike(user_id: number, times?: number): Promise<Ret>;
+    setNickname(nickname: string): Promise<Ret>;
+    setGender(gender: 0 | 1 | 2): Promise<Ret>; //0未知 1男 2女
+    setBirthday(birthday: string | number): Promise<Ret>; //20110202的形式
+    setDescription(description?: string): Promise<Ret>;
+    setSignature(signature?: string): Promise<Ret>;
+    setPortrait(file: Buffer | string): Promise<Ret>; //图片CQ码中file相同格式
+    setGroupPortrait(group_id: number, file: Buffer | string): Promise<Ret>;
 
-    // getFile(fileid: string, busid?: string): Promise<RetCommon<FileElem["data"]>>; //用于下载链接失效后重新获取
-    // uploadC2CImages(user_id: number, images: ImgPttElem["data"][]): Promise<RetCommon<ImgPttElem["data"][]>>; //上传好友图以备发送
-    // uploadGroupImages(group_id: number, images: ImgPttElem["data"][]): Promise<RetCommon<ImgPttElem["data"][]>>; //上传群图以备发送
-    // getSummaryCard(user_id: number): Promise<RetCommon<unknown>>; //查看用户资料
+    // getFile(fileid: string, busid?: string): Promise<Ret<FileElem["data"]>>; //用于下载链接失效后重新获取
+    // uploadC2CImages(user_id: number, images: ImgPttElem["data"][]): Promise<Ret<ImgPttElem["data"][]>>; //上传好友图以备发送
+    // uploadGroupImages(group_id: number, images: ImgPttElem["data"][]): Promise<Ret<ImgPttElem["data"][]>>; //上传群图以备发送
+    // getSummaryCard(user_id: number): Promise<Ret<unknown>>; //查看用户资料
 
-    getCookies(domain?: string): Promise<RetCommon<{ cookies: string }>>;
-    getCsrfToken(): Promise<RetCommon<{ token: number }>>;
-    cleanCache(type?: "image" | "record"): Promise<RetCommon>;
-    canSendImage(): RetCommon;
-    canSendRecord(): RetCommon;
-    getVersionInfo(): RetCommon; //暂时为返回package.json中的信息
-    getStatus(): RetCommon<Status>;
-    getLoginInfo(): RetCommon<LoginInfo>;
+    getCookies(domain?: string): Promise<Ret<{ cookies: string }>>;
+    getCsrfToken(): Promise<Ret<{ token: number }>>;
+    cleanCache(type?: "image" | "record"): Promise<Ret>;
+    canSendImage(): Ret;
+    canSendRecord(): Ret;
+    getVersionInfo(): Ret; //暂时为返回package.json中的信息
+    getStatus(): Ret<Status>;
+    getLoginInfo(): Ret<LoginInfo>;
 
     on(event: "system.login.captcha", listener: (this: Client, data: CaptchaEventData) => void): this;
     on(event: "system.login.device" | "system.login.slider", listener: (this: Client, data: DeviceEventData) => void): this;
@@ -639,8 +640,8 @@ export class Client extends events.EventEmitter {
     on(event: string | symbol, listener: (this: Client, ...args: any[]) => void): this;
 
     //重载完成之前bot不接受其他任何请求，也不会上报任何事件
-    reloadFriendList(): Promise<RetCommon>;
-    reloadGroupList(): Promise<RetCommon>;
+    reloadFriendList(): Promise<Ret>;
+    reloadGroupList(): Promise<Ret>;
 }
 
 export function createClient(uin: number, config?: ConfBot): Client;
