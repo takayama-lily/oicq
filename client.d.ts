@@ -361,7 +361,7 @@ export interface GroupAddEventData extends RequestEventData {
     group_name: string,
     comment: string,
     inviter_id?: number, //邀请人
-    actor_id?: number, //处理人
+    // actor_id?: number, //处理人
 }
 export interface GroupInviteEventData extends RequestEventData {
     group_id: number,
