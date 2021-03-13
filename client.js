@@ -362,12 +362,13 @@ class AndroidClient extends Client {
 
     em(name = "", data = {}) {
         data = Object.assign(this.parseEventType(name), data);
-        let i = name.lastIndexOf(".");
-        while (i > -1) {
+        while (true) {
             this.emit(name, data);
+            let i = name.lastIndexOf(".");
+            if (i === -1)
+                break;
             name = name.slice(0, i);
         }
-        this.emit(name, data);
     }
 
     msgExists(from, type, seq, time) {

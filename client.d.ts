@@ -527,8 +527,19 @@ export class Client extends events.EventEmitter {
     sendTempMsg(group_id: number, user_id: number, message: MessageElem | Iterable<MessageElem> | string, auto_escape?: boolean): Promise<RetCommon<{ message_id: string }>>;
     sendDiscussMsg(discuss_id: number, message: MessageElem | Iterable<MessageElem> | string, auto_escape?: boolean): Promise<RetCommon>;
     deleteMsg(message_id: string): Promise<RetCommon>;
+
+    /**
+     * 获取一条消息
+     * 无法获取被撤回的消息
+     */
     getMsg(message_id: string): Promise<RetCommon<PrivateMessageEventData | GroupMessageEventData>>;
-    getChatHistory(message_id: string, count?: number): Promise<RetCommon<PrivateMessageEventData[] | GroupMessageEventData[]>>; //获取msgid(包括自身)往前的count条消息
+
+    /**
+     * 获取message_id往前的count条消息(包括自身)
+     * 无法获取被撤回的消息，因此返回的数量并不一定为count
+     * count默认为20，不能超过20
+     */
+    getChatHistory(message_id: string, count?: number): Promise<RetCommon<PrivateMessageEventData[] | GroupMessageEventData[]>>; //
     getForwardMsg(resid: string): Promise<RetCommon<any[]>>;
 
     sendGroupNotice(group_id: number, content: string): Promise<RetCommon>;
