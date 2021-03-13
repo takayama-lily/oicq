@@ -547,7 +547,7 @@ class AndroidClient extends Client {
     async getChatHistory(message_id, count = 10) {
         return await this.useProtocol(chat.getMsgs, arguments);
     }
-    async getForwardMsg(resid) {
+    async getForwardMsg(id) {
         return await this.useProtocol(chat.getForwardMsg, arguments);
     }
 

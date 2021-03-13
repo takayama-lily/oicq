@@ -539,8 +539,20 @@ export class Client extends events.EventEmitter {
      * 无法获取被撤回的消息，因此返回的数量并不一定为count
      * count默认为20，不能超过20
      */
-    getChatHistory(message_id: string, count?: number): Promise<RetCommon<PrivateMessageEventData[] | GroupMessageEventData[]>>; //
-    getForwardMsg(resid: string): Promise<RetCommon<any[]>>;
+    getChatHistory(message_id: string, count?: number): Promise<RetCommon<PrivateMessageEventData[] | GroupMessageEventData[]>>;
+
+    /**
+     * 获取转发消息
+     * resid在xml消息中，需要自行解析xml获得
+     */
+    getForwardMsg(resid: string): Promise<RetCommon<Array<{
+        group_id?: number,
+        user_id: number,
+        nickname: number,
+        time: number,
+        message: MessageElem[],
+        raw_message: string,
+    }>>>;
 
     sendGroupNotice(group_id: number, content: string): Promise<RetCommon>;
     setGroupName(group_id: number, group_name: string): Promise<RetCommon>;
