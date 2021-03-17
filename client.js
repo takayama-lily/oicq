@@ -1,3 +1,7 @@
+/**
+ * 网络层(断线重连、心跳)
+ * api入口
+ */
 "use strict";
 const version = require("./package.json");
 version.app_name = version.name;
@@ -20,6 +24,7 @@ const wt = require("./lib/wtlogin/wt");
 const chat = require("./lib/message/chat");
 const troop = require("./lib/troop");
 const { getErrorMessage, TimeoutError } = require("./exception");
+const { segment, cqcode } = require("./util");
 const BUF0 = Buffer.alloc(0);
 
 function buildApiRet(retcode, data = null, error = null) {
@@ -35,8 +40,6 @@ class Client extends net.Socket {
     static OFFLINE = Symbol("OFFLINE");
     static INIT = Symbol("INIT");
     static ONLINE = Symbol("ONLINE");
-}
-class AndroidClient extends Client {
     logining = false;
     status = Client.OFFLINE;
     nickname = "";
@@ -98,6 +101,7 @@ class AndroidClient extends Client {
             platform: 1,
             log_level: "info",
             kickoff: false,
+            brief: false,
             ignore_self: true,
             resend: true,
             reconn_interval: 5,
@@ -183,7 +187,7 @@ class AndroidClient extends Client {
             if (this.status !== Client.OFFLINE)
                 this.terminate();
             if (this.config.reconn_interval >= 1) {
-                this.logger.warn(this.config.reconn_interval + "秒后重新连接。");
+                this.logger.mark(this.config.reconn_interval + "秒后重新连接。");
                 setTimeout(this.login.bind(this), this.config.reconn_interval * 1000);
             }
             this.em("system.offline.network", { message });
@@ -339,22 +343,29 @@ class AndroidClient extends Client {
         }
     }
 
-    em(name = "", data = {}) {
+    parseEventType(name = "") {
         const slice = name.split(".");
         const post_type = slice[0], sub_type = slice[2];
-        const param = {
+        const data = {
             self_id: this.uin,
             time: timestamp(),
-            post_type: post_type
+            post_type: post_type,
         };
         const type_name = slice[0] + "_type";
-        param[type_name] = slice[1];
+        data[type_name] = slice[1];
         if (sub_type)
-            param.sub_type = sub_type;
-        Object.assign(param, data);
-        while (slice.length > 0) {
-            this.emit(slice.join("."), param);
-            slice.pop();
+            data.sub_type = sub_type;
+        return data;
+    }
+
+    em(name = "", data = {}) {
+        data = Object.assign(this.parseEventType(name), data);
+        while (true) {
+            this.emit(name, data);
+            let i = name.lastIndexOf(".");
+            if (i === -1)
+                break;
+            name = name.slice(0, i);
         }
     }
 
@@ -522,11 +533,20 @@ class AndroidClient extends Client {
     async sendDiscussMsg(discuss_id, message = "", auto_escape = false) {
         return await this.useProtocol(chat.sendMsg, [discuss_id, message, auto_escape, 2]);
     }
+    async sendTempMsg(group_id, user_id, message = "", auto_escape = false) {
+        return await this.useProtocol(chat.sendTempMsg, arguments);
+    }
     async deleteMsg(message_id) {
         return await this.useProtocol(chat.recallMsg, arguments);
     }
     async getMsg(message_id) {
-        return await this.useProtocol(chat.getHistoryMsg, arguments);
+        return await this.useProtocol(chat.getOneMsg, arguments);
+    }
+    async getChatHistory(message_id, count = 10) {
+        return await this.useProtocol(chat.getMsgs, arguments);
+    }
+    async getForwardMsg(id) {
+        return await this.useProtocol(chat.getForwardMsg, arguments);
     }
 
     ///////////////////////////////////////////////////
@@ -578,6 +598,9 @@ class AndroidClient extends Client {
     }
     async setGroupAddRequest(flag, approve = true, reason = "", block = false) {
         return await this.useProtocol(sysmsg.groupAction, arguments);
+    }
+    async getSystemMsg() {
+        return await this.useProtocol(sysmsg.getSysMsg, arguments);
     }
 
     async addGroup(group_id, comment = "") {
@@ -739,17 +762,18 @@ function setGlobalConfig() { }
 //----------------------------------------------------------------------------------------------------
 
 /**
- * @param {Number} uin 
- * @param {JSON} config 
- * @returns {AndroidClient}
+ * @param {number} uin 
+ * @param {import("./client").ConfBot} config 
+ * @returns {Client}
  */
 function createClient(uin, config = {}) {
     uin = parseInt(uin);
     if (!checkUin(uin))
         throw new Error("Argument uin is not an OICQ account.");
-    return new AndroidClient(uin, config);
+    return new Client(uin, config);
 }
 
 module.exports = {
-    createClient, setGlobalConfig
+    createClient, setGlobalConfig, Client,
+    segment, cqcode,
 };

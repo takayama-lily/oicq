@@ -1,7 +1,7 @@
 {
   "name": "oicq",
-  "version": "1.13.3",
-  "upday": "2021/3/1",
+  "version": "1.14.0",
+  "upday": "2021/3/18",
   "description": "QQ protocol!",
   "main": "client.js",
   "types": "client.d.ts",
@@ -28,6 +28,7 @@
     "url": "https://github.com/takayama-lily/oicq/issues"
   },
   "homepage": "https://github.com/takayama-lily/oicq#readme",
+  "changelogs": "https://github.com/takayama-lily/oicq/releases",
   "dependencies": {
     "crypto-tea": "^0.2.0",
     "https-proxy-agent": "^5.0.0",
@@ -46,6 +47,7 @@
     "/device.js",
     "/exception.js",
     "/client.d.ts",
-    "/test.js"
+    "/test.js",
+    "/util.js"
   ]
 }

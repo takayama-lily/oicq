@@ -98,10 +98,21 @@ export interface MsgHead extends Proto {
     4: bigint, //uuid
     5: number, //seqid
     6: number, //time
-    // 8: Routing,
-    // 9: Group,
+    7: bigint, //uuid
+    8: { //routing
+        4: number //group_id
+    },
+    9: {
+        1: number, //group_id
+        4: Proto, //card
+        8: Proto, //group_name
+    },
     10: number, //appid
-    // 13: Discuss,
+    13: {
+        1: number, //disscus_id
+        4: Proto, //card
+        5: Proto, //disscus_name
+    },
 }
 
 export interface MsgContent extends Proto {
@@ -113,7 +124,7 @@ export interface MsgContent extends Proto {
 
 export interface MsgBody extends Proto {
     1: RichMsg,
-    // 2: FileMsg,
+    2: Proto, //离线文件
 }
 
 export interface RichMsg extends Proto {
@@ -123,6 +134,7 @@ export interface RichMsg extends Proto {
 }
 
 export interface MsgAttr extends Proto {
+    2: number, //time
     3: number, //random integer
     9: Proto, //font
 }
@@ -132,6 +144,11 @@ export interface MsgAttr extends Proto {
 export class Client extends oicq.Client {
     logining: boolean;
     status: Symbol;
+
+    fl: Map<number, oicq.FriendInfo>;
+    sl: Map<number, oicq.StrangerInfo>;
+    gl: Map<number, oicq.GroupInfo>;
+    gml: Map<number, Map<number, oicq.MemberInfo>>;
 
     apk: ApkInfo;
     ksid: string | Buffer;
@@ -168,4 +185,7 @@ export class Client extends oicq.Client {
     em(name: string, data: object): void;
     msgExists(from: number, type: number, seq: number, time: number): boolean;
     buildSyncCookie(): Buffer;
+    parseEventType(name: string): oicq.CommonEventData;
 }
+
+export * from '../client';
