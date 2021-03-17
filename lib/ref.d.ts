@@ -98,6 +98,7 @@ export interface MsgHead extends Proto {
     4: bigint, //uuid
     5: number, //seqid
     6: number, //time
+    7: bigint, //uuid
     8: { //routing
         4: number //group_id
     },
@@ -133,6 +134,7 @@ export interface RichMsg extends Proto {
 }
 
 export interface MsgAttr extends Proto {
+    2: number, //time
     3: number, //random integer
     9: Proto, //font
 }
