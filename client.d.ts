@@ -513,7 +513,7 @@ export class Client extends EventEmitter {
     logout(): Promise<void>; //先下线再关闭连接
     isOnline(): boolean;
 
-    setOnlineStatus(status: 11 | 31 | 41 | 50 | 60 | 70): Promise<Ret>; //11我在线上 31离开 41隐身 50忙碌 60Q我吧 70请勿打扰
+    setOnlineStatus(status: number): Promise<Ret>; //11我在线上 31离开 41隐身 50忙碌 60Q我吧 70请勿打扰
 
     getFriendList(): Ret<Client["fl"]>;
     getStrangerList(): Ret<Client["sl"]>;
@@ -657,9 +657,9 @@ export namespace segment {
     function bface(file: string): BfaceElem; //原创表情
     function rps(id?: number): MfaceElem; //猜拳
     function dice(id?: number): MfaceElem; //骰子
-    function image(file: Buffer | Uint8Array | string, cache?: boolean, timeout?: number, headers: OutgoingHttpHeaders, proxy?: boolean): ImgPttElem; //图片
-    function flash(file: Buffer | Uint8Array | string, cache?: boolean, timeout?: number, headers: OutgoingHttpHeaders, proxy?: boolean): ImgPttElem; //闪照
-    function ptt(file: Buffer | Uint8Array | string, cache?: boolean, timeout?: number, headers: OutgoingHttpHeaders, proxy?: boolean): ImgPttElem; //语音
+    function image(file: Buffer | Uint8Array | string, cache?: boolean, timeout?: number, headers?: OutgoingHttpHeaders, proxy?: boolean): ImgPttElem; //图片
+    function flash(file: Buffer | Uint8Array | string, cache?: boolean, timeout?: number, headers?: OutgoingHttpHeaders, proxy?: boolean): ImgPttElem; //闪照
+    function ptt(file: Buffer | Uint8Array | string, cache?: boolean, timeout?: number, headers?: OutgoingHttpHeaders, proxy?: boolean): ImgPttElem; //语音
     function location(lat: number, lng: number, address: string, id?: string): LocationElem; //位置分享
     function music(type: "qq" | "163", id: number): MusicElem;
     function json(data: any): JsonElem;
@@ -687,9 +687,9 @@ export namespace cqcode {
     function bface(file: string): string;
     function rps(id?: number): string;
     function dice(id?: number): string;
-    function image(file: string, cache?: boolean, timeout?: number, headers: string, proxy?: boolean): string;
-    function flash(file: string, cache?: boolean, timeout?: number, headers: string, proxy?: boolean): string;
-    function ptt(file: string, cache?: boolean, timeout?: number, headers: string, proxy?: boolean): string;
+    function image(file: string, cache?: boolean, timeout?: number, headers?: string, proxy?: boolean): string;
+    function flash(file: string, cache?: boolean, timeout?: number, headers?: string, proxy?: boolean): string;
+    function ptt(file: string, cache?: boolean, timeout?: number, headers?: string, proxy?: boolean): string;
     function location(lat: number, lng: number, address: string, id?: string): string;
     function music(type: "qq" | "163", id: number): string;
     function json(data: string): string;
