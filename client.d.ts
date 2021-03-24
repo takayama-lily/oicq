@@ -507,8 +507,15 @@ export class Client extends EventEmitter {
     readonly stat: Statistics;
 
     login(password?: Buffer | string): void; //密码支持明文和md5
+
+    /**
+     * @deprecated
+     */
     captchaLogin(captcha: string): void;
     sliderLogin(ticket: string): void;
+    /**
+     * @deprecated
+     */
     terminate(): void; //直接关闭连接
     logout(): Promise<void>; //先下线再关闭连接
     isOnline(): boolean;
@@ -518,7 +525,7 @@ export class Client extends EventEmitter {
     getFriendList(): Ret<Client["fl"]>;
     getStrangerList(): Ret<Client["sl"]>;
     getGroupList(): Ret<Client["gl"]>;
-    getGroupMemberList(group_id: number, no_cache?: boolean): Promise<Ret<Client["gml"]>>;
+    getGroupMemberList(group_id: number, no_cache?: boolean): Promise<Ret<ReadonlyMap<number, MemberInfo>>>;
     getStrangerInfo(user_id: number, no_cache?: boolean): Promise<Ret<StrangerInfo>>;
     getGroupInfo(group_id: number, no_cache?: boolean): Promise<Ret<GroupInfo>>;
     getGroupMemberInfo(group_id: number, user_id: number, no_cache?: boolean): Promise<Ret<MemberInfo>>;
