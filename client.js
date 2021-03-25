@@ -298,7 +298,7 @@ class Client extends net.Socket {
                     } else {
                         this.terminate();
                     }
-                } else if (data.info.includes("冻结") || data.info.includes("泄露")) {
+                } else if (data.info.includes("冻结") || data.info.includes("资金管理")) {
                     sub_type = "frozen";
                     this.terminate();
                 } else if (data.info.includes("设备锁")) {
