@@ -4,30 +4,30 @@
 "use strict";
 const fs = require("fs");
 const path = require("path");
-const os = require("os");
 const crypto = require("crypto");
-const { uuid, md5 } = require("./lib/common");
+const { md5 } = require("./lib/common");
 
-function rand(n = 9) {
-    const max = 10 ** n - n;
-    const min = 10 ** (n - 1) + n;
-    return parseInt(Math.random() * (max - min) + min);
-}
-
-function _getMac() {
-    const o = os.networkInterfaces();
-    for (let k in o) {
-        for (let v of o[k]) {
-            if (!v.internal)
-                return v.mac.toUpperCase();
-        }
+/**
+ * @param {number} uin 
+ */
+function _genIMEI(uin) {
+    let imei = uin % 2 ? "86" : "35";
+    const buf = Buffer.alloc(4);
+    buf.writeUInt32BE(uin);
+    let a = buf.readUInt16BE();
+    let b = Buffer.concat([Buffer.alloc(1), buf.slice(1)]).readUInt32BE();
+    if (a > 9999) {
+        a = parseInt(a / 10);
+    } else if (a < 1000) {
+        a = String(uin).substr(0, 4);
     }
-    return `00:50:A${rand(1)}:${rand(1)}D:${rand(1)}B:C${rand(1)}`;
-}
-
-function _genIMEI() {
-    let imei = Math.random() > 0.5 ? "86" : "35";
-    imei += rand(4) + "0" + rand(7);
+    while (b > 9999999) {
+        b = b >>> 1;
+    }
+    if (b < 1000000) {
+        b = String(uin).substr(0, 4) + String(uin).substr(0, 3);
+    }
+    imei += a + "0" + b;
     function calcSP(imei) {
         let sum = 0;
         for (let i = 0; i < imei.length; ++i) {
@@ -45,25 +45,29 @@ function _genIMEI() {
 
 /**
  * @param {string} filepath 
+ * @param {number} uin 
  */
-function _genDevice(filepath) {
+function _genDevice(filepath, uin) {
+    const hash = md5(String(uin));
+    const hex = hash.toString("hex");
+    const uuid = hex.substr(0, 8) + "-" + hex.substr(8, 4) + "-" + hex.substr(12, 4) + "-" + hex.substr(16, 4) + "-" + hex.substr(20);
     const device = `{
-    "--begin--":    "修改后可能需要重新验证设备。",
-    "product":      "iarim",
-    "device":       "sagit",
-    "board":        "eomam",
-    "brand":        "Xiaomi",
-    "model":        "MI ${rand(1)}",
-    "wifi_ssid":    "TP-LINK-${rand(10).toString(16)}",
+    "--begin--":    "该设备文件由账号作为seed自动生成，每个账号生成的文件相同。",
+    "product":      "MRS4S",
+    "device":       "HIM188MOE",
+    "board":        "MIRAI-YYDS",
+    "brand":        "OICQX",
+    "model":        "Konata 2020",
+    "wifi_ssid":    "TP-LINK-${uin.toString(16)}",
     "bootloader":   "U-boot",
-    "--end--":      "下面的请勿随意修改，除非你知道你在做什么。",
-    "android_id":   "BRAND.${rand(6)}.${rand(3)}",
-    "boot_id":      "${uuid()}",
-    "proc_version": "Linux version 4.19.71-${rand(5)} (oicq@takayama.github.com)",
-    "mac_address":  "${_getMac()}",
-    "ip_address":   "10.0.${rand(2)}.${rand(2)}",
-    "imei":         "${_genIMEI()}",
-    "incremental":  "${rand(7)}"
+    "android_id":   "OICQX.${hash.readUInt16BE()}${hash[2]}.${hash[3]}${String(uin)[0]}",
+    "boot_id":      "${uuid}",
+    "proc_version": "Linux version 4.19.71-${hash.readUInt16BE(4)} (konata@takayama.github.com)",
+    "mac_address":  "00:50:${hash[6].toString(16).toUpperCase()}:${hash[7].toString(16).toUpperCase()}:${hash[8].toString(16).toUpperCase()}:${hash[9].toString(16).toUpperCase()}",
+    "ip_address":   "10.0.${hash[10]}.${hash[11]}",
+    "imei":         "${_genIMEI(uin)}",
+    "incremental":  "${hash.readUInt32BE(12)}",
+    "--end--":      "修改后可能需要重新验证设备。"
 }`;
     const dir = path.dirname(filepath);
     if (!fs.existsSync(dir))
@@ -74,14 +78,15 @@ function _genDevice(filepath) {
 
 /**
  * @param {string} filepath 
+ * @param {number} uin 
  * @returns {import("./lib/ref").Device}
  */
-function getDeviceInfo(filepath) {
+function getDeviceInfo(filepath, uin) {
     var d;
     try {
         d = JSON.parse(fs.readFileSync(filepath, { encoding: "utf-8" }));
     } catch {
-        d = _genDevice(filepath);
+        d = _genDevice(filepath, uin);
     }
     const device = {
         display: d.android_id,

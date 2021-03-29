@@ -121,7 +121,7 @@ class Client extends net.Socket {
         const filepath = path.join(this.dir, `device-${uin}.json`);
         if (!fs.existsSync(filepath))
             this.logger.mark("创建了新的设备文件：" + filepath);
-        this.device = getDeviceInfo(filepath);
+        this.device = getDeviceInfo(filepath, this.uin);
         this.apk = getApkInfo(config.platform);
         this.ksid = Buffer.from(`|${this.device.imei}|` + this.apk.name);
 
