@@ -443,6 +443,7 @@ class Client extends net.Socket {
                 this.password_md5 = md5(String(password));
         }
         this._connect(() => {
+            this.session_id = randomBytes(4);
             wt.passwordLogin.call(this);
         });
     }
