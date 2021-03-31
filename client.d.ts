@@ -666,7 +666,7 @@ export namespace segment {
     function dice(id?: number): MfaceElem; //骰子
     function image(file: Buffer | Uint8Array | string, cache?: boolean, timeout?: number, headers?: OutgoingHttpHeaders, proxy?: boolean): ImgPttElem; //图片
     function flash(file: Buffer | Uint8Array | string, cache?: boolean, timeout?: number, headers?: OutgoingHttpHeaders, proxy?: boolean): ImgPttElem; //闪照
-    function ptt(file: Buffer | Uint8Array | string, cache?: boolean, timeout?: number, headers?: OutgoingHttpHeaders, proxy?: boolean): ImgPttElem; //语音
+    function record(file: Buffer | Uint8Array | string, cache?: boolean, timeout?: number, headers?: OutgoingHttpHeaders, proxy?: boolean): ImgPttElem; //语音
     function location(lat: number, lng: number, address: string, id?: string): LocationElem; //位置分享
     function music(type: "qq" | "163", id: number): MusicElem;
     function json(data: any): JsonElem;
@@ -696,7 +696,7 @@ export namespace cqcode {
     function dice(id?: number): string;
     function image(file: string, cache?: boolean, timeout?: number, headers?: string, proxy?: boolean): string;
     function flash(file: string, cache?: boolean, timeout?: number, headers?: string, proxy?: boolean): string;
-    function ptt(file: string, cache?: boolean, timeout?: number, headers?: string, proxy?: boolean): string;
+    function record(file: string, cache?: boolean, timeout?: number, headers?: string, proxy?: boolean): string;
     function location(lat: number, lng: number, address: string, id?: string): string;
     function music(type: "qq" | "163", id: number): string;
     function json(data: string): string;

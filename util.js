@@ -19,7 +19,7 @@ const elem_map = {
     dice: ["id"],
     image: ["file", "cache", "timeout", "headers", "proxy"],
     flash: ["file", "cache", "timeout", "headers", "proxy"],
-    ptt: ["file", "cache", "timeout", "headers", "proxy"],
+    record: ["file", "cache", "timeout", "headers", "proxy"],
     location: ["lat", "lng", "address", "id"],
     music: ["type", "id"],
     json: ["data"],
