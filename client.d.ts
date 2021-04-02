@@ -405,6 +405,7 @@ export interface DiscussMessageEventData extends MessageEventData {
 
 export interface FriendRecallEventData extends CommonEventData {
     user_id: number,
+    operator_id: number,
     message_id: string,
 }
 export interface FriendProfileEventData extends CommonEventData {
@@ -412,19 +413,29 @@ export interface FriendProfileEventData extends CommonEventData {
     nickname?: string,
     signature?: string,
 }
-export interface FriendEventData extends CommonEventData {
+export interface FriendIncreaseEventData extends CommonEventData {
     user_id: number,
     nickname: string,
 }
-export interface FriendPokeEventData extends FriendEventData {
+export type FriendEventData = FriendIncreaseEventData;
+export interface FriendPokeEventData extends CommonEventData {
+    user_id: number,
+    operator_id: number,
+    target_id: number,
     action: string,
     suffix: string
 }
-export interface GroupPokeEventData extends FriendPokeEventData {
-    group_id: number
+export interface GroupPokeEventData extends CommonEventData {
+    group_id: number,
+    operator_id: number,
+    user_id: number,
+    action: string,
+    suffix: string
 }
-export interface MemberIncreaseEventData extends FriendEventData {
-    group_id: number
+export interface MemberIncreaseEventData extends CommonEventData {
+    group_id: number,
+    user_id: number,
+    nickname: string,
 }
 export interface MemberDecreaseEventData extends CommonEventData {
     group_id: number,
@@ -433,9 +444,11 @@ export interface MemberDecreaseEventData extends CommonEventData {
     dismiss: boolean,
     member?: MemberInfo,
 }
-export interface GroupRecallEventData extends FriendEventData {
+export interface GroupRecallEventData extends CommonEventData {
     group_id: number,
-    operator_id: number
+    operator_id: number,
+    user_id: number,
+    message_id: string,
 }
 export interface GroupAdminEventData extends CommonEventData {
     group_id: number,
@@ -476,7 +489,7 @@ export interface GroupSettingEventData extends CommonEventData {
     enable_confess?: boolean,
 }
 
-export type FriendNoticeEventData = FriendEventData | FriendRecallEventData | FriendProfileEventData | FriendPokeEventData;
+export type FriendNoticeEventData = FriendIncreaseEventData | FriendRecallEventData | FriendProfileEventData | FriendPokeEventData;
 export type GroupNoticeEventData = GroupRecallEventData | GroupSettingEventData | GroupTitleEventData | GroupTransferEventData |
     GroupMuteEventData | GroupAdminEventData | MemberIncreaseEventData | MemberDecreaseEventData;
 
@@ -627,7 +640,7 @@ export class Client extends EventEmitter {
     on(event: "message.discuss", listener: (this: Client, data: DiscussMessageEventData) => void): this;
     on(event: "message", listener: (this: Client, data: PrivateMessageEventData | GroupMessageEventData | DiscussMessageEventData) => void): this;
 
-    on(event: "notice.friend.increase" | "notice.friend.decrease", listener: (this: Client, data: FriendEventData) => void): this;
+    on(event: "notice.friend.increase" | "notice.friend.decrease", listener: (this: Client, data: FriendIncreaseEventData) => void): this;
     on(event: "notice.friend.recall", listener: (this: Client, data: FriendRecallEventData) => void): this;
     on(event: "notice.friend.profile", listener: (this: Client, data: FriendProfileEventData) => void): this;
     on(event: "notice.friend.poke", listener: (this: Client, data: FriendPokeEventData) => void): this;
