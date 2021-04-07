@@ -83,6 +83,9 @@ class Client extends net.Socket {
     const3 = randomBytes(1)[0];
     var4 = 0;
 
+    roaming_faces_bid = "";
+    roaming_faces = [];
+
     stat = {
         start_time: timestamp(),
         lost_times: 0,
@@ -655,6 +658,10 @@ class Client extends net.Socket {
     }
 
     ///////////////////////////////////////////////////
+
+    getRoamingFaces(no_cache = false) {
+        return this.useProtocol(chat.getRoamingFaces, arguments);
+    }
 
     async getCookies(domain) {
         await wt.exchangeEMP.call(this);

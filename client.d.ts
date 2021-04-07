@@ -610,6 +610,12 @@ export class Client extends EventEmitter {
     // uploadGroupImages(group_id: number, images: ImgPttElem["data"][]): Promise<Ret<ImgPttElem["data"][]>>; //上传群图以备发送
     // getSummaryCard(user_id: number): Promise<Ret<unknown>>; //查看用户资料
 
+    getRoamingFaces(no_cache?: boolean): Promise<Ret<{
+        bid: string,
+        url: string,
+        faces: string[]
+    }>>;
+
     getCookies(domain?: string): Promise<Ret<{ cookies: string }>>;
     getCsrfToken(): Promise<Ret<{ token: number }>>;
     cleanCache(type?: "image" | "record"): Promise<Ret>;
