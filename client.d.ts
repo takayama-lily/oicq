@@ -73,15 +73,28 @@ export type Gender = "male" | "female" | "unknown";
 //////////
 
 export interface RetError {
-    code?: number,
-    message?: string,
+    code: number,
+    message: string,
 }
-export interface Ret<T = null> {
-    retcode: 0 | 1 | 100 | 102 | 103 | 104, //0ok 1async 100error 102failed 103timeout 104offline
-    status: "ok" | "async" | "failed",
-    data: T | null,
-    error: RetError | null,
+interface RetSuccess<T> {
+    retcode: 0,
+    status: "ok",
+    data: T,
+    error: null,
 }
+interface RetAsync {
+    retcode: 1,
+    status: "async",
+    data: null,
+    error: null,
+}
+interface RetFailure {
+    retcode: 100 | 102 | 103 | 104, //100error 102failed 103timeout 104offline
+    status: "failed",
+    data: null,
+    error: RetError,
+}
+export type Ret<T = null> = RetSuccess<T> | RetAsync | RetFailure;
 export type RetCommon = Ret;
 
 //////////
@@ -332,45 +345,74 @@ export interface CommonEventData {
     sub_type?: string,
 }
 
-export interface CaptchaEventData extends CommonEventData {
+// system events
+export interface CommonSystemEventData extends CommonEventData {
+    post_type: "system",
+}
+export interface CaptchaEventData extends CommonSystemEventData {
+    system_type: "login",
+    sub_type: "captcha",
     image: Buffer
 }
-export interface DeviceEventData extends CommonEventData {
+export interface SliderEventData extends CommonSystemEventData {
+    system_type: "login",
+    sub_type: "slider",
     url: string
 }
-export interface LoginErrorEventData extends CommonEventData {
+export interface DeviceEventData extends CommonSystemEventData {
+    system_type: "login",
+    sub_type: "device",
+    url: string
+}
+export interface LoginErrorEventData extends CommonSystemEventData {
+    system_type: "login",
+    sub_type: "error",
     code: number,
     message: string,
 }
-export interface OfflineEventData extends CommonEventData {
+export interface OnlineEventData extends CommonSystemEventData {
+    system_type: "online",
+}
+export interface OfflineEventData extends CommonSystemEventData {
+    system_type: "offline",
+    sub_type: "network" | "kickoff" | "frozen" | "device" | "unknown",
     message: string,
 }
 
-interface RequestEventData extends CommonEventData {
+// request events
+interface CommonRequestEventData extends CommonEventData {
+    post_type: "request",
     user_id: number,
     nickname: string,
     flag: string,
 }
-export interface FriendAddEventData extends RequestEventData {
+export interface FriendAddEventData extends CommonRequestEventData {
+    request_type: "friend",
+    sub_type: "add",
     comment: string,
     source: string,
     age: number,
     sex: Gender,
 }
-export interface GroupAddEventData extends RequestEventData {
+export interface GroupAddEventData extends CommonRequestEventData {
+    request_type: "group",
+    sub_type: "add",
     group_id: number,
     group_name: string,
     comment: string,
     inviter_id?: number, //邀请人
-    // actor_id?: number, //处理人
 }
-export interface GroupInviteEventData extends RequestEventData {
+export interface GroupInviteEventData extends CommonRequestEventData {
+    request_type: "group",
+    sub_type: "invite",
     group_id: number,
     group_name: string,
     role: GroupRole, //邀请者权限
 }
 
-interface MessageEventData extends CommonEventData {
+// message events
+interface CommonMessageEventData extends CommonEventData {
+    post_type: "message",
     message: MessageElem[],
     raw_message: string,
     message_id: string,
@@ -378,11 +420,15 @@ interface MessageEventData extends CommonEventData {
     font: string,
     reply: (message: MessageElem | Iterable<MessageElem> | string, auto_escape?: boolean) => Promise<Ret<{ message_id: string }>>,
 }
-export interface PrivateMessageEventData extends MessageEventData {
+export interface PrivateMessageEventData extends CommonMessageEventData {
+    message_type: "private",
+    sub_type: "friend" | "group" | "single" | "other",
     sender: FriendInfo,
     auto_reply: boolean,
 }
-export interface GroupMessageEventData extends MessageEventData {
+export interface GroupMessageEventData extends CommonMessageEventData {
+    message_type: "group",
+    sub_type: "normal" | "anonymous",
     group_id: number,
     group_name: string,
     anonymous: Anonymous | null,
@@ -393,7 +439,8 @@ export interface Anonymous {
     name: string,
     flag: string,
 }
-export interface DiscussMessageEventData extends MessageEventData {
+export interface DiscussMessageEventData extends CommonMessageEventData {
+    message_type: "discuss",
     discuss_id: number,
     discuss_name: string,
     sender: {
@@ -403,78 +450,104 @@ export interface DiscussMessageEventData extends MessageEventData {
     },
 }
 
-export interface FriendRecallEventData extends CommonEventData {
+// notice events
+interface CommonFriendNoticeEventData extends CommonEventData {
+    post_type: "notice",
+    notice_type: "friend",
+}
+export interface FriendRecallEventData extends CommonFriendNoticeEventData {
+    sub_type: "recall",
     user_id: number,
     operator_id: number,
     message_id: string,
 }
-export interface FriendProfileEventData extends CommonEventData {
+export interface FriendProfileEventData extends CommonFriendNoticeEventData {
+    sub_type: "profile",
     user_id: number,
     nickname?: string,
     signature?: string,
 }
-export interface FriendIncreaseEventData extends CommonEventData {
+export interface FriendIncreaseEventData extends CommonFriendNoticeEventData {
+    sub_type: "increase",
     user_id: number,
     nickname: string,
-}
-export type FriendEventData = FriendIncreaseEventData;
+};
+export interface FriendDecreaseEventData extends CommonFriendNoticeEventData {
+    sub_type: "decrease",
+    user_id: number,
+    nickname: string,
+};
 export interface FriendPokeEventData extends CommonEventData {
+    sub_type: "poke",
     user_id: number,
     operator_id: number,
     target_id: number,
     action: string,
     suffix: string
 }
-export interface GroupPokeEventData extends CommonEventData {
+
+interface CommonGroupNoticeEventData extends CommonEventData {
+    post_type: "notice",
+    notice_type: "group",
+}
+export interface GroupPokeEventData extends CommonGroupNoticeEventData {
+    sub_type: "poke",
     group_id: number,
     operator_id: number,
     user_id: number,
     action: string,
     suffix: string
 }
-export interface MemberIncreaseEventData extends CommonEventData {
+export interface MemberIncreaseEventData extends CommonGroupNoticeEventData {
+    sub_type: "increase",
     group_id: number,
     user_id: number,
     nickname: string,
 }
-export interface MemberDecreaseEventData extends CommonEventData {
+export interface MemberDecreaseEventData extends CommonGroupNoticeEventData {
+    sub_type: "decrease",
     group_id: number,
     operator_id: number,
     user_id: number,
     dismiss: boolean,
     member?: MemberInfo,
 }
-export interface GroupRecallEventData extends CommonEventData {
+export interface GroupRecallEventData extends CommonGroupNoticeEventData {
+    sub_type: "recall",
     group_id: number,
     operator_id: number,
     user_id: number,
     message_id: string,
 }
-export interface GroupAdminEventData extends CommonEventData {
+export interface GroupAdminEventData extends CommonGroupNoticeEventData {
+    sub_type: "admin",
     group_id: number,
     user_id: number,
     set: boolean,
 }
-export interface GroupMuteEventData extends CommonEventData {
+export interface GroupMuteEventData extends CommonGroupNoticeEventData {
+    sub_type: "ban",
     group_id: number,
     operator_id: number,
     user_id: number,
     nickname?: string,
     duration: number,
 }
-export interface GroupTransferEventData extends CommonEventData {
+export interface GroupTransferEventData extends CommonGroupNoticeEventData {
+    sub_type: "transfer",
     group_id: number,
     operator_id: number,
     user_id: number,
 }
-export interface GroupTitleEventData extends CommonEventData {
+export interface GroupTitleEventData extends CommonGroupNoticeEventData {
+    sub_type: "title",
     group_id: number,
     user_id: number,
     nickname: string,
     title: string,
 }
-
-export interface GroupSettingEventData extends CommonEventData {
+export interface GroupSettingEventData extends CommonGroupNoticeEventData {
+    sub_type: "setting",
     group_id: number,
     group_name?: string,
     enable_guest?: boolean,
@@ -489,14 +562,19 @@ export interface GroupSettingEventData extends CommonEventData {
     enable_confess?: boolean,
 }
 
-export type FriendNoticeEventData = FriendIncreaseEventData | FriendRecallEventData | FriendProfileEventData | FriendPokeEventData;
-export type GroupNoticeEventData = GroupRecallEventData | GroupSettingEventData | GroupTitleEventData | GroupTransferEventData |
-    GroupMuteEventData | GroupAdminEventData | MemberIncreaseEventData | MemberDecreaseEventData;
+export type FriendNoticeEventData = FriendIncreaseEventData | FriendDecreaseEventData | FriendRecallEventData |
+                                    FriendProfileEventData | FriendPokeEventData; //5
+export type GroupNoticeEventData = GroupRecallEventData | GroupSettingEventData | GroupTitleEventData |
+                                    GroupTransferEventData | GroupMuteEventData | GroupAdminEventData |
+                                    MemberIncreaseEventData | MemberDecreaseEventData | GroupPokeEventData; //9
 
-export type EventData = CaptchaEventData | DeviceEventData | LoginErrorEventData | OfflineEventData |
-    FriendAddEventData | GroupAddEventData | GroupInviteEventData |
-    PrivateMessageEventData | GroupMessageEventData | DiscussMessageEventData |
-    FriendNoticeEventData | GroupNoticeEventData;
+export type SystemEventData = CaptchaEventData | DeviceEventData | SliderEventData | LoginErrorEventData |
+                                OfflineEventData | OnlineEventData; //6(4+2)
+export type RequestEventData = FriendAddEventData | GroupAddEventData | GroupInviteEventData; //3
+export type MessageEventData = PrivateMessageEventData | GroupMessageEventData | DiscussMessageEventData; //3
+export type NoticeEventData = FriendNoticeEventData | GroupNoticeEventData; //2
+export type EventData = SystemEventData | RequestEventData | MessageEventData | NoticeEventData; //4
+    
 
 //////////
 
@@ -526,9 +604,6 @@ export class Client extends EventEmitter {
      */
     captchaLogin(captcha: string): void;
     sliderLogin(ticket: string): void;
-    /**
-     * @deprecated
-     */
     terminate(): void; //直接关闭连接
     logout(): Promise<void>; //先下线再关闭连接
     isOnline(): boolean;
@@ -626,27 +701,29 @@ export class Client extends EventEmitter {
     getLoginInfo(): Ret<LoginInfo>;
 
     on(event: "system.login.captcha", listener: (this: Client, data: CaptchaEventData) => void): this;
-    on(event: "system.login.device" | "system.login.slider", listener: (this: Client, data: DeviceEventData) => void): this;
+    on(event: "system.login.slider", listener: (this: Client, data: SliderEventData) => void): this;
+    on(event: "system.login.device", listener: (this: Client, data: DeviceEventData) => void): this;
     on(event: "system.login.error", listener: (this: Client, data: LoginErrorEventData) => void): this;
-    on(event: "system.login", listener: (this: Client, data: CaptchaEventData | DeviceEventData | LoginErrorEventData) => void): this;
-    on(event: "system.online", listener: (this: Client, data: CommonEventData) => void): this;
+    on(event: "system.login", listener: (this: Client, data: CaptchaEventData | DeviceEventData | LoginErrorEventData | SliderEventData) => void): this;
+    on(event: "system.online", listener: (this: Client, data: OnlineEventData) => void): this;
     on(event: "system.offline" | "system.offline.network" | "system.offline.kickoff" |
         "system.offline.frozen" | "system.offline.device" | "system.offline.unknown", listener: (this: Client, data: OfflineEventData) => void): this;
-    on(event: "system", listener: (this: Client, data: CaptchaEventData | DeviceEventData | LoginErrorEventData | OfflineEventData) => void): this;
+    on(event: "system", listener: (this: Client, data: SystemEventData) => void): this;
 
     on(event: "request.friend" | "request.friend.add", listener: (this: Client, data: FriendAddEventData) => void): this;
     on(event: "request.group.add", listener: (this: Client, data: GroupAddEventData) => void): this;
     on(event: "request.group.invite", listener: (this: Client, data: GroupInviteEventData) => void): this;
     on(event: "request.group", listener: (this: Client, data: GroupAddEventData | GroupInviteEventData) => void): this;
-    on(event: "request", listener: (this: Client, data: FriendAddEventData | GroupAddEventData | GroupInviteEventData) => void): this;
+    on(event: "request", listener: (this: Client, data: RequestEventData) => void): this;
 
     on(event: "message.private" | "message.private.friend" | "message.private.group" |
         "message.private.single" | "message.private.other", listener: (this: Client, data: PrivateMessageEventData) => void): this;
     on(event: "message.group" | "message.group.normal" | "message.group.anonymous", listener: (this: Client, data: GroupMessageEventData) => void): this;
     on(event: "message.discuss", listener: (this: Client, data: DiscussMessageEventData) => void): this;
-    on(event: "message", listener: (this: Client, data: PrivateMessageEventData | GroupMessageEventData | DiscussMessageEventData) => void): this;
+    on(event: "message", listener: (this: Client, data: MessageEventData) => void): this;
 
-    on(event: "notice.friend.increase" | "notice.friend.decrease", listener: (this: Client, data: FriendIncreaseEventData) => void): this;
+    on(event: "notice.friend.increase", listener: (this: Client, data: FriendIncreaseEventData) => void): this;
+    on(event: "notice.friend.decrease", listener: (this: Client, data: FriendDecreaseEventData) => void): this;
     on(event: "notice.friend.recall", listener: (this: Client, data: FriendRecallEventData) => void): this;
     on(event: "notice.friend.profile", listener: (this: Client, data: FriendProfileEventData) => void): this;
     on(event: "notice.friend.poke", listener: (this: Client, data: FriendPokeEventData) => void): this;
@@ -661,7 +738,7 @@ export class Client extends EventEmitter {
     on(event: "notice.group.setting", listener: (this: Client, data: GroupSettingEventData) => void): this;
     on(event: "notice.friend", listener: (this: Client, data: FriendNoticeEventData) => void): this;
     on(event: "notice.group", listener: (this: Client, data: GroupNoticeEventData) => void): this;
-    on(event: "notice", listener: (this: Client, data: FriendNoticeEventData | GroupNoticeEventData) => void): this;
+    on(event: "notice", listener: (this: Client, data: NoticeEventData) => void): this;
 
     on(event: string | symbol, listener: (this: Client, ...args: any[]) => void): this;
 
