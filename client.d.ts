@@ -691,6 +691,31 @@ export class Client extends EventEmitter {
         faces: string[]
     }>>;
 
+    getGroupNotice(group_id: number): Promise<Ret<Array<{
+        u: number, //发布者
+        fid: string,
+        pubt: number, //发布时间
+        msg: {
+            text: string,
+            title: string,
+            pics?: Array<{
+                id: string,
+                w: string,
+                h: string,
+            }>,
+        },
+        type: number,
+        settings: {
+            is_show_edit_card: number,
+            remind_ts: number,
+            tip_window_type: number,
+            confirm_required: number
+        },
+        read_num: number,
+        is_read: number,
+        is_all_confirm: number
+    }>>>;
+
     getCookies(domain?: string): Promise<Ret<{ cookies: string }>>;
     getCsrfToken(): Promise<Ret<{ token: number }>>;
     cleanCache(type?: "image" | "record"): Promise<Ret>;

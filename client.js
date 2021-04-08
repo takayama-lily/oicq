@@ -663,6 +663,10 @@ class Client extends net.Socket {
         return this.useProtocol(chat.getRoamingFaces, arguments);
     }
 
+    getGroupNotice(group_id) {
+        return this.useProtocol(troop.getGroupNotice, arguments);
+    }
+
     async getCookies(domain) {
         await wt.exchangeEMP.call(this);
         if (domain && !this.cookies[domain])
