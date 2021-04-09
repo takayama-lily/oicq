@@ -83,8 +83,7 @@ class Client extends net.Socket {
     const3 = randomBytes(1)[0];
     var4 = 0;
 
-    roaming_faces_bid = "";
-    roaming_faces = [];
+    roaming_stamp = [];
 
     stat = {
         start_time: timestamp(),
@@ -659,8 +658,8 @@ class Client extends net.Socket {
 
     ///////////////////////////////////////////////////
 
-    getRoamingFaces(no_cache = false) {
-        return this.useProtocol(chat.getRoamingFaces, arguments);
+    getRoamingStamp(no_cache = false) {
+        return this.useProtocol(chat.getRoamingStamp, arguments);
     }
 
     getGroupNotice(group_id) {

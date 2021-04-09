@@ -176,8 +176,7 @@ export class Client extends oicq.Client {
     sig: Sig;
     cookies: object;
 
-    roaming_faces_bid: string;
-    roaming_faces: string[];
+    roaming_stamp: string[];
 
     nextSeq(): number;
     send(): Promise<Buffer>;

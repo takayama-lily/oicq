@@ -580,8 +580,6 @@ export type EventData = SystemEventData | RequestEventData | MessageEventData | 
 
 export class Client extends EventEmitter {
 
-    private constructor();
-
     readonly uin: number;
     readonly password_md5: Buffer;
     readonly nickname: string;
@@ -685,11 +683,7 @@ export class Client extends EventEmitter {
     // uploadGroupImages(group_id: number, images: ImgPttElem["data"][]): Promise<Ret<ImgPttElem["data"][]>>; //上传群图以备发送
     // getSummaryCard(user_id: number): Promise<Ret<unknown>>; //查看用户资料
 
-    getRoamingFaces(no_cache?: boolean): Promise<Ret<{
-        bid: string,
-        url: string,
-        faces: string[]
-    }>>;
+    getRoamingStamp(no_cache?: boolean): Promise<Ret<string[]>>; //获取漫游表情
 
     getGroupNotice(group_id: number): Promise<Ret<Array<{
         u: number, //发布者
