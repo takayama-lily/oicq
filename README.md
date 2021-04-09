@@ -18,7 +18,7 @@
 # npm i oicq
 ```
 
-**Example:**
+**Usage:**
 
 ```js
 const { createClient } = require("oicq");
@@ -45,4 +45,6 @@ bot.login("password"); // your password or password_md5
 
 **相关文档：**
 
-[wiki](https://github.com/takayama-lily/oicq/wiki)  
+[API列表](https://github.com/takayama-lily/oicq/wiki/91.API%E6%96%87%E6%A1%A3)  
+[事件列表](https://github.com/takayama-lily/oicq/wiki/92.%E4%BA%8B%E4%BB%B6%E6%96%87%E6%A1%A3)  
+[wiki列表](https://github.com/takayama-lily/oicq/wiki)  
