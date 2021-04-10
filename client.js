@@ -95,6 +95,8 @@ class Client extends net.Socket {
         sent_msg_cnt: 0,
     };
 
+    data_cache = BUF0;
+
     constructor(uin, config) {
         super();
         this.uin = uin;
@@ -131,7 +133,7 @@ class Client extends net.Socket {
             this.logger.error(err.message);
         });
         this.on("close", () => {
-            this.read();
+            this.data_cache = BUF0;
             if (this.remoteAddress)
                 this.logger.mark(`${this.remoteAddress}:${this.remotePort} closed`);
             this.stopHeartbeat();
@@ -146,12 +148,13 @@ class Client extends net.Socket {
             }
             this.status = Client.OFFLINE;
         });
-        this.on("readable", () => {
-            while (this.readableLength > 4) {
-                let len_buf = this.read(4);
-                let len = len_buf.readInt32BE();
-                if (this.readableLength >= len - 4) {
-                    const packet = this.read(len - 4);
+        this.on("data", (data) => {
+            this.data_cache = Buffer.concat([this.data_cache, data]);
+            while (this.data_cache.length > 4) {
+                let len = this.data_cache.readUInt32BE();
+                if (this.data_cache.length >= len) {
+                    const packet = this.data_cache.slice(4, len);
+                    this.data_cache = this.data_cache.slice(len);
                     ++this.stat.recv_pkt_cnt;
                     try {
                         core.parseIncomingPacket.call(this, packet);
@@ -160,7 +163,6 @@ class Client extends net.Socket {
                         this.em("internal.exception", e);
                     }
                 } else {
-                    this.unshift(len_buf);
                     break;
                 }
             }
@@ -210,7 +212,7 @@ class Client extends net.Socket {
         this.connect(port, ip, () => {
             this.status = Client.INIT;
             this.logger.mark(`${this.remoteAddress}:${this.remotePort} connected`);
-            this.resume();
+            // this.resume();
             callback();
         });
     }
