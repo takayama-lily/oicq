@@ -446,6 +446,7 @@ class Client extends net.Socket {
         }
         this._connect(() => {
             this.session_id = randomBytes(4);
+            this.random_key = randomBytes(16);
             wt.passwordLogin.call(this);
         });
     }
