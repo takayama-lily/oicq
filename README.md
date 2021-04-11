@@ -3,7 +3,6 @@
 [![npm version](https://img.shields.io/npm/v/oicq.svg?logo=npm)](https://www.npmjs.com/package/oicq)
 [![node engine](https://img.shields.io/node/v/oicq.svg)](https://nodejs.org)
 [![Gitter](https://badges.gitter.im/takayama-lily/oicq.svg)](https://gitter.im/takayama-lily/oicq?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
-[![bug反馈群](https://img.shields.io/badge/bug反馈群-236172566-red)](https://qm.qq.com/cgi-bin/qm/qr?k=NXw3NEA5lzPjkRhyEpjVBqMpdg1WHRKJ&jump_from=webapi)
 
 * QQ(安卓)协议的nodejs实现。也参考了一些其他开源仓库如[mirai](https://github.com/mamoe/mirai)、[miraiGo](https://github.com/Mrs4s/MiraiGo)等。  
 * 以高效和稳定为第一目的，在此基础上不断完善，将会逐步支持手机协议的大部分功能。
@@ -15,6 +14,7 @@
 **Install:**
 
 ```bash
+# npm init
 # npm i oicq
 ```
 
@@ -48,3 +48,10 @@ bot.login("password"); // your password or password_md5
 [API列表](https://github.com/takayama-lily/oicq/wiki/91.API%E6%96%87%E6%A1%A3)  
 [事件列表](https://github.com/takayama-lily/oicq/wiki/92.%E4%BA%8B%E4%BB%B6%E6%96%87%E6%A1%A3)  
 [wiki列表](https://github.com/takayama-lily/oicq/wiki)  
+
+**其他：**
+
+[JavaScript语言基础](https://developer.mozilla.org/zh-CN/docs/Web/JavaScript)  
+[七天学会NodeJS](https://github.com/nqdeng/7-days-nodejs)  
+[5分钟上手TypeScript](https://www.tslang.cn/docs/handbook/typescript-in-5-minutes.html)  
+[![bug反馈群](https://img.shields.io/badge/bug反馈群-236172566-red)](https://qm.qq.com/cgi-bin/qm/qr?k=NXw3NEA5lzPjkRhyEpjVBqMpdg1WHRKJ&jump_from=webapi)
