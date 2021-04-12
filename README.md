@@ -47,6 +47,7 @@ bot.login("password"); // your password or password_md5
 
 [API列表](https://github.com/takayama-lily/oicq/wiki/91.API%E6%96%87%E6%A1%A3)  
 [事件列表](https://github.com/takayama-lily/oicq/wiki/92.%E4%BA%8B%E4%BB%B6%E6%96%87%E6%A1%A3)  
+[常见问题](https://github.com/takayama-lily/oicq/wiki/02.%E5%85%B6%E4%BB%96%E5%B8%B8%E8%A7%81%E9%97%AE%E9%A2%98)
 [wiki列表](https://github.com/takayama-lily/oicq/wiki)  
 
 **其他：**
