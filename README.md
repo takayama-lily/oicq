@@ -8,6 +8,7 @@
 * 以高效和稳定为第一目的，在此基础上不断完善，将会逐步支持手机协议的大部分功能。
 * 使用 酷Q和CQHTTP 风格的API、事件和参数，原生支持经典的CQ码。  
 * 请使用 `Nodejs 12.16` 以上版本。有bug请告诉我。
+* [开发和贡献插件](https://github.com/takayama-lily/oicq-plugins)
 
 ----
 
@@ -39,8 +40,7 @@ bot.login("password"); // your password or password_md5
 ```
 
 > [如何获得滑动验证码ticket](https://github.com/takayama-lily/oicq/wiki/01.%E6%BB%91%E5%8A%A8%E9%AA%8C%E8%AF%81%E7%A0%81%E5%92%8C%E8%AE%BE%E5%A4%87%E9%94%81)  
-> 更详细的例子可以参考 [demo.js](docs/demo.js)  
-> [开发和贡献插件](https://github.com/takayama-lily/oicq-plugins)  
+> 更详细的例子可以参考 [demo.js](docs/demo.js)    
 > API简洁友好，开箱即用，熟悉Nodejs者建议直接引入依赖进行开发。  
 > 其他语言的使用者可以用 [http-api](https://github.com/takayama-lily/onebot) 搭建环境。  
 
