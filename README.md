@@ -40,8 +40,9 @@ bot.login("password"); // your password or password_md5
 
 > [如何获得滑动验证码ticket](https://github.com/takayama-lily/oicq/wiki/01.%E6%BB%91%E5%8A%A8%E9%AA%8C%E8%AF%81%E7%A0%81%E5%92%8C%E8%AE%BE%E5%A4%87%E9%94%81)  
 > 更详细的例子可以参考 [demo.js](docs/demo.js)  
+> [开发和贡献插件](https://github.com/takayama-lily/oicq-plugins)
 > API简洁友好，开箱即用，熟悉Nodejs者建议直接引入依赖进行开发。  
-> 其他语言的使用者可以用 [http-api](https://github.com/takayama-lily/onebot) 搭建环境。
+> 其他语言的使用者可以用 [http-api](https://github.com/takayama-lily/onebot) 搭建环境。  
 
 **相关文档：**
 
