@@ -56,4 +56,4 @@ bot.login("password"); // your password or password_md5
 [JavaScript语言基础](https://developer.mozilla.org/zh-CN/docs/Web/JavaScript)  
 [七天学会NodeJS](https://github.com/nqdeng/7-days-nodejs)  
 [5分钟上手TypeScript](https://www.tslang.cn/docs/handbook/typescript-in-5-minutes.html)  
-[![bug反馈群](https://img.shields.io/badge/bug反馈群-236172566-red)](https://qm.qq.com/cgi-bin/qm/qr?k=NXw3NEA5lzPjkRhyEpjVBqMpdg1WHRKJ&jump_from=webapi)
+[![交流群反馈群](https://img.shields.io/badge/交流群反馈群-236172566-red)](https://qm.qq.com/cgi-bin/qm/qr?k=NXw3NEA5lzPjkRhyEpjVBqMpdg1WHRKJ&jump_from=webapi)
