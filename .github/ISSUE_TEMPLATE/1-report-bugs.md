@@ -22,7 +22,9 @@ Thank you for reporting an issue.
 如果你修改了config.platform
 可能的值是apad，ipad，iMac，安卓手表
 -->
-* **使用的协议**: 默认未修改?
+* **使用的协议**: 手机(默认)
+
+* [x] 我已确认过官方客户端不存在此问题，库的行为存在问题。
 
 ### 问题描述
 
