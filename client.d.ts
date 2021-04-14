@@ -471,12 +471,12 @@ export interface FriendIncreaseEventData extends CommonFriendNoticeEventData {
     sub_type: "increase",
     user_id: number,
     nickname: string,
-};
+}
 export interface FriendDecreaseEventData extends CommonFriendNoticeEventData {
     sub_type: "decrease",
     user_id: number,
     nickname: string,
-};
+}
 export interface FriendPokeEventData extends CommonEventData {
     sub_type: "poke",
     user_id: number,
@@ -822,4 +822,15 @@ export namespace cqcode {
     function reply(id: string): string;
     function node(id: string): string;
     function anonymous(ignore?: boolean): string;
+}
+
+/**
+ * 一个内置控制台指令分发器
+ * 用于接收stdin输入，并根据前缀匹配分发到所注册的函数
+ */
+export namespace console {
+    function registerCommand(cmd: string, callback: (input: string) => void): void;
+    function deregisterCommand(cmd: string, callback: (input: string) => void): void;
+    function enable(): void;
+    function disable(): void;
 }

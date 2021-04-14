@@ -790,4 +790,5 @@ function createClient(uin, config = {}) {
 module.exports = {
     createClient, setGlobalConfig, Client,
     segment, cqcode,
+    console: require("./console")
 };
