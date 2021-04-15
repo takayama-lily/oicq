@@ -1,6 +1,6 @@
 "use strict";
 try {
-    var { createClient } = require("../client");
+    var { createClient } = require("../index");
 } catch {
     var { createClient } = require("oicq");
 }

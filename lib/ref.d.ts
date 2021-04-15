@@ -2,7 +2,7 @@
 
 /// <reference types="node" />
 
-import * as oicq from '../client';
+import * as oicq from '../index';
 
 //////////
 
@@ -190,4 +190,4 @@ export class Client extends oicq.Client {
     parseEventType(name: string): oicq.CommonEventData;
 }
 
-export * from '../client';
+export * from '../index';

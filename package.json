@@ -3,8 +3,8 @@
   "version": "1.15.1",
   "upday": "2021/4/11",
   "description": "QQ protocol!",
-  "main": "client.js",
-  "types": "client.d.ts",
+  "main": "index.js",
+  "types": "index.d.ts",
   "scripts": {
     "test": "node ./test.js"
   },
@@ -43,11 +43,10 @@
   },
   "files": [
     "/lib",
-    "/client.js",
-    "/device.js",
-    "/exception.js",
-    "/client.d.ts",
+    "/index.js",
+    "/index.d.ts",
     "/test.js",
+    "/console.js",
     "/util.js"
   ]
 }

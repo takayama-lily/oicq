@@ -50,7 +50,7 @@ for (const [type, params] of Object.entries(elem_map)) {
 }
 
 /**
- * @param {import("./client").MessageElem | import("./client").MessageElem[]} arg 
+ * @param {import("./index").MessageElem | import("./index").MessageElem[]} arg 
  */
 segment.toCqcode = (arg) => {
     if (typeof arg === "string")

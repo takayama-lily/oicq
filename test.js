@@ -1,6 +1,6 @@
 "use strict";
 const crypto = require("crypto");
-const oicq = require("./client");
+const oicq = require("./index");
 
 /**
  * 一个简单的控制台，仅用来调试

@@ -594,7 +594,9 @@ export class Client extends EventEmitter {
     readonly dir: string;
     readonly config: ConfBot;
     readonly stat: Statistics;
+    readonly plugins: Set<NodeJS.Module>;
 
+    constructor(uin: number, config?: ConfBot);
     login(password?: Buffer | string): void; //密码支持明文和md5
 
     /**
