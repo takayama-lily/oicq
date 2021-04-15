@@ -218,10 +218,21 @@ export interface MfaceElem {
     }
 }
 
+/**
+ * string或二进制buffer
+ * string时支持以下协议：
+ *   http(s):// 
+ *   base64:// 
+ *   /tmp/example.jpg  绝对路径
+ *   example.jpg  相对(于启动目录)路径
+ *   file:///  
+ *   protobuf://  仅语音和视频转发支持
+ */
+export type MediaFile = string | Uint8Array | ArrayBuffer | SharedArrayBuffer;
 export interface ImgPttElem {
     type: "image" | "flash" | "record",
     data: {
-        file: string | Buffer | Uint8Array,
+        file: MediaFile,
         cache?: boolean,
         proxy?: boolean,
         timeout?: number,
@@ -597,7 +608,7 @@ export class Client extends EventEmitter {
     readonly plugins: Set<NodeJS.Module>;
 
     constructor(uin: number, config?: ConfBot);
-    login(password?: Buffer | string): void; //密码支持明文和md5
+    login(password?: Uint8Array | string): void; //密码支持明文和md5
 
     /**
      * @deprecated
@@ -677,16 +688,24 @@ export class Client extends EventEmitter {
     setBirthday(birthday: string | number): Promise<Ret>; //20110202的形式
     setDescription(description?: string): Promise<Ret>;
     setSignature(signature?: string): Promise<Ret>;
-    setPortrait(file: Buffer | string): Promise<Ret>; //图片CQ码中file相同格式
-    setGroupPortrait(group_id: number, file: Buffer | string): Promise<Ret>;
+    setPortrait(file: MediaFile): Promise<Ret>;
+    setGroupPortrait(group_id: number, file: MediaFile): Promise<Ret>;
 
     // getFile(fileid: string, busid?: string): Promise<Ret<FileElem["data"]>>; //用于下载链接失效后重新获取
-    // uploadC2CImages(user_id: number, images: ImgPttElem["data"][]): Promise<Ret<ImgPttElem["data"][]>>; //上传好友图以备发送
-    // uploadGroupImages(group_id: number, images: ImgPttElem["data"][]): Promise<Ret<ImgPttElem["data"][]>>; //上传群图以备发送
-    // getSummaryCard(user_id: number): Promise<Ret<unknown>>; //查看用户资料
 
-    getRoamingStamp(no_cache?: boolean): Promise<Ret<string[]>>; //获取漫游表情
+    /**
+     * 预先上传图片以备发送
+     */
+    preloadImages(files: Iterable<MediaFile>): Promise<Ret<string[]>>;
 
+    /**
+     * 获取漫游表情
+     */
+    getRoamingStamp(no_cache?: boolean): Promise<Ret<string[]>>;
+
+    /**
+     * 获取群公告
+     */
     getGroupNotice(group_id: number): Promise<Ret<Array<{
         u: number, //发布者
         fid: string,
@@ -781,9 +800,9 @@ export namespace segment {
     function bface(file: string): BfaceElem; //原创表情
     function rps(id?: number): MfaceElem; //猜拳
     function dice(id?: number): MfaceElem; //骰子
-    function image(file: Buffer | Uint8Array | string, cache?: boolean, timeout?: number, headers?: OutgoingHttpHeaders, proxy?: boolean): ImgPttElem; //图片
-    function flash(file: Buffer | Uint8Array | string, cache?: boolean, timeout?: number, headers?: OutgoingHttpHeaders, proxy?: boolean): ImgPttElem; //闪照
-    function record(file: Buffer | Uint8Array | string, cache?: boolean, timeout?: number, headers?: OutgoingHttpHeaders, proxy?: boolean): ImgPttElem; //语音
+    function image(file: MediaFile, cache?: boolean, timeout?: number, headers?: OutgoingHttpHeaders, proxy?: boolean): ImgPttElem; //图片
+    function flash(file: MediaFile, cache?: boolean, timeout?: number, headers?: OutgoingHttpHeaders, proxy?: boolean): ImgPttElem; //闪照
+    function record(file: MediaFile, cache?: boolean, timeout?: number, headers?: OutgoingHttpHeaders, proxy?: boolean): ImgPttElem; //语音
     function location(lat: number, lng: number, address: string, id?: string): LocationElem; //位置分享
     function music(type: "qq" | "163", id: number): MusicElem;
     function json(data: any): JsonElem;
