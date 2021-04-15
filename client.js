@@ -109,7 +109,7 @@ class Client extends net.Socket {
             ignore_self: true,
             resend: true,
             reconn_interval: 5,
-            data_dir: path.join(process.mainModule.path, "data"),
+            data_dir: path.join(require.main ? require.main.path : process.cwd(), "data"),
             ...config
         };
         this.config = config;
