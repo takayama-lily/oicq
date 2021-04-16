@@ -695,6 +695,8 @@ export class Client extends EventEmitter {
 
     /**
      * 预先上传图片以备发送
+     * 通常图片在发送时一并上传
+     * 提前上传可用于加快发送速度，实现秒发
      */
     preloadImages(files: Iterable<MediaFile>): Promise<Ret<string[]>>;
 
@@ -782,7 +784,10 @@ export class Client extends EventEmitter {
 
     on(event: string | symbol, listener: (this: Client, ...args: any[]) => void): this;
 
-    //重载完成之前bot不接受其他任何请求，也不会上报任何事件
+    /**
+     * 重载好友列表和群列表
+     * 完成之前bot不接受其他任何请求，也不会上报任何事件
+     */
     reloadFriendList(): Promise<Ret>;
     reloadGroupList(): Promise<Ret>;
 }
@@ -849,7 +854,7 @@ export namespace cqcode {
  * 一个内置控制台指令分发器
  * 用于接收stdin输入，并根据前缀匹配分发到所注册的函数
  */
-export namespace console {
+export namespace stdin {
     function registerCommand(cmd: string, callback: (input: string) => void): void;
     function deregisterCommand(cmd: string, callback: (input: string) => void): void;
     function enable(): void;

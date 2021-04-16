@@ -46,7 +46,7 @@
     "/index.js",
     "/index.d.ts",
     "/test.js",
-    "/console.js",
+    "/stdin.js",
     "/util.js"
   ]
 }
