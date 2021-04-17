@@ -32,14 +32,15 @@
   "dependencies": {
     "crypto-tea": "^0.2.0",
     "https-proxy-agent": "^5.0.0",
-    "image-size": "^0.9.3",
+    "image-size": "^0.9.7",
     "jce": "^0.1.7",
     "log4js": "^6.3.0",
-    "protobufjs": "^6.10.1"
+    "long": "^4.0.0"
   },
   "devDependencies": {
     "babel-eslint": "^10.1.0",
-    "eslint": "^7.17.0"
+    "eslint": "^7.17.0",
+    "protobufjs": "^6.10.2"
   },
   "files": [
     "/lib",
