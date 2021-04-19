@@ -373,7 +373,8 @@ export interface SliderEventData extends CommonSystemEventData {
 export interface DeviceEventData extends CommonSystemEventData {
     system_type: "login",
     sub_type: "device",
-    url: string
+    url: string,
+    phone: string,
 }
 export interface LoginErrorEventData extends CommonSystemEventData {
     system_type: "login",
@@ -618,6 +619,10 @@ export class Client extends EventEmitter {
     terminate(): void; //直接关闭连接
     logout(): Promise<void>; //先下线再关闭连接
     isOnline(): boolean;
+
+    //发短信过设备锁
+    sendSMSCode(): void;
+    submitSMSCode(code: string): void;
 
     setOnlineStatus(status: number): Promise<Ret>; //11我在线上 31离开 41隐身 50忙碌 60Q我吧 70请勿打扰
 
