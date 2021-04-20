@@ -265,7 +265,7 @@ export interface LocationElem {
 export interface MusicElem {
     type: "music",
     data: {
-        type: "qq" | "163",
+        type: "qq" | "163"| "migu",
         id: number,
     }
 }
@@ -809,7 +809,7 @@ export namespace segment {
     function flash(file: MediaFile, cache?: boolean, timeout?: number, headers?: OutgoingHttpHeaders, proxy?: boolean): ImgPttElem; //闪照
     function record(file: MediaFile, cache?: boolean, timeout?: number, headers?: OutgoingHttpHeaders, proxy?: boolean): ImgPttElem; //语音
     function location(lat: number, lng: number, address: string, id?: string): LocationElem; //位置分享
-    function music(type: "qq" | "163", id: number): MusicElem;
+    function music(type: "qq" | "163" | "migu", id: number): MusicElem;
     function json(data: any): JsonElem;
     function xml(data: string, type?: number): XmlElem;
     function share(url: string, title: string, image?: string, content?: string): ShareElem; //内容分享
