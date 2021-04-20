@@ -265,8 +265,8 @@ export interface LocationElem {
 export interface MusicElem {
     type: "music",
     data: {
-        type: "qq" | "163",
-        id: number,
+        type: "qq" | "163" | "migu" | "kugou" | "kuwo",
+        id: number | string,
     }
 }
 
@@ -574,18 +574,18 @@ export interface GroupSettingEventData extends CommonGroupNoticeEventData {
 }
 
 export type FriendNoticeEventData = FriendIncreaseEventData | FriendDecreaseEventData | FriendRecallEventData |
-                                    FriendProfileEventData | FriendPokeEventData; //5
+    FriendProfileEventData | FriendPokeEventData; //5
 export type GroupNoticeEventData = GroupRecallEventData | GroupSettingEventData | GroupTitleEventData |
-                                    GroupTransferEventData | GroupMuteEventData | GroupAdminEventData |
-                                    MemberIncreaseEventData | MemberDecreaseEventData | GroupPokeEventData; //9
+    GroupTransferEventData | GroupMuteEventData | GroupAdminEventData |
+    MemberIncreaseEventData | MemberDecreaseEventData | GroupPokeEventData; //9
 
 export type SystemEventData = CaptchaEventData | DeviceEventData | SliderEventData | LoginErrorEventData |
-                                OfflineEventData | OnlineEventData; //6(4+2)
+    OfflineEventData | OnlineEventData; //6(4+2)
 export type RequestEventData = FriendAddEventData | GroupAddEventData | GroupInviteEventData; //3
 export type MessageEventData = PrivateMessageEventData | GroupMessageEventData | DiscussMessageEventData; //3
 export type NoticeEventData = FriendNoticeEventData | GroupNoticeEventData; //2
 export type EventData = SystemEventData | RequestEventData | MessageEventData | NoticeEventData; //4
-    
+
 
 //////////
 
@@ -809,7 +809,7 @@ export namespace segment {
     function flash(file: MediaFile, cache?: boolean, timeout?: number, headers?: OutgoingHttpHeaders, proxy?: boolean): ImgPttElem; //闪照
     function record(file: MediaFile, cache?: boolean, timeout?: number, headers?: OutgoingHttpHeaders, proxy?: boolean): ImgPttElem; //语音
     function location(lat: number, lng: number, address: string, id?: string): LocationElem; //位置分享
-    function music(type: "qq" | "163", id: number): MusicElem;
+    function music(type: "qq" | "163" | "migu" | "kugou" | "kuwo", id: number | string): MusicElem;
     function json(data: any): JsonElem;
     function xml(data: string, type?: number): XmlElem;
     function share(url: string, title: string, image?: string, content?: string): ShareElem; //内容分享
