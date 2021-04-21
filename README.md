@@ -6,7 +6,7 @@
 * QQ(安卓)协议基于Node.js的实现。也参考了一些其他开源仓库如[mirai](https://github.com/mamoe/mirai)、[miraiGo](https://github.com/Mrs4s/MiraiGo)等。  
   * 小巧：依赖包大小仅1M
   * 完善：实现了手机协议大部分常用功能
-  * 稳定：基于单线程，易维护，无崩溃烦恼，bug率极低
+  * 稳定：基于单线程，易维护，无崩溃，bug率极低
   * 简单：使用CQHTTP风格的API，简洁易懂，原生支持经典CQ码
   * 高效跨平台，低资源占用
 * 请使用 `Node.js 12.16` 以上版本。不会支持金钱/红包相关协议。
@@ -59,6 +59,6 @@ bot.login("password"); // your password or password_md5
 **其他：**
 
 [JavaScript语言基础](https://developer.mozilla.org/zh-CN/docs/Web/JavaScript)  
-[七天学会NodeJS](https://github.com/nqdeng/7-days-nodejs)  
+[Node.js入门教程](http://nodejs.cn/learn)  
 [5分钟上手TypeScript](https://www.tslang.cn/docs/handbook/typescript-in-5-minutes.html)  
 [![问题交流反馈群](https://img.shields.io/badge/问题交流反馈群-236172566-red)](https://qm.qq.com/cgi-bin/qm/qr?k=NXw3NEA5lzPjkRhyEpjVBqMpdg1WHRKJ&jump_from=webapi)
