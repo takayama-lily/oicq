@@ -1,18 +1,18 @@
 "use strict";
 try {
-    var { createClient } = require("../index");
-} catch {
     var { createClient } = require("oicq");
+} catch {
+    var { createClient } = require("../index");
 }
 
 // your account
 const uin = 123456789;
 const bot = createClient(uin, {
     log_level: "debug", //日志级别设置为debug
-    platform: 1, //登录设备选择为手机
+    platform: 5, //登录设备选择为iPad
 });
 
-//监听并输入滑动验证码ticket(同一地点只需验证一次)
+//监听并输入滑动验证码ticket(同一设备只需验证一次)
 bot.on("system.login.slider", () => {
     process.stdin.once("data", (input) => {
         bot.sliderLogin(input);
@@ -28,8 +28,8 @@ bot.on("system.login.device", () => {
 });
 
 //监听上线事件
-bot.on("system.online", () => {
-    console.log(`Logged in as ${bot.nickname}!`);
+bot.on("system.online", function () {
+    console.log(`Logged in as ${this.nickname}!`);
 });
 
 //自动同意好友申请
@@ -63,4 +63,4 @@ bot.on("notice.group.increase", (data) => {
 bot.login("password");
 
 //同一事件可以多次监听
-//更多api和事件请参考文档或client.d.ts文件
+//更多api和事件请参考文档或index.d.ts文件
