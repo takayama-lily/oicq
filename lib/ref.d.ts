@@ -164,6 +164,8 @@ export class Client extends oicq.Client {
     captcha_sign?: Buffer;
     t104?: Buffer;
     t106: Buffer;
+    t174?: Buffer;
+    phone?: string;
     t402?: Buffer;
     t403?: Buffer;
 

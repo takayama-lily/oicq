@@ -1,3 +1,6 @@
+/**
+ * 简易控制台指令分发器
+ */
 "use strict";
 const { EventEmitter } = require("events");
 

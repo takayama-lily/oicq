@@ -219,12 +219,13 @@ export interface MfaceElem {
 }
 
 /**
+ * @typedef MediaFile [CQ:image]中的file参数
  * string或二进制buffer
  * string时支持以下协议：
  *   http(s):// 
  *   base64:// 
- *   /tmp/example.jpg  绝对路径
- *   example.jpg  相对(于启动目录)路径
+ *   /tmp/example.jpg  本地绝对路径
+ *   example.jpg  本地相对(于启动目录)路径
  *   file:///  
  *   protobuf://  仅语音和视频转发支持
  */
@@ -262,11 +263,12 @@ export interface LocationElem {
     }
 }
 
+export type MusicType = "qq" | "163" | "migu" | "kugou" | "kuwo";
 export interface MusicElem {
     type: "music",
     data: {
-        type: "qq" | "163" | "migu" | "kugou" | "kuwo",
-        id: number | string,
+        type: MusicType,
+        id: string,
     }
 }
 
@@ -373,7 +375,8 @@ export interface SliderEventData extends CommonSystemEventData {
 export interface DeviceEventData extends CommonSystemEventData {
     system_type: "login",
     sub_type: "device",
-    url: string
+    url: string,
+    phone: string,
 }
 export interface LoginErrorEventData extends CommonSystemEventData {
     system_type: "login",
@@ -596,15 +599,15 @@ export class Client extends EventEmitter {
     readonly nickname: string;
     readonly sex: Gender;
     readonly age: number;
-    readonly online_status: number;
-    readonly fl: ReadonlyMap<number, FriendInfo>;
-    readonly sl: ReadonlyMap<number, StrangerInfo>;
-    readonly gl: ReadonlyMap<number, GroupInfo>;
-    readonly gml: ReadonlyMap<number, ReadonlyMap<number, MemberInfo>>;
+    readonly online_status: number; //在线状态
+    readonly fl: ReadonlyMap<number, FriendInfo>; //好友列表
+    readonly sl: ReadonlyMap<number, StrangerInfo>; //陌生人列表
+    readonly gl: ReadonlyMap<number, GroupInfo>; //群列表
+    readonly gml: ReadonlyMap<number, ReadonlyMap<number, MemberInfo>>; //群员列表
     readonly logger: log4js.Logger;
-    readonly dir: string;
+    readonly dir: string; //当前账号本地存储路径
     readonly config: ConfBot;
-    readonly stat: Statistics;
+    readonly stat: Statistics; //数据统计
     readonly plugins: Set<NodeJS.Module>;
 
     constructor(uin: number, config?: ConfBot);
@@ -619,21 +622,30 @@ export class Client extends EventEmitter {
     logout(): Promise<void>; //先下线再关闭连接
     isOnline(): boolean;
 
-    setOnlineStatus(status: number): Promise<Ret>; //11我在线上 31离开 41隐身 50忙碌 60Q我吧 70请勿打扰
+    //发短信过设备锁
+    sendSMSCode(): void;
+    submitSMSCode(code: string): void;
 
-    getFriendList(): Ret<Client["fl"]>;
-    getStrangerList(): Ret<Client["sl"]>;
-    getGroupList(): Ret<Client["gl"]>;
-    getGroupMemberList(group_id: number, no_cache?: boolean): Promise<Ret<ReadonlyMap<number, MemberInfo>>>;
-    getStrangerInfo(user_id: number, no_cache?: boolean): Promise<Ret<StrangerInfo>>;
-    getGroupInfo(group_id: number, no_cache?: boolean): Promise<Ret<GroupInfo>>;
-    getGroupMemberInfo(group_id: number, user_id: number, no_cache?: boolean): Promise<Ret<MemberInfo>>;
+    /**
+     * 设置在线状态
+     * @param status 11我在线上 31离开 41隐身 50忙碌 60Q我吧 70请勿打扰
+     */
+    setOnlineStatus(status: number): Promise<Ret>;
+
+    getFriendList(): Ret<Client["fl"]>; //获取好友列表，建议直接访问 this.fl
+    getStrangerList(): Ret<Client["sl"]>; //获取陌生人列表，建议直接访问 this.sl
+    getGroupList(): Ret<Client["gl"]>; //获取群列表，建议直接访问 this.gl
+    getGroupMemberList(group_id: number, no_cache?: boolean): Promise<Ret<ReadonlyMap<number, MemberInfo>>>; //获取群员列表，建议直接访问 this.gml.get(gid)
+
+    getStrangerInfo(user_id: number, no_cache?: boolean): Promise<Ret<StrangerInfo>>; //获取陌生人资料
+    getGroupInfo(group_id: number, no_cache?: boolean): Promise<Ret<GroupInfo>>; //获取群资料
+    getGroupMemberInfo(group_id: number, user_id: number, no_cache?: boolean): Promise<Ret<MemberInfo>>; //获取群员资料
 
     sendPrivateMsg(user_id: number, message: MessageElem | Iterable<MessageElem> | string, auto_escape?: boolean): Promise<Ret<{ message_id: string }>>;
     sendGroupMsg(group_id: number, message: MessageElem | Iterable<MessageElem> | string, auto_escape?: boolean): Promise<Ret<{ message_id: string }>>;
     sendTempMsg(group_id: number, user_id: number, message: MessageElem | Iterable<MessageElem> | string, auto_escape?: boolean): Promise<Ret<{ message_id: string }>>;
     sendDiscussMsg(discuss_id: number, message: MessageElem | Iterable<MessageElem> | string, auto_escape?: boolean): Promise<Ret>;
-    deleteMsg(message_id: string): Promise<Ret>;
+    deleteMsg(message_id: string): Promise<Ret>; //撤回
 
     /**
      * 获取一条消息
@@ -645,12 +657,16 @@ export class Client extends EventEmitter {
      * 获取message_id往前的count条消息(包括自身)
      * 无法获取被撤回的消息，因此返回的数量并不一定为count
      * count默认为20，不能超过20
+     * 
+     * 若要获取最新的20条消息，参考https://github.com/takayama-lily/oicq/wiki/93.%E8%A7%A3%E6%9E%90%E6%B6%88%E6%81%AFID
+     * 自行构造消息id，除群号外其余位补0
      */
     getChatHistory(message_id: string, count?: number): Promise<Ret<PrivateMessageEventData[] | GroupMessageEventData[]>>;
 
     /**
      * 获取转发消息
      * resid在xml消息中，需要自行解析xml获得
+     * 暂不支持套娃转发解析
      */
     getForwardMsg(resid: string): Promise<Ret<Array<{
         group_id?: number,
@@ -661,35 +677,36 @@ export class Client extends EventEmitter {
         raw_message: string,
     }>>>;
 
-    sendGroupNotice(group_id: number, content: string): Promise<Ret>;
-    setGroupName(group_id: number, group_name: string): Promise<Ret>;
-    setGroupAnonymous(group_id: number, enable?: boolean): Promise<Ret>;
-    setGroupWholeBan(group_id: number, enable?: boolean): Promise<Ret>;
-    setGroupAdmin(group_id: number, user_id: number, enable?: boolean): Promise<Ret>;
-    setGroupSpecialTitle(group_id: number, user_id: number, special_title?: string, duration?: number): Promise<Ret>;
-    setGroupCard(group_id: number, user_id: number, card?: string): Promise<Ret>;
-    setGroupKick(group_id: number, user_id: number, reject_add_request?: boolean): Promise<Ret>;
-    setGroupBan(group_id: number, user_id: number, duration?: number): Promise<Ret>;
-    setGroupAnonymousBan(group_id: number, flag: string, duration?: number): Promise<Ret>;
-    setGroupLeave(group_id: number, is_dismiss?: boolean): Promise<Ret>;
-    sendGroupPoke(group_id: number, user_id: number): Promise<Ret>; //group_id是好友时可以私聊戳一戳(命名可能会在之后改进)
+    sendGroupNotice(group_id: number, content: string): Promise<Ret>; //发群公告
+    setGroupName(group_id: number, group_name: string): Promise<Ret>; //设置群名
+    setGroupAnonymous(group_id: number, enable?: boolean): Promise<Ret>; //设置允许匿名发言
+    setGroupWholeBan(group_id: number, enable?: boolean): Promise<Ret>; //全员禁言
+    setGroupAdmin(group_id: number, user_id: number, enable?: boolean): Promise<Ret>; //设置群管理
+    setGroupSpecialTitle(group_id: number, user_id: number, special_title?: string, duration?: number): Promise<Ret>; //设置群头衔
+    setGroupCard(group_id: number, user_id: number, card?: string): Promise<Ret>; //设置群名片
+    setGroupKick(group_id: number, user_id: number, reject_add_request?: boolean): Promise<Ret>; //踢人
+    setGroupBan(group_id: number, user_id: number, duration?: number): Promise<Ret>; //禁言
+    setGroupAnonymousBan(group_id: number, flag: string, duration?: number): Promise<Ret>; //禁言匿名
+    setGroupLeave(group_id: number, is_dismiss?: boolean): Promise<Ret>; //退群
+    sendGroupPoke(group_id: number, user_id: number): Promise<Ret>; //戳一戳
 
-    setFriendAddRequest(flag: string, approve?: boolean, remark?: string, block?: boolean): Promise<Ret>;
-    setGroupAddRequest(flag: string, approve?: boolean, reason?: string, block?: boolean): Promise<Ret>;
-    getSystemMsg(): Promise<Ret<Array<FriendAddEventData | GroupAddEventData | GroupInviteEventData>>>;
+    setFriendAddRequest(flag: string, approve?: boolean, remark?: string, block?: boolean): Promise<Ret>; //处理好友请求
+    setGroupAddRequest(flag: string, approve?: boolean, reason?: string, block?: boolean): Promise<Ret>; //处理群请求
+    getSystemMsg(): Promise<Ret<Array<FriendAddEventData | GroupAddEventData | GroupInviteEventData>>>; //获取未处理的请求
 
     addGroup(group_id: number, comment?: string): Promise<Ret>;
-    addFriend(group_id: number, user_id: number, comment?: string): Promise<Ret>;
-    deleteFriend(user_id: number, block?: boolean): Promise<Ret>;
-    inviteFriend(group_id: number, user_id: number): Promise<Ret>;
-    sendLike(user_id: number, times?: number): Promise<Ret>;
-    setNickname(nickname: string): Promise<Ret>;
-    setGender(gender: 0 | 1 | 2): Promise<Ret>; //0未知 1男 2女
-    setBirthday(birthday: string | number): Promise<Ret>; //20110202的形式
-    setDescription(description?: string): Promise<Ret>;
-    setSignature(signature?: string): Promise<Ret>;
-    setPortrait(file: MediaFile): Promise<Ret>;
-    setGroupPortrait(group_id: number, file: MediaFile): Promise<Ret>;
+    addFriend(group_id: number, user_id: number, comment?: string): Promise<Ret>; //添加群员为好友
+    deleteFriend(user_id: number, block?: boolean): Promise<Ret>; //删除好友
+    inviteFriend(group_id: number, user_id: number): Promise<Ret>; //邀请好友入群
+    sendLike(user_id: number, times?: number): Promise<Ret>; //点赞
+
+    setNickname(nickname: string): Promise<Ret>; //设置昵称
+    setGender(gender: 0 | 1 | 2): Promise<Ret>; //设置性别 0未知 1男 2女
+    setBirthday(birthday: string | number): Promise<Ret>; //设置生日 20110202的形式
+    setDescription(description?: string): Promise<Ret>; //设置个人说明
+    setSignature(signature?: string): Promise<Ret>; //设置个人签名
+    setPortrait(file: MediaFile): Promise<Ret>; //设置个人头像
+    setGroupPortrait(group_id: number, file: MediaFile): Promise<Ret>; //设置群头像
 
     // getFile(fileid: string, busid?: string): Promise<Ret<FileElem["data"]>>; //用于下载链接失效后重新获取
 
@@ -743,44 +760,44 @@ export class Client extends EventEmitter {
     getLoginInfo(): Ret<LoginInfo>;
 
     on(event: "system.login.captcha", listener: (this: Client, data: CaptchaEventData) => void): this;
-    on(event: "system.login.slider", listener: (this: Client, data: SliderEventData) => void): this;
-    on(event: "system.login.device", listener: (this: Client, data: DeviceEventData) => void): this;
-    on(event: "system.login.error", listener: (this: Client, data: LoginErrorEventData) => void): this;
+    on(event: "system.login.slider", listener: (this: Client, data: SliderEventData) => void): this; //收到滑动验证码事件
+    on(event: "system.login.device", listener: (this: Client, data: DeviceEventData) => void): this; //设备锁验证事件
+    on(event: "system.login.error", listener: (this: Client, data: LoginErrorEventData) => void): this; //登录遇到错误
     on(event: "system.login", listener: (this: Client, data: CaptchaEventData | DeviceEventData | LoginErrorEventData | SliderEventData) => void): this;
-    on(event: "system.online", listener: (this: Client, data: OnlineEventData) => void): this;
-    on(event: "system.offline" | "system.offline.network" | "system.offline.kickoff" |
+    on(event: "system.online", listener: (this: Client, data: OnlineEventData) => void): this; //上线事件
+    on(event: "system.offline" | "system.offline.network" | "system.offline.kickoff" | //下线事件
         "system.offline.frozen" | "system.offline.device" | "system.offline.unknown", listener: (this: Client, data: OfflineEventData) => void): this;
     on(event: "system", listener: (this: Client, data: SystemEventData) => void): this;
 
-    on(event: "request.friend" | "request.friend.add", listener: (this: Client, data: FriendAddEventData) => void): this;
-    on(event: "request.group.add", listener: (this: Client, data: GroupAddEventData) => void): this;
-    on(event: "request.group.invite", listener: (this: Client, data: GroupInviteEventData) => void): this;
+    on(event: "request.friend" | "request.friend.add", listener: (this: Client, data: FriendAddEventData) => void): this; //收到好友申请事件
+    on(event: "request.group.add", listener: (this: Client, data: GroupAddEventData) => void): this; //收到加群申请事件
+    on(event: "request.group.invite", listener: (this: Client, data: GroupInviteEventData) => void): this; //收到群邀请事件
     on(event: "request.group", listener: (this: Client, data: GroupAddEventData | GroupInviteEventData) => void): this;
-    on(event: "request", listener: (this: Client, data: RequestEventData) => void): this;
+    on(event: "request", listener: (this: Client, data: RequestEventData) => void): this; //监听以上所有request事件
 
     on(event: "message.private" | "message.private.friend" | "message.private.group" |
-        "message.private.single" | "message.private.other", listener: (this: Client, data: PrivateMessageEventData) => void): this;
-    on(event: "message.group" | "message.group.normal" | "message.group.anonymous", listener: (this: Client, data: GroupMessageEventData) => void): this;
-    on(event: "message.discuss", listener: (this: Client, data: DiscussMessageEventData) => void): this;
-    on(event: "message", listener: (this: Client, data: MessageEventData) => void): this;
+        "message.private.single" | "message.private.other", listener: (this: Client, data: PrivateMessageEventData) => void): this; //私聊消息事件
+    on(event: "message.group" | "message.group.normal" | "message.group.anonymous", listener: (this: Client, data: GroupMessageEventData) => void): this; //群消息事件
+    on(event: "message.discuss", listener: (this: Client, data: DiscussMessageEventData) => void): this; //讨论组消息事件
+    on(event: "message", listener: (this: Client, data: MessageEventData) => void): this; //监听以上所有message事件
 
-    on(event: "notice.friend.increase", listener: (this: Client, data: FriendIncreaseEventData) => void): this;
-    on(event: "notice.friend.decrease", listener: (this: Client, data: FriendDecreaseEventData) => void): this;
-    on(event: "notice.friend.recall", listener: (this: Client, data: FriendRecallEventData) => void): this;
-    on(event: "notice.friend.profile", listener: (this: Client, data: FriendProfileEventData) => void): this;
-    on(event: "notice.friend.poke", listener: (this: Client, data: FriendPokeEventData) => void): this;
-    on(event: "notice.group.increase", listener: (this: Client, data: MemberIncreaseEventData) => void): this;
-    on(event: "notice.group.decrease", listener: (this: Client, data: MemberDecreaseEventData) => void): this;
-    on(event: "notice.group.recall", listener: (this: Client, data: GroupRecallEventData) => void): this;
-    on(event: "notice.group.admin", listener: (this: Client, data: GroupAdminEventData) => void): this;
-    on(event: "notice.group.ban", listener: (this: Client, data: GroupMuteEventData) => void): this;
-    on(event: "notice.group.transfer", listener: (this: Client, data: GroupTransferEventData) => void): this;
-    on(event: "notice.group.title", listener: (this: Client, data: GroupTitleEventData) => void): this;
-    on(event: "notice.group.poke", listener: (this: Client, data: GroupPokeEventData) => void): this;
-    on(event: "notice.group.setting", listener: (this: Client, data: GroupSettingEventData) => void): this;
-    on(event: "notice.friend", listener: (this: Client, data: FriendNoticeEventData) => void): this;
-    on(event: "notice.group", listener: (this: Client, data: GroupNoticeEventData) => void): this;
-    on(event: "notice", listener: (this: Client, data: NoticeEventData) => void): this;
+    on(event: "notice.friend.increase", listener: (this: Client, data: FriendIncreaseEventData) => void): this; //新增好友事件
+    on(event: "notice.friend.decrease", listener: (this: Client, data: FriendDecreaseEventData) => void): this; //好友(被)删除事件
+    on(event: "notice.friend.recall", listener: (this: Client, data: FriendRecallEventData) => void): this; //好友撤回事件
+    on(event: "notice.friend.profile", listener: (this: Client, data: FriendProfileEventData) => void): this; //好友资料变更事件
+    on(event: "notice.friend.poke", listener: (this: Client, data: FriendPokeEventData) => void): this; //好友戳一戳事件
+    on(event: "notice.group.increase", listener: (this: Client, data: MemberIncreaseEventData) => void): this; //踢群・退群事件
+    on(event: "notice.group.decrease", listener: (this: Client, data: MemberDecreaseEventData) => void): this; //入群・群员增加事件
+    on(event: "notice.group.recall", listener: (this: Client, data: GroupRecallEventData) => void): this; //群消息撤回事件
+    on(event: "notice.group.admin", listener: (this: Client, data: GroupAdminEventData) => void): this; //管理员变更事件
+    on(event: "notice.group.ban", listener: (this: Client, data: GroupMuteEventData) => void): this; //群禁言事件
+    on(event: "notice.group.transfer", listener: (this: Client, data: GroupTransferEventData) => void): this; //群转让事件
+    on(event: "notice.group.title", listener: (this: Client, data: GroupTitleEventData) => void): this; //群头衔变更事件
+    on(event: "notice.group.poke", listener: (this: Client, data: GroupPokeEventData) => void): this; //群戳一戳事件
+    on(event: "notice.group.setting", listener: (this: Client, data: GroupSettingEventData) => void): this; //群设置变更事件
+    on(event: "notice.friend", listener: (this: Client, data: FriendNoticeEventData) => void): this; //监听以上所有好友notice事件
+    on(event: "notice.group", listener: (this: Client, data: GroupNoticeEventData) => void): this; //监听以上所有群notice事件
+    on(event: "notice", listener: (this: Client, data: NoticeEventData) => void): this; //监听以上所有notice事件
 
     on(event: string | symbol, listener: (this: Client, ...args: any[]) => void): this;
 
@@ -798,8 +815,8 @@ export function createClient(uin: number, config?: ConfBot): Client;
  * 生成消息元素的快捷函数
  */
 export namespace segment {
-    function text(text: string): TextElem;
-    function at(qq: number, text?: string, dummy?: boolean): AtElem;
+    function text(text: string): TextElem; //普通文本
+    function at(qq: number, text?: string, dummy?: boolean): AtElem; //at
     function face(id: number, text?: string): FaceElem; //经典表情
     function sface(id: number, text?: string): FaceElem;
     function bface(file: string): BfaceElem; //原创表情
@@ -809,7 +826,7 @@ export namespace segment {
     function flash(file: MediaFile, cache?: boolean, timeout?: number, headers?: OutgoingHttpHeaders, proxy?: boolean): ImgPttElem; //闪照
     function record(file: MediaFile, cache?: boolean, timeout?: number, headers?: OutgoingHttpHeaders, proxy?: boolean): ImgPttElem; //语音
     function location(lat: number, lng: number, address: string, id?: string): LocationElem; //位置分享
-    function music(type: "qq" | "163" | "migu" | "kugou" | "kuwo", id: number | string): MusicElem;
+    function music(type: MusicType, id: string): MusicElem; //音乐分享
     function json(data: any): JsonElem;
     function xml(data: string, type?: number): XmlElem;
     function share(url: string, title: string, image?: string, content?: string): ShareElem; //内容分享
@@ -839,7 +856,7 @@ export namespace cqcode {
     function flash(file: string, cache?: boolean, timeout?: number, headers?: string, proxy?: boolean): string;
     function record(file: string, cache?: boolean, timeout?: number, headers?: string, proxy?: boolean): string;
     function location(lat: number, lng: number, address: string, id?: string): string;
-    function music(type: "qq" | "163", id: number): string;
+    function music(type: MusicType, id: string): string;
     function json(data: string): string;
     function xml(data: string, type?: number): string;
     function share(url: string, title: string, image?: string, content?: string): string;
