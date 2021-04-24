@@ -33,13 +33,13 @@
   "dependencies": {
     "https-proxy-agent": "^5.0.0",
     "image-size": "^0.9.7",
-    "jce": "^0.1.7",
+    "jce": "^0.2.1",
     "log4js": "^6.3.0",
     "long": "^4.0.0"
   },
   "devDependencies": {
     "babel-eslint": "^10.1.0",
-    "eslint": "^7.17.0",
+    "eslint": "^7.25.0",
     "protobufjs": "^6.10.2"
   },
   "files": [

@@ -17,8 +17,8 @@
 **Install:**
 
 ```bash
-# npm init
-# npm i oicq
+> npm init    # or > yarn init
+> npm i oicq  # or > yarn add oicq
 ```
 
 **Usage:**
