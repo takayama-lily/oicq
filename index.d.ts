@@ -38,6 +38,10 @@ export interface ConfBot {
     //设置为0则不会自动重连，然后你可以监听此事件自己处理
     reconn_interval?: number,
 
+    //一些内部缓存(如群员详细资料、群详细资料等)的生命周期，默认3600(秒)
+    //即使不用相关API(使用`no_cache=true`)强制刷新数据，超过这个时间后内部也会自动刷新
+    internal_cache_life?: number,
+
     //手动指定ip和port
     //默认使用msfwifi.3g.qq.com:8080进行连接，若要修改建议优先更改该域名hosts指向而不是手动指定ip
     //@link https://site.ip138.com/msfwifi.3g.qq.com/ 端口通常以下四个都会开放：80,443,8080,14000
