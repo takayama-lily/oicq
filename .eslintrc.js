@@ -11,7 +11,7 @@ module.exports = {
     },
     "rules": {
         "indent": [
-            "error",
+            "warn",
             4
         ],
         "linebreak-style": [
@@ -19,15 +19,15 @@ module.exports = {
             "unix"
         ],
         "quotes": [
-            "error",
+            "warn",
             "double"
         ],
         "semi": [
-            "error",
+            "warn",
             "always"
         ],
         "no-empty": [
-            "error",
+            "warn",
             { "allowEmptyCatch": true }
         ],
         "no-unused-vars": "warn",
