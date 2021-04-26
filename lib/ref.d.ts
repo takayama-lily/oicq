@@ -68,11 +68,11 @@ export interface ApkInfo {
     sdkver: string,
 }
 
-export interface ProtocolResponse {
+export type ProtocolResponse = Promise<{
     result: number,
     emsg?: string,
     data?: any,
-}
+}>
 
 export interface HighwayUploadObject {
     buf: Buffer,
