@@ -61,4 +61,5 @@ bot.login("password"); // your password or password_md5
 [JavaScript语言基础](https://developer.mozilla.org/zh-CN/docs/Web/JavaScript)  
 [Node.js入门教程](http://nodejs.cn/learn)  
 [5分钟上手TypeScript](https://www.tslang.cn/docs/handbook/typescript-in-5-minutes.html)  
-[![问题交流反馈群](https://img.shields.io/badge/问题交流反馈群-236172566-red)](https://qm.qq.com/cgi-bin/qm/qr?k=NXw3NEA5lzPjkRhyEpjVBqMpdg1WHRKJ&jump_from=webapi)
+[![Gitter](https://badges.gitter.im/takayama-lily/oicq.svg)](https://gitter.im/takayama-lily/oicq?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
+[![group:236172566](https://img.shields.io/badge/group-236172566-blue)](https://qm.qq.com/cgi-bin/qm/qr?k=NXw3NEA5lzPjkRhyEpjVBqMpdg1WHRKJ&jump_from=webapi)
