@@ -3,13 +3,10 @@
 [![npm version](https://img.shields.io/npm/v/oicq.svg?logo=npm)](https://www.npmjs.com/package/oicq)
 [![node engine](https://img.shields.io/node/v/oicq.svg)](https://nodejs.org)
 
-* QQ(安卓)协议基于Node.js的实现。也参考了一些其他开源仓库如[mirai](https://github.com/mamoe/mirai)、[miraiGo](https://github.com/Mrs4s/MiraiGo)等。  
-  * 小巧：依赖包大小仅1M
-  * 完善：实现了手机协议大部分常用功能
-  * 稳定：基于单线程，易维护，无崩溃，bug率极低
-  * 简单：使用CQHTTP风格的API，简洁易懂，原生支持经典CQ码
-  * 高效跨平台，低资源占用
-* 请使用 `Node.js 12.16` 以上版本。不会支持金钱/红包相关协议。
+* QQ(安卓)协议基于Node.js的实现。也参考了一些其他开源仓库如[mirai](https://github.com/mamoe/mirai)、[miraiGo](https://github.com/Mrs4s/MiraiGo)等。
+* 使用 酷Q/CQHTTP 风格的API，原生支持经典CQ码。
+* 实现了大部分常用协议和功能，但不会支持金钱/红包相关协议。
+* 请使用 `Node.js 12.16` 以上版本。
 * [插件站(建设中)](https://github.com/takayama-lily/oicq-plugins)
 
 ----
