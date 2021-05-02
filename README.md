@@ -7,7 +7,6 @@
 * 使用 酷Q/CQHTTP 风格的API，原生支持经典CQ码。
 * 实现了大部分常用协议和功能，但不会支持金钱/红包相关协议。
 * 请使用 `Node.js 12.16` 以上版本。
-* [插件站(建设中)](https://github.com/takayama-lily/oicq-plugins)
 
 ----
 
@@ -41,13 +40,14 @@ bot.on("system.login.slider", () => {
 bot.login("password"); // your password or password_md5
 ```
 
-> [如何完成滑动验证码并拿到ticket](https://github.com/takayama-lily/oicq/wiki/01.%E6%BB%91%E5%8A%A8%E9%AA%8C%E8%AF%81%E7%A0%81%E5%92%8C%E8%AE%BE%E5%A4%87%E9%94%81)  
 > 更详细的例子可以参考 [demo.js](docs/demo.js)  
-> API简洁友好，开箱即用，熟悉Nodejs者建议直接引入依赖进行开发。  
+> API简洁友好，熟悉Nodejs者可直接引入依赖进行开发。  
+> 如果你不知道要如何组织代码，可参考或使用 [abot](https://github.com/takayama-lily/abot) 以插件形式编写功能。  
 > 其他语言的使用者可以用 [http-api](https://github.com/takayama-lily/onebot) 搭建环境。  
 
 **相关文档：**
 
+[滑动验证码ticket教程](https://github.com/takayama-lily/oicq/wiki/01.%E6%BB%91%E5%8A%A8%E9%AA%8C%E8%AF%81%E7%A0%81%E5%92%8C%E8%AE%BE%E5%A4%87%E9%94%81)  
 [API参考文档](https://github.com/takayama-lily/oicq/wiki/91.API%E6%96%87%E6%A1%A3)  
 [事件参考文档](https://github.com/takayama-lily/oicq/wiki/92.%E4%BA%8B%E4%BB%B6%E6%96%87%E6%A1%A3)  
 [常见问题](https://github.com/takayama-lily/oicq/wiki/02.%E5%85%B6%E4%BB%96%E5%B8%B8%E8%A7%81%E9%97%AE%E9%A2%98)  
