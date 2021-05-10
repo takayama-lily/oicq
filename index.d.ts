@@ -495,7 +495,7 @@ export interface FriendDecreaseEventData extends CommonFriendNoticeEventData {
     user_id: number,
     nickname: string,
 }
-export interface FriendPokeEventData extends CommonEventData {
+export interface FriendPokeEventData extends CommonFriendNoticeEventData {
     sub_type: "poke",
     user_id: number,
     operator_id: number,
