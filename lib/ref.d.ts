@@ -83,6 +83,10 @@ export interface HighwayUploadObject {
 export interface Proto {
     [k: number]: Proto,
     raw: Buffer,
+    toString: () => string,
+    toHex: () => string,
+    toBuffer: () => Buffer,
+    [Symbol.toPrimitive]: () => string,
 }
 
 export interface Msg extends Proto {
