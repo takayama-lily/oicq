@@ -344,7 +344,7 @@ export interface FileElem {
         size: number,
         md5: string,
         duration: number,
-        busid: string,
+        busid: number,
         fileid: string,
     }
 }
@@ -593,26 +593,26 @@ export type MessageEventData = PrivateMessageEventData | GroupMessageEventData |
 export type NoticeEventData = FriendNoticeEventData | GroupNoticeEventData; //2
 export type EventData = SystemEventData | RequestEventData | MessageEventData | NoticeEventData; //4
 
-interface GfsBaseStat {
+export interface GfsBaseStat {
     fid: string, //文件(夹)id
     pid: string, //父文件夹id
     name: string,
     user_id: number,
     create_time: number,
 }
-interface GfsFileStat extends GfsBaseStat {
+export interface GfsFileStat extends GfsBaseStat {
     size: number,
-    busid: string,
+    busid: number,
     md5: string,
     sha1: string,
     expire_time: number,
     download_times: number,
 }
-interface GfsFolderStat extends GfsBaseStat {
+export interface GfsFolderStat extends GfsBaseStat {
     file_count: number,
     is_folder: true,
 }
-const GfsStat = GfsFileStat | GfsFolderStat;
+export const GfsStat = GfsFileStat | GfsFolderStat;
 declare class Gfs {
     /** root为"/" */
     resolve(fid: string): Promise<GfsStat>;
@@ -620,17 +620,16 @@ declare class Gfs {
     cd(fid?: string): void;
     dir(fid?: string): Promise<GfsStat[]>;
     mkdir(name: string): Promise<GfsFolderStat>; /** 目前无法在非root下创建目录 */
-    rmdir(fid: string): Promise<void>; /** 会连带目录下所有文件一起删除 */
-    rm(fid: string): Promise<void>;
+    rm(fid: string): Promise<void>; /** 删除目标是文件夹的话会删除下面的所有文件 */
     rename(fid: string, name: string): Promise<void>;
-    mv(fid: string, pid: string): Promise<void>;
+    mv(fid: string, pid: string): Promise<void>; /** 无法移动文件夹 */
     df(): Promise<{
         total: number,
         used: number,
         free: number,
     }>;
-    upload(filepath: string, pid?: string): Promise<GfsFileStat>;
-    download(fid: string, busid: string): Promise<FileElem["data"]>;
+    upload(filepath: string, pid?: string, name?: string): Promise<GfsFileStat>;
+    download(fid: string): Promise<FileElem["data"]>;
 }
 
 //////////
@@ -801,6 +800,8 @@ export class Client extends EventEmitter {
     getVersionInfo(): Ret; //暂时为返回package.json中的信息
     getStatus(): Ret<Status>;
     getLoginInfo(): Ret<LoginInfo>;
+
+    acuqireGfs(group_id: number): Gfs;
 
     on(event: "system.login.captcha", listener: (this: Client, data: CaptchaEventData) => void): this;
     on(event: "system.login.slider", listener: (this: Client, data: SliderEventData) => void): this; //收到滑动验证码事件
