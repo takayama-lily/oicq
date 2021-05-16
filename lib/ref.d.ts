@@ -78,6 +78,7 @@ export interface HighwayUploadObject {
     buf: Buffer,
     md5: Buffer,
     key: Buffer,
+    ext?: Buffer,
 }
 
 export interface Proto {
@@ -143,6 +144,13 @@ export interface MsgAttr extends Proto {
     9: Proto, //font
 }
 
+export interface Storage {
+    sig_session: Buffer,
+    session_key: Buffer,
+    ip: string,
+    port: number,
+}
+
 //////////
 
 export class Client extends oicq.Client {
@@ -183,6 +191,7 @@ export class Client extends oicq.Client {
     cookies: object;
 
     roaming_stamp: string[];
+    storage: Storage;
 
     nextSeq(): number;
     send(): Promise<Buffer>;
