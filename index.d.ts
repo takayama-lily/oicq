@@ -608,27 +608,27 @@ export interface GfsFileStat extends GfsBaseStat {
     expire_time: number,
     download_times: number,
 }
-export interface GfsFolderStat extends GfsBaseStat {
+export interface GfsDirStat extends GfsBaseStat {
     file_count: number,
-    is_folder: true,
+    is_dir: true,
 }
-export const GfsStat = GfsFileStat | GfsFolderStat;
+export const GfsStat = GfsFileStat | GfsDirStat;
 declare class Gfs {
-    /** root为"/" */
-    resolve(fid: string): Promise<GfsStat>;
-    pwd(): string;
-    cd(fid?: string): void;
-    dir(fid?: string): Promise<GfsStat[]>;
-    mkdir(name: string): Promise<GfsFolderStat>; /** 目前无法在非root下创建目录 */
-    rm(fid: string): Promise<void>; /** 删除目标是文件夹的话会删除下面的所有文件 */
+    stat(fid: string): Promise<GfsStat>; /** 尽量不要对目录使用此方法 */
+    ls(fid?: string, start?: number, limit?: number): Promise<GfsStat[]>; /** start从0开始，limit默认100(最大) */
+    dir: Gfs["ls"]; /** ls的别名 */
+    mkdir(name: string): Promise<GfsDirStat>;
+    rm(fid: string): Promise<void>; /** 删除目标是目录的时候会删除下面的所有文件 */
     rename(fid: string, name: string): Promise<void>;
-    mv(fid: string, pid: string): Promise<void>; /** 无法移动文件夹 */
+    mv(fid: string, pid: string): Promise<void>; /** 无法移动目录 */
     df(): Promise<{
         total: number,
         used: number,
         free: number,
+        file_count: number,
+        max_file_count: number,
     }>;
-    upload(filepath: string, pid?: string, name?: string): Promise<GfsFileStat>;
+    upload(filepath: string, pid?: string, name?: string): Promise<GfsFileStat>; /** 默认传到根目录 */
     download(fid: string): Promise<FileElem["data"]>;
 }
 
