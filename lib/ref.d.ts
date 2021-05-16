@@ -74,13 +74,6 @@ export type ProtocolResponse = Promise<{
     data?: any,
 }>
 
-export interface HighwayUploadObject {
-    buf: Buffer,
-    md5: Buffer,
-    key: Buffer,
-    ext?: Buffer,
-}
-
 export interface HighwayUploadStreamObject {
     cmd: number,
     size: number,
