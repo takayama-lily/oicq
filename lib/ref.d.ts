@@ -81,6 +81,15 @@ export interface HighwayUploadObject {
     ext?: Buffer,
 }
 
+export interface HighwayUploadStreamObject {
+    cmd: number,
+    size: number,
+    md5: Buffer,
+    ticket?: Buffer,
+    ext?: Buffer,
+    encrypt?: boolean,
+}
+
 export interface Proto {
     [k: number]: Proto,
     toString: () => string,

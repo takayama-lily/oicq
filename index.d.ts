@@ -605,7 +605,7 @@ export interface GfsFileStat extends GfsBaseStat {
     busid: number,
     md5: string,
     sha1: string,
-    expire_time: number,
+    duration: number,
     download_times: number,
 }
 export interface GfsDirStat extends GfsBaseStat {
