@@ -8,29 +8,22 @@ import * as log4js from 'log4js';
 
 export type Uin = number;
 
-// 大多数情况下你无需关心这些配置项，因为默认配置就是最常用的，除非你需要一些与默认不同的规则
+/** 大多数情况下你无需关心这些配置项，因为默认配置就是最常用的，除非你需要一些与默认不同的规则 */
 export interface ConfBot {
 
-    //日志等级，默认info
-    //往屏幕打印日志会降低性能，若消息量巨大建议重定向或设置为"warn"屏蔽一般消息日志
+    /** 日志等级，默认info (往屏幕打印日志会降低性能，若消息量巨大建议修改此参数或重定向) */
     log_level?: "trace" | "debug" | "info" | "warn" | "error" | "fatal" | "mark" | "off",
-
-    //1:安卓手机(默认) 2:aPad 3:安卓手表 4:MacOS 5:iPad
+    /** 1:安卓手机(默认) 2:aPad 3:安卓手表 4:MacOS 5:iPad */
     platform?: number,
-
-    //被踢下线是否在3秒后重新登陆，默认false
+    /** 被踢下线是否在3秒后重新登陆，默认false */
     kickoff?: boolean,
-
-    //群聊是否无视自己的发言，默认true
+    /** 群聊是否过滤自己的发言，默认true */
     ignore_self?: boolean,
-
-    //被风控时是否尝试用分片发送，默认true
+    /** 被风控时是否尝试用分片发送，默认true */
     resend?: boolean,
-
-    //raw_message里不使用CQ码字符串，而是使用简短易读的形式(如："[图片][表情]")，可以加快解析速度，默认false
+    /** raw_message里是否不使用CQ码字符串，而是使用简短易读的形式(如："[图片][表情]")，可以加快解析速度，默认false */
     brief?: boolean,
-
-    //数据存储文件夹，需要可写权限，默认主目录下的data文件夹
+    /** 数据存储文件夹，需要可写权限，默认主模块下的data文件夹 */
     data_dir?: string,
 
     //触发system.offline.network事件后的重连间隔秒数，默认5(秒)，不建议设置低于3(秒)
@@ -177,6 +170,7 @@ export interface MemberInfo extends MemberBaseInfo {
 ////////// Message Elements
 
 /**
+ * 使用cqhttp风格的消息元素类型
  * @see https://github.com/howmanybots/onebot/blob/master/v11/specs/message/segment.md
  */
 export type MessageElem = TextElem | AtElem | FaceElem | BfaceElem | MfaceElem |
@@ -223,17 +217,17 @@ export interface MfaceElem {
 }
 
 /**
- * @typedef MediaFile [CQ:image]中的file参数
- * string或二进制buffer
- * string时支持以下协议：
+ * @typedef MediaFile 为string时等同于[CQ:image]中的file参数
+ * string支持以下写法：
  *   http(s):// 
  *   base64:// 
  *   /tmp/example.jpg  本地绝对路径
- *   example.jpg  本地相对(于启动目录)路径
+ *   example.jpg  本地相对(于启动目录的)路径
  *   file:///  
- *   protobuf://  仅语音和视频转发支持
+ *   protobuf://  仅用于语音和视频的转发
  */
 export type MediaFile = string | Uint8Array | ArrayBuffer | SharedArrayBuffer;
+
 export interface ImgPttElem {
     type: "image" | "flash" | "record",
     data: {
@@ -298,7 +292,7 @@ export interface XmlElem {
     type: "xml",
     data: {
         data: string,
-        type?: number,
+        type?: number, //type为35的是合并转发
         text?: string,
     }
 }
@@ -593,6 +587,8 @@ export type MessageEventData = PrivateMessageEventData | GroupMessageEventData |
 export type NoticeEventData = FriendNoticeEventData | GroupNoticeEventData; //2
 export type EventData = SystemEventData | RequestEventData | MessageEventData | NoticeEventData; //4
 
+////////// group file system
+
 export interface GfsBaseStat {
     fid: string, //文件(夹)id
     pid: string, //父文件夹id
@@ -612,15 +608,29 @@ export interface GfsDirStat extends GfsBaseStat {
     file_count: number,
     is_dir: true,
 }
-export const GfsStat = GfsFileStat | GfsDirStat;
+export type GfsStat = GfsFileStat | GfsDirStat;
+
+/**
+ * 这里面的方法是会reject的，需要catch
+ */
 declare class Gfs {
-    stat(fid: string): Promise<GfsStat>; /** 尽量不要对目录使用此方法 */
-    ls(fid?: string, start?: number, limit?: number): Promise<GfsStat[]>; /** start从0开始，limit默认100(最大) */
-    dir: Gfs["ls"]; /** ls的别名 */
+    /** 群号 */
+    readonly gid: number;
+    /** 查看文件属性(尽量不要对目录使用此方法) */
+    stat(fid: string): Promise<GfsStat>;
+    /** 列出文件，start从0开始，limit默认100(最大) */
+    ls(fid?: string, start?: number, limit?: number): Promise<GfsStat[]>;
+    /** ls的别名 */
+    dir: Gfs["ls"];
+    /** 创建目录 */
     mkdir(name: string): Promise<GfsDirStat>;
-    rm(fid: string): Promise<void>; /** 删除目标是目录的时候会删除下面的所有文件 */
+    /** 删除文件或目录(删除目标是目录的时候会删除下面的所有文件) */
+    rm(fid: string): Promise<void>; 
+    /** 重命名文件或目录 */
     rename(fid: string, name: string): Promise<void>;
-    mv(fid: string, pid: string): Promise<void>; /** 无法移动目录 */
+    /** 移动文件到其他目录 */
+    mv(fid: string, pid: string): Promise<void>;
+    /** 查看可用空间和文件数量 */
     df(): Promise<{
         total: number,
         used: number,
@@ -628,12 +638,18 @@ declare class Gfs {
         file_count: number,
         max_file_count: number,
     }>;
-    upload(filepath: string, pid?: string, name?: string): Promise<GfsFileStat>; /** 默认传到根目录 */
+    /** 上传文件(默认传到根目录) */
+    upload(localpath: string, pid?: string, name?: string): Promise<GfsFileStat>;
+    /** 获取文件的下载链接 */
     download(fid: string): Promise<FileElem["data"]>;
 }
 
 //////////
 
+/**
+ * 方法不会reject或抛出异常，使用retcode判断是否成功
+ * @see {Ret}
+ */
 export class Client extends EventEmitter {
 
     readonly uin: number;
@@ -641,31 +657,41 @@ export class Client extends EventEmitter {
     readonly nickname: string;
     readonly sex: Gender;
     readonly age: number;
-    readonly online_status: number; //在线状态
-    readonly fl: ReadonlyMap<number, FriendInfo>; //好友列表
-    readonly sl: ReadonlyMap<number, StrangerInfo>; //陌生人列表
-    readonly gl: ReadonlyMap<number, GroupInfo>; //群列表
-    readonly gml: ReadonlyMap<number, ReadonlyMap<number, MemberInfo>>; //群员列表
+    /** 在线状态 */
+    readonly online_status: number;
+    /** 好友列表 */
+    readonly fl: ReadonlyMap<number, FriendInfo>;
+    /** 陌生人列表 */
+    readonly sl: ReadonlyMap<number, StrangerInfo>;
+    /** 群列表 */
+    readonly gl: ReadonlyMap<number, GroupInfo>;
+    /** 群员列表 */
+    readonly gml: ReadonlyMap<number, ReadonlyMap<number, MemberInfo>>;
+    /** 日志记录器 */
     readonly logger: log4js.Logger;
-    readonly dir: string; //当前账号本地存储路径
+    /** 当前账号本地存储路径 */
+    readonly dir: string;
+    /** 配置信息(大部分参数支持热修改) */
     readonly config: ConfBot;
-    readonly stat: Statistics; //数据统计
-    readonly plugins: Set<NodeJS.Module>;
+    /** 数据统计信息 */
+    readonly stat: Statistics;
 
     constructor(uin: number, config?: ConfBot);
-    login(password?: Uint8Array | string): void; //密码支持明文和md5
 
     /**
-     * @deprecated
+     * @param password 明文或md5后的密码，重复调用时可无需传入此参数
      */
-    captchaLogin(captcha: string): void;
+    login(password?: Uint8Array | string): void;
+
+    /** 提交滑动验证码ticket */
     sliderLogin(ticket: string): void;
-    terminate(): void; //直接关闭连接
-    logout(): Promise<void>; //先下线再关闭连接
+    /** 先下线再关闭连接 */
+    logout(): Promise<void>;
     isOnline(): boolean;
 
-    //发短信过设备锁
+    /** 发验证码给密保手机，用于发短信过设备锁 */
     sendSMSCode(): void;
+    /** 提交收到的短信验证码 */
     submitSMSCode(code: string): void;
 
     /**
@@ -674,25 +700,33 @@ export class Client extends EventEmitter {
      */
     setOnlineStatus(status: number): Promise<Ret>;
 
-    getFriendList(): Ret<Client["fl"]>; //获取好友列表，建议直接访问 this.fl
-    getStrangerList(): Ret<Client["sl"]>; //获取陌生人列表，建议直接访问 this.sl
-    getGroupList(): Ret<Client["gl"]>; //获取群列表，建议直接访问 this.gl
-    getGroupMemberList(group_id: number, no_cache?: boolean): Promise<Ret<ReadonlyMap<number, MemberInfo>>>; //获取群员列表，建议直接访问 this.gml.get(gid)
+    /** @deprecated 获取好友列表，请直接访问 this.fl */
+    getFriendList(): Ret<Client["fl"]>;
+    /** @deprecated 获取陌生人列表，请直接访问 this.sl */
+    getStrangerList(): Ret<Client["sl"]>;
+    /** @deprecated 获取群列表，请直接访问 this.gl */
+    getGroupList(): Ret<Client["gl"]>;
+    /** 获取群成员列表 */
+    getGroupMemberList(group_id: number, no_cache?: boolean): Promise<Ret<ReadonlyMap<number, MemberInfo>>>;
 
-    getStrangerInfo(user_id: number, no_cache?: boolean): Promise<Ret<StrangerInfo>>; //获取陌生人资料
-    getGroupInfo(group_id: number, no_cache?: boolean): Promise<Ret<GroupInfo>>; //获取群资料
-    getGroupMemberInfo(group_id: number, user_id: number, no_cache?: boolean): Promise<Ret<MemberInfo>>; //获取群员资料
+    /** 获取陌生人资料 */
+    getStrangerInfo(user_id: number, no_cache?: boolean): Promise<Ret<StrangerInfo>>;
+    /** 获取群资料 */
+    getGroupInfo(group_id: number, no_cache?: boolean): Promise<Ret<GroupInfo>>;
+    /** 获取群员资料 */
+    getGroupMemberInfo(group_id: number, user_id: number, no_cache?: boolean): Promise<Ret<MemberInfo>>;
 
+    /** 私聊 */
     sendPrivateMsg(user_id: number, message: MessageElem | Iterable<MessageElem> | string, auto_escape?: boolean): Promise<Ret<{ message_id: string }>>;
+    /** 群聊 */
     sendGroupMsg(group_id: number, message: MessageElem | Iterable<MessageElem> | string, auto_escape?: boolean): Promise<Ret<{ message_id: string }>>;
+    /** 群临时会话，大多数时候可以使用私聊达到同样效果 */
     sendTempMsg(group_id: number, user_id: number, message: MessageElem | Iterable<MessageElem> | string, auto_escape?: boolean): Promise<Ret<{ message_id: string }>>;
+    /** 讨论组 */
     sendDiscussMsg(discuss_id: number, message: MessageElem | Iterable<MessageElem> | string, auto_escape?: boolean): Promise<Ret>;
-    deleteMsg(message_id: string): Promise<Ret>; //撤回
-
-    /**
-     * 获取一条消息
-     * 无法获取被撤回的消息
-     */
+    /** 撤回 */
+    deleteMsg(message_id: string): Promise<Ret>;
+    /** 获取一条消息(无法获取被撤回的消息) */
     getMsg(message_id: string): Promise<Ret<PrivateMessageEventData | GroupMessageEventData>>;
 
     /**
@@ -719,38 +753,63 @@ export class Client extends EventEmitter {
         raw_message: string,
     }>>>;
 
-    sendGroupNotice(group_id: number, content: string): Promise<Ret>; //发群公告
-    setGroupName(group_id: number, group_name: string): Promise<Ret>; //设置群名
-    setGroupAnonymous(group_id: number, enable?: boolean): Promise<Ret>; //设置允许匿名发言
-    setGroupWholeBan(group_id: number, enable?: boolean): Promise<Ret>; //全员禁言
-    setGroupAdmin(group_id: number, user_id: number, enable?: boolean): Promise<Ret>; //设置群管理
-    setGroupSpecialTitle(group_id: number, user_id: number, special_title?: string, duration?: number): Promise<Ret>; //设置群头衔
-    setGroupCard(group_id: number, user_id: number, card?: string): Promise<Ret>; //设置群名片
-    setGroupKick(group_id: number, user_id: number, reject_add_request?: boolean): Promise<Ret>; //踢人
-    setGroupBan(group_id: number, user_id: number, duration?: number): Promise<Ret>; //禁言
-    setGroupAnonymousBan(group_id: number, flag: string, duration?: number): Promise<Ret>; //禁言匿名
-    setGroupLeave(group_id: number, is_dismiss?: boolean): Promise<Ret>; //退群
-    sendGroupPoke(group_id: number, user_id: number): Promise<Ret>; //戳一戳
+    /** 发群公告 */
+    sendGroupNotice(group_id: number, content: string): Promise<Ret>;
+    /** 设置群名 */
+    setGroupName(group_id: number, group_name: string): Promise<Ret>;
+    /** 开启或关闭匿名 */
+    setGroupAnonymous(group_id: number, enable?: boolean): Promise<Ret>;
+    /** 全员禁言 */
+    setGroupWholeBan(group_id: number, enable?: boolean): Promise<Ret>;
+    /** 设置管理员 */
+    setGroupAdmin(group_id: number, user_id: number, enable?: boolean): Promise<Ret>;
+    /** 设置群头衔 */
+    setGroupSpecialTitle(group_id: number, user_id: number, special_title?: string, duration?: number): Promise<Ret>;
+    /** 设置群名片 */
+    setGroupCard(group_id: number, user_id: number, card?: string): Promise<Ret>;
+    /** 踢人 */
+    setGroupKick(group_id: number, user_id: number, reject_add_request?: boolean): Promise<Ret>;
+    /** 禁言 */
+    setGroupBan(group_id: number, user_id: number, duration?: number): Promise<Ret>;
+    /** 禁言匿名玩家 */
+    setGroupAnonymousBan(group_id: number, flag: string, duration?: number): Promise<Ret>;
+    /** 退群 */
+    setGroupLeave(group_id: number, is_dismiss?: boolean): Promise<Ret>;
+    /** 戳一戳 */
+    sendGroupPoke(group_id: number, user_id: number): Promise<Ret>;
 
-    setFriendAddRequest(flag: string, approve?: boolean, remark?: string, block?: boolean): Promise<Ret>; //处理好友请求
-    setGroupAddRequest(flag: string, approve?: boolean, reason?: string, block?: boolean): Promise<Ret>; //处理群请求
-    getSystemMsg(): Promise<Ret<Array<FriendAddEventData | GroupAddEventData | GroupInviteEventData>>>; //获取未处理的请求
+    /** 处理好友请求 */
+    setFriendAddRequest(flag: string, approve?: boolean, remark?: string, block?: boolean): Promise<Ret>;
+    /** 处理群请求 */
+    setGroupAddRequest(flag: string, approve?: boolean, reason?: string, block?: boolean): Promise<Ret>;
+    /** 获取未处理的请求 */
+    getSystemMsg(): Promise<Ret<Array<FriendAddEventData | GroupAddEventData | GroupInviteEventData>>>;
 
+    /** 添加群(该接口风控) */
     addGroup(group_id: number, comment?: string): Promise<Ret>;
-    addFriend(group_id: number, user_id: number, comment?: string): Promise<Ret>; //添加群员为好友
-    deleteFriend(user_id: number, block?: boolean): Promise<Ret>; //删除好友
-    inviteFriend(group_id: number, user_id: number): Promise<Ret>; //邀请好友入群
-    sendLike(user_id: number, times?: number): Promise<Ret>; //点赞
+    /** 添加好友(只能添加群员) */
+    addFriend(group_id: number, user_id: number, comment?: string): Promise<Ret>;
+    /** 删除好友 */
+    deleteFriend(user_id: number, block?: boolean): Promise<Ret>;
+    /** 邀请好友入群 */
+    inviteFriend(group_id: number, user_id: number): Promise<Ret>;
+    /** 点赞(times默认1) */
+    sendLike(user_id: number, times?: number): Promise<Ret>;
 
-    setNickname(nickname: string): Promise<Ret>; //设置昵称
-    setGender(gender: 0 | 1 | 2): Promise<Ret>; //设置性别 0未知 1男 2女
-    setBirthday(birthday: string | number): Promise<Ret>; //设置生日 20110202的形式
-    setDescription(description?: string): Promise<Ret>; //设置个人说明
-    setSignature(signature?: string): Promise<Ret>; //设置个人签名
-    setPortrait(file: MediaFile): Promise<Ret>; //设置个人头像
-    setGroupPortrait(group_id: number, file: MediaFile): Promise<Ret>; //设置群头像
-
-    // getFile(fileid: string, busid?: string): Promise<Ret<FileElem["data"]>>; //用于下载链接失效后重新获取
+    /** 设置昵称 */
+    setNickname(nickname: string): Promise<Ret>;
+    /** 设置性别(0未知 1男 2女) */
+    setGender(gender: 0 | 1 | 2): Promise<Ret>;
+    /** 设置生日(20110202的形式) */
+    setBirthday(birthday: string | number): Promise<Ret>;
+    /** 设置个人说明 */
+    setDescription(description?: string): Promise<Ret>;
+    /** 设置个人签名 */
+    setSignature(signature?: string): Promise<Ret>;
+    /** 设置个人头像 */
+    setPortrait(file: MediaFile): Promise<Ret>; //
+    /** 设置群头像 */
+    setGroupPortrait(group_id: number, file: MediaFile): Promise<Ret>;
 
     /**
      * 预先上传图片以备发送
@@ -759,14 +818,10 @@ export class Client extends EventEmitter {
      */
     preloadImages(files: Iterable<MediaFile>): Promise<Ret<string[]>>;
 
-    /**
-     * 获取漫游表情
-     */
+    /** 获取漫游表情 */
     getRoamingStamp(no_cache?: boolean): Promise<Ret<string[]>>;
 
-    /**
-     * 获取群公告
-     */
+    /** 获取群公告 */
     getGroupNotice(group_id: number): Promise<Ret<Array<{
         u: number, //发布者
         fid: string,
@@ -792,15 +847,23 @@ export class Client extends EventEmitter {
         is_all_confirm: number
     }>>>;
 
+    /**
+     * 支持的域名：
+     * tenpay.com | docs.qq.com | office.qq.com | connect.qq.com
+     * vip.qq.com | mail.qq.com | qzone.qq.com | gamecenter.qq.com
+     * mma.qq.com | game.qq.com | qqweb.qq.com | openmobile.qq.com
+     * qun.qq.com | ti.qq.com |
+     */
     getCookies(domain?: string): Promise<Ret<{ cookies: string }>>;
     getCsrfToken(): Promise<Ret<{ token: number }>>;
+    /** 清除 image 和 record 文件夹下的缓存文件 */
     cleanCache(type?: "image" | "record"): Promise<Ret>;
-    canSendImage(): Ret;
-    canSendRecord(): Ret;
-    getVersionInfo(): Ret; //暂时为返回package.json中的信息
+    /** 获取在线状态和数据统计 */
     getStatus(): Ret<Status>;
+    /** 获取登录账号信息 */
     getLoginInfo(): Ret<LoginInfo>;
 
+    /** 进入群文件系统 */
     acuqireGfs(group_id: number): Gfs;
 
     on(event: "system.login.captcha", listener: (this: Client, data: CaptchaEventData) => void): this;
@@ -847,40 +910,72 @@ export class Client extends EventEmitter {
 
     /**
      * 重载好友列表和群列表
-     * 完成之前bot不接受其他任何请求，也不会上报任何事件
+     * 完成之前无法调用任何api，也不会上报任何事件
      */
     reloadFriendList(): Promise<Ret>;
     reloadGroupList(): Promise<Ret>;
+
+    /** @deprecated 直接关闭连接 */
+    terminate(): void;
+    /** @deprecated 文字验证码 */
+    captchaLogin(captcha: string): void;
+    /** @deprecated */
+    canSendImage(): Ret;
+    /** @deprecated */
+    canSendRecord(): Ret;
+    /** @deprecated 获取版本信息(暂时为返回package.json中的信息) */
+    getVersionInfo(): Ret<any>;
 }
 
+/** 工厂方法 */
 export function createClient(uin: number, config?: ConfBot): Client;
 
 /**
  * 生成消息元素的快捷函数
  */
 export namespace segment {
-    function text(text: string): TextElem; //普通文本
-    function at(qq: number, text?: string, dummy?: boolean): AtElem; //at
-    function face(id: number, text?: string): FaceElem; //经典表情
+    /** 普通文本 */
+    function text(text: string): TextElem;
+    /** at */
+    function at(qq: number, text?: string, dummy?: boolean): AtElem;
+    /** 经典表情 */
+    function face(id: number, text?: string): FaceElem;
+    /** 小表情 */
     function sface(id: number, text?: string): FaceElem;
-    function bface(file: string): BfaceElem; //原创表情
-    function rps(id?: number): MfaceElem; //猜拳
-    function dice(id?: number): MfaceElem; //骰子
-    function image(file: MediaFile, cache?: boolean, timeout?: number, headers?: OutgoingHttpHeaders, proxy?: boolean): ImgPttElem; //图片
-    function flash(file: MediaFile, cache?: boolean, timeout?: number, headers?: OutgoingHttpHeaders, proxy?: boolean): ImgPttElem; //闪照
-    function record(file: MediaFile, cache?: boolean, timeout?: number, headers?: OutgoingHttpHeaders, proxy?: boolean): ImgPttElem; //语音
-    function location(lat: number, lng: number, address: string, id?: string): LocationElem; //位置分享
-    function music(type: MusicType, id: string): MusicElem; //音乐分享
+    /** 原创表情 */
+    function bface(file: string): BfaceElem;
+    /** 猜拳 */
+    function rps(id?: number): MfaceElem;
+    /** 骰子 */
+    function dice(id?: number): MfaceElem;
+    /** 图片(后三个参数在下载网络图片时有效) */
+    function image(file: MediaFile, cache?: boolean, timeout?: number, headers?: OutgoingHttpHeaders): ImgPttElem;
+    /** 闪照 */
+    function flash(file: MediaFile, cache?: boolean, timeout?: number, headers?: OutgoingHttpHeaders): ImgPttElem;
+    /** 语音 */
+    function record(file: MediaFile, cache?: boolean, timeout?: number, headers?: OutgoingHttpHeaders): ImgPttElem;
+    /** 位置分享 */
+    function location(lat: number, lng: number, address: string, id?: string): LocationElem;
+    /** 音乐分享 */
+    function music(type: MusicType, id: string): MusicElem;
+    /** JSON消息 */
     function json(data: any): JsonElem;
+    /** XML消息 */
     function xml(data: string, type?: number): XmlElem;
-    function share(url: string, title: string, image?: string, content?: string): ShareElem; //内容分享
-    function shake(): ShakeElem; //抖动
-    function poke(type: number, id?: number): PokeElem; //戳一戳
-    function reply(id: string): ReplyElem; //引用回复
-    function node(id: string): NodeElem; //转发节点
-    function anonymous(ignore?: boolean): AnonymousElem; //匿名
+    /** 内容分享 */
+    function share(url: string, title: string, image?: string, content?: string): ShareElem;
+    /** 窗口抖动 */
+    function shake(): ShakeElem;
+    /** 戳一戳 */
+    function poke(type: number, id?: number): PokeElem;
+    /** 引用回复 */
+    function reply(id: string): ReplyElem;
+    /** 转发节点 */
+    function node(id: string): NodeElem;
+    /** 匿名 */
+    function anonymous(ignore?: boolean): AnonymousElem;
 
-    //将元素转换到CQ码字符串 (CQ码字符串无法逆转换到元素，因为类型会丢失)
+    /** 将元素转换到CQ码字符串(CQ码字符串无法逆转换到元素，因为类型会丢失) */
     function toCqcode(elem: MessageElem): string;
     function toCqcode(elems: Iterable<MessageElem>): string;
 }
@@ -896,9 +991,9 @@ export namespace cqcode {
     function bface(file: string): string;
     function rps(id?: number): string;
     function dice(id?: number): string;
-    function image(file: string, cache?: boolean, timeout?: number, headers?: string, proxy?: boolean): string;
-    function flash(file: string, cache?: boolean, timeout?: number, headers?: string, proxy?: boolean): string;
-    function record(file: string, cache?: boolean, timeout?: number, headers?: string, proxy?: boolean): string;
+    function image(file: string, cache?: boolean, timeout?: number, headers?: string): string;
+    function flash(file: string, cache?: boolean, timeout?: number, headers?: string): string;
+    function record(file: string, cache?: boolean, timeout?: number, headers?: string): string;
     function location(lat: number, lng: number, address: string, id?: string): string;
     function music(type: MusicType, id: string): string;
     function json(data: string): string;
@@ -909,15 +1004,4 @@ export namespace cqcode {
     function reply(id: string): string;
     function node(id: string): string;
     function anonymous(ignore?: boolean): string;
-}
-
-/**
- * 一个内置控制台指令分发器
- * 用于接收stdin输入，并根据前缀匹配分发到所注册的函数
- */
-export namespace stdin {
-    function registerCommand(cmd: string, callback: (input: string) => void): void;
-    function deregisterCommand(cmd: string, callback: (input: string) => void): void;
-    function enable(): void;
-    function disable(): void;
 }
