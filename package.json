@@ -1,7 +1,7 @@
 {
   "name": "oicq",
-  "version": "1.16.1",
-  "upday": "2021/4/27",
+  "version": "1.17.0",
+  "upday": "2021/5/19",
   "description": "QQ protocol!",
   "main": "index.js",
   "types": "index.d.ts",
@@ -12,22 +12,18 @@
   "engines": {
     "node": ">= v12.16"
   },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/takayama-lily/oicq.git"
-  },
+  "repository": "https://github.com/takayama-lily/oicq.git",
   "keywords": [
     "qq",
     "oicq",
     "protocol",
     "android",
-    "bot"
+    "bot",
+    "coolq"
   ],
   "author": "takayama",
-  "license": "Apache-2.0",
-  "bugs": {
-    "url": "https://github.com/takayama-lily/oicq/issues"
-  },
+  "license": "MPL-2.0",
+  "bugs": "https://github.com/takayama-lily/oicq/issues",
   "homepage": "https://github.com/takayama-lily/oicq#readme",
   "changelogs": "https://github.com/takayama-lily/oicq/releases",
   "dependencies": {
