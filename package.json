@@ -31,7 +31,6 @@
   "homepage": "https://github.com/takayama-lily/oicq#readme",
   "changelogs": "https://github.com/takayama-lily/oicq/releases",
   "dependencies": {
-    "https-proxy-agent": "^5.0.0",
     "image-size": "^0.9.7",
     "jce": "^0.2.3",
     "log4js": "^6.3.0",
