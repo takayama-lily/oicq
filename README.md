@@ -43,7 +43,6 @@ bot.login("password"); // your password or password_md5
 > 更详细的例子可以参考 [demo.js](docs/demo.js)  
 > API简洁友好，熟悉Nodejs者可直接引入依赖进行开发。  
 > 如果你不知道要如何组织代码，可参考或使用 [abot](https://github.com/takayama-lily/abot) 以插件形式编写功能。  
-> 其他语言的使用者可以用 [http-api](https://github.com/takayama-lily/onebot) 搭建环境。  
 
 **相关文档：**
 
@@ -59,4 +58,4 @@ bot.login("password"); // your password or password_md5
 [Node.js入门教程](http://nodejs.cn/learn)  
 [5分钟上手TypeScript](https://www.tslang.cn/docs/handbook/typescript-in-5-minutes.html)  
 [![Gitter](https://badges.gitter.im/takayama-lily/oicq.svg)](https://gitter.im/takayama-lily/oicq?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
-[![group:236172566](https://img.shields.io/badge/group-236172566-blue)](https://qm.qq.com/cgi-bin/qm/qr?k=NXw3NEA5lzPjkRhyEpjVBqMpdg1WHRKJ&jump_from=webapi)
+<!-- [![group:236172566](https://img.shields.io/badge/group-236172566-blue)](https://qm.qq.com/cgi-bin/qm/qr?k=NXw3NEA5lzPjkRhyEpjVBqMpdg1WHRKJ&jump_from=webapi) -->
