@@ -613,7 +613,8 @@ export type GfsStat = GfsFileStat | GfsDirStat;
 /**
  * 这里面的方法是会reject的，需要catch
  */
-declare class Gfs {
+export class Gfs {
+    private constructor();
     /** 群号 */
     readonly gid: number;
     /** 查看文件属性(尽量不要对目录使用此方法) */
@@ -767,7 +768,7 @@ export class Client extends EventEmitter {
     setGroupSpecialTitle(group_id: number, user_id: number, special_title?: string, duration?: number): Promise<Ret>;
     /** 设置群名片 */
     setGroupCard(group_id: number, user_id: number, card?: string): Promise<Ret>;
-    /** 踢人 */
+    /** 踢人(不支持批量) */
     setGroupKick(group_id: number, user_id: number, reject_add_request?: boolean): Promise<Ret>;
     /** 禁言 */
     setGroupBan(group_id: number, user_id: number, duration?: number): Promise<Ret>;
@@ -785,15 +786,15 @@ export class Client extends EventEmitter {
     /** 获取未处理的请求 */
     getSystemMsg(): Promise<Ret<Array<FriendAddEventData | GroupAddEventData | GroupInviteEventData>>>;
 
-    /** 添加群(该接口风控) */
+    /** 该接口风控 */
     addGroup(group_id: number, comment?: string): Promise<Ret>;
-    /** 添加好友(只能添加群员) */
+    /** 该接口风控(只能添加群员) */
     addFriend(group_id: number, user_id: number, comment?: string): Promise<Ret>;
     /** 删除好友 */
     deleteFriend(user_id: number, block?: boolean): Promise<Ret>;
-    /** 邀请好友入群 */
+    /** 邀请好友入群(不支持陌生人和批量) */
     inviteFriend(group_id: number, user_id: number): Promise<Ret>;
-    /** 点赞(times默认1) */
+    /** 点赞(times默认1，不支持陌生人)  */
     sendLike(user_id: number, times?: number): Promise<Ret>;
 
     /** 设置昵称 */
@@ -862,6 +863,8 @@ export class Client extends EventEmitter {
     getStatus(): Ret<Status>;
     /** 获取登录账号信息 */
     getLoginInfo(): Ret<LoginInfo>;
+    /** 获取等级信息(默认获取自己的) */
+    getLevelInfo(user_id?: number): Promise<Ret<any>>;
 
     /** 进入群文件系统 */
     acuqireGfs(group_id: number): Gfs;

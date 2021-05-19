@@ -168,7 +168,6 @@ export class Client extends oicq.Client {
     ksid: string | Buffer;
     device: Device;
 
-    heartbeat: NodeJS.Timeout | null;
     seq_id: number;
     handlers: Map<number, (buf: Buffer) => void>;
     seq_cache: Map<number, Set<string>>;
@@ -185,14 +184,10 @@ export class Client extends oicq.Client {
 
     sync_finished: boolean;
     sync_cookie: Buffer;
-    const1: number;
-    const2: number;
-    const3: number;
 
     sig: Sig;
     cookies: object;
 
-    roaming_stamp: string[];
     storage: Storage;
 
     nextSeq(): number;
@@ -200,11 +195,11 @@ export class Client extends oicq.Client {
     sendOidb(cmd: string, body: Buffer): Promise<Buffer>;
     sendUni(cmd: string, body: Buffer, seq?: number): Promise<Buffer>;
     writeUni(cmd: string, body: Buffer, seq?: number): void;
-    useProtocol(fn: Function, params: any[]): oicq.RetCommon;
     em(name: string, data: object): void;
     msgExists(from: number, type: number, seq: number, time: number): boolean;
     buildSyncCookie(): Buffer;
     parseEventType(name: string): oicq.CommonEventData;
+    pbGetMsg(): Promise<boolean>;
 }
 
 export * from '../index';
