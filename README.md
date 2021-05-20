@@ -22,22 +22,22 @@
 ```js
 const { createClient } = require("oicq");
 const uin = 123456789; // your account
-const bot = createClient(uin);
+const client = createClient(uin);
 
 //监听上线事件
-bot.on("system.online", () => console.log("Logged in!"));
+client.on("system.online", () => console.log("Logged in!"));
 
 //监听消息并回复
-bot.on("message", (data) => data.reply("hello world"));
+client.on("message", (data) => data.reply("hello world"));
 
 //监听滑动验证码事件并输入ticket
-bot.on("system.login.slider", () => {
+client.on("system.login.slider", function () {
   process.stdin.once("data", (input) => {
-    bot.sliderLogin(input);
+    this.sliderLogin(input);
   });
 });
 
-bot.login("password"); // your password or password_md5
+client.login("password"); // your password or password_md5
 ```
 
 > 更详细的例子可以参考 [demo.js](docs/demo.js)  
