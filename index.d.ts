@@ -867,7 +867,7 @@ export class Client extends EventEmitter {
     getLevelInfo(user_id?: number): Promise<Ret<any>>;
 
     /** 进入群文件系统 */
-    acuqireGfs(group_id: number): Gfs;
+    acquireGfs(group_id: number): Gfs;
 
     on(event: "system.login.captcha", listener: (this: Client, data: CaptchaEventData) => void): this;
     on(event: "system.login.slider", listener: (this: Client, data: SliderEventData) => void): this; //收到滑动验证码事件
