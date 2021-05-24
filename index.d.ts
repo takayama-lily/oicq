@@ -35,9 +35,10 @@ export interface ConfBot {
     //即使不用相关API(使用`no_cache=true`)强制刷新数据，超过这个时间后内部也会自动刷新
     internal_cache_life?: number,
 
-    //手动指定ip和port
-    //默认使用msfwifi.3g.qq.com:8080进行连接，若要修改建议优先更改该域名hosts指向而不是手动指定ip
-    //@link https://site.ip138.com/msfwifi.3g.qq.com/ 端口通常以下四个都会开放：80,443,8080,14000
+    /** 自动选择最优服务器(默认开启)，关闭后会一直使用`msfwifi.3g.qq.com`进行连接 */
+    auto_server?: boolean;
+
+    /** 手动指定ip和port，不推荐使用，大多数情况下你应该使用auto_server */
     remote_ip?: string,
     remote_port?: number,
 }
