@@ -22,7 +22,7 @@ function runEncryptWithDecrypt(len, times) {
     console.timeEnd(label)
 }
 
-console.log("--tea performance test begin--")
+console.log("--tea performance test (50MB) begin--")
 
 runEncrypt(50, 1e6)
 runEncryptWithDecrypt(50, 1e6)
@@ -33,4 +33,4 @@ runEncryptWithDecrypt(5000, 1e4)
 runEncrypt(50000, 1e3)
 runEncryptWithDecrypt(50000, 1e3)
 
-console.log("--tea performance test end--\n")
+console.log("--tea performance test (50MB) end--\n")

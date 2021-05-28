@@ -35,5 +35,8 @@ module.exports = {
         "no-constant-condition": "warn",
         "no-useless-escape": "warn",
         "no-case-declarations": "warn",
+    },
+    "standard": {
+        "env": [ "mocha" ]
     }
 };

@@ -8,7 +8,8 @@
   "type": "commonjs",
   "scripts": {
     "test": "node ./test.js",
-    "bench": "node ./test/benchmark"
+    "bench": "node ./test/benchmark",
+    "mocha": "./node_modules/.bin/_mocha"
   },
   "engines": {
     "node": ">= v12.16"
@@ -35,6 +36,7 @@
   },
   "devDependencies": {
     "babel-eslint": "^10.1.0",
+    "chai": "^4.3.4",
     "eslint": "^7.25.0",
     "mocha": "^8.4.0",
     "mockjs": "^1.1.0",

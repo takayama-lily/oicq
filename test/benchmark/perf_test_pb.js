@@ -30,7 +30,7 @@ function genObj() {
 }
 
 function runEncode(times) {
-    const label = `pb encode / ${times} times`
+    const label = `pb encode / ${times} times (${times*6/1e4}MB)`
     console.time(label)
     for (let i = 0; i < times; ++i) {
         const encoded = pb.encode(genObj());
@@ -39,7 +39,7 @@ function runEncode(times) {
 }
 
 function runEncodeWithDecode(times) {
-    const label = `pb encode / ${times} times / with decode`
+    const label = `pb encode / ${times} times / with decode (${times*6/1e4}MB)`
     console.time(label)
     for (let i = 0; i < times; ++i) {
         const encoded = pb.encode(genObj());
