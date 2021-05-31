@@ -41,9 +41,19 @@ client.on("system.login.slider", function () {
 client.login("password"); // your password or password_md5
 ```
 
-> 更详细的例子可以参考 [demo.js](docs/demo.js)  
-> API简洁友好，熟悉Nodejs者可直接引入依赖进行开发。  
-> 如果你不知道要如何组织代码，可参考或使用 [abot](https://github.com/takayama-lily/abot) 以插件形式编写功能。  
+**常用功能一瞥：**
+
+```js
+client.sendGroupMsg(gid, "hello") //群聊
+client.sendPrivateMsg(uid, "hello") //私聊
+client.deleteMsg(id) //撤回
+client.setGroupKick(gid, uid) //踢人
+client.setGroupBan(gid, uid, 3600) //禁言
+```
+
+> 更详细的例子：[demo.js](docs/demo.js)  
+> 更多API：[index.d.ts](https://github.com/takayama-lily/oicq/blob/b600469337bf9ecd5a871413661d56c6325afce3/index.d.ts#L655)  
+> 基于此库的插件式机器人框架；[abot](https://github.com/takayama-lily/abot)  
 
 **相关文档：**
 
