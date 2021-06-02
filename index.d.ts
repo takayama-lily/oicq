@@ -227,7 +227,7 @@ export interface MfaceElem {
  *   file:///  
  *   protobuf://  仅用于语音和视频的转发
  */
-export type MediaFile = string | Uint8Array | ArrayBuffer | SharedArrayBuffer;
+export type MediaFile = string | Buffer;
 
 export interface ImgPttElem {
     type: "image" | "flash" | "record",

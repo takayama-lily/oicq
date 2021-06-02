@@ -29,12 +29,13 @@
   "homepage": "https://github.com/takayama-lily/oicq#readme",
   "changelogs": "https://github.com/takayama-lily/oicq/releases",
   "dependencies": {
-    "image-size": "^0.9.7",
     "jce": "^0.2.3",
     "log4js": "^6.3.0",
-    "long": "^4.0.0"
+    "long": "^4.0.0",
+    "probe-image-size": "^7.1.1"
   },
   "devDependencies": {
+    "@types/probe-image-size": "^7.0.0",
     "babel-eslint": "^10.1.0",
     "chai": "^4.3.4",
     "eslint": "^7.25.0",
