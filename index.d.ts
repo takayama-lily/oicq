@@ -227,7 +227,7 @@ export interface MfaceElem {
  *   file:///  
  *   protobuf://  仅用于语音和视频的转发
  */
-export type MediaFile = string | Buffer;
+export type MediaFile = string | Uint8Array | ArrayBuffer | SharedArrayBuffer;
 
 export interface ImgPttElem {
     type: "image" | "flash" | "record",
@@ -613,6 +613,7 @@ export type GfsStat = GfsFileStat | GfsDirStat;
 
 /**
  * 这里面的方法是会reject的，需要catch
+ * node15开始，unhandledRejection默认会升级为uncaughtException导致程序退出
  */
 export class Gfs {
     private constructor();

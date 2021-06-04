@@ -32,16 +32,16 @@
     "jce": "^0.2.3",
     "log4js": "^6.3.0",
     "long": "^4.0.0",
-    "probe-image-size": "^7.1.1"
+    "probe-image-size": "^7.2.0"
   },
   "devDependencies": {
     "@types/probe-image-size": "^7.0.0",
     "babel-eslint": "^10.1.0",
     "chai": "^4.3.4",
-    "eslint": "^7.25.0",
+    "eslint": "^7.27.0",
     "mocha": "^8.4.0",
     "mockjs": "^1.1.0",
-    "protobufjs": "^6.10.2"
+    "protobufjs": "^6.11.2"
   },
   "files": [
     "/lib",
