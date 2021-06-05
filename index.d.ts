@@ -176,7 +176,7 @@ export interface MemberInfo extends MemberBaseInfo {
  */
 export type MessageElem = TextElem | AtElem | FaceElem | BfaceElem | MfaceElem |
     ImgPttElem | LocationElem | MusicElem | ShareElem | JsonElem | XmlElem |
-    AnonymousElem | ReplyElem | NodeElem | ShakeElem | PokeElem | FileElem | VideoElem;
+    AnonymousElem | ReplyElem | NodeElem | ShakeElem | PokeElem | FileElem | VideoElem | MiraiElem;
 
 export interface TextElem {
     type: "text",
@@ -328,6 +328,13 @@ export interface PokeElem {
     data: {
         type: number,
         id?: number,
+    }
+}
+
+export interface MiraiElem {
+    type: "mirai",
+    data: {
+        data: string,
     }
 }
 
@@ -979,6 +986,8 @@ export namespace segment {
     function node(id: string): NodeElem;
     /** 匿名 */
     function anonymous(ignore?: boolean): AnonymousElem;
+    /** 只有mirai系客户端可以解析的消息 */
+    function mirai(data: string): MiraiElem;
 
     /** 将元素转换到CQ码字符串(CQ码字符串无法逆转换到元素，因为类型会丢失) */
     function toCqcode(elem: MessageElem): string;
@@ -1009,4 +1018,5 @@ export namespace cqcode {
     function reply(id: string): string;
     function node(id: string): string;
     function anonymous(ignore?: boolean): string;
+    function mirai(data: string): string;
 }

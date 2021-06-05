@@ -30,6 +30,7 @@ const elem_map = {
     reply: ["id"],
     node: ["id"],
     anonymous: ["ignore"],
+    mirai: ["data"],
 };
 
 for (const [type, params] of Object.entries(elem_map)) {
