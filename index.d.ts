@@ -905,8 +905,8 @@ export class Client extends EventEmitter {
     on(event: "notice.friend.recall", listener: (this: Client, data: FriendRecallEventData) => void): this; //好友撤回事件
     on(event: "notice.friend.profile", listener: (this: Client, data: FriendProfileEventData) => void): this; //好友资料变更事件
     on(event: "notice.friend.poke", listener: (this: Client, data: FriendPokeEventData) => void): this; //好友戳一戳事件
-    on(event: "notice.group.increase", listener: (this: Client, data: MemberIncreaseEventData) => void): this; //踢群・退群事件
-    on(event: "notice.group.decrease", listener: (this: Client, data: MemberDecreaseEventData) => void): this; //入群・群员增加事件
+    on(event: "notice.group.increase", listener: (this: Client, data: MemberIncreaseEventData) => void): this; //入群・群员增加事件
+    on(event: "notice.group.decrease", listener: (this: Client, data: MemberDecreaseEventData) => void): this; //踢群・退群事件
     on(event: "notice.group.recall", listener: (this: Client, data: GroupRecallEventData) => void): this; //群消息撤回事件
     on(event: "notice.group.admin", listener: (this: Client, data: GroupAdminEventData) => void): this; //管理员变更事件
     on(event: "notice.group.ban", listener: (this: Client, data: GroupMuteEventData) => void): this; //群禁言事件
