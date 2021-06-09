@@ -2,12 +2,12 @@
 
 [![npm version](https://img.shields.io/npm/v/oicq.svg?logo=npm)](https://www.npmjs.com/package/oicq)
 [![node engine](https://img.shields.io/node/v/oicq.svg)](https://nodejs.org)
-[![discord](https://img.shields.io/static/v1?label=chat&message=discord&color=7289da&logo=discord)](https://discord.gg/gKnU7BARzv)
+[![discord](https://img.shields.io/static/v1?label=chat&message=on%20discord&color=7289da&logo=discord)](https://discord.gg/gKnU7BARzv)
 
-* QQ(安卓)协议基于Node.js的实现。也参考了一些其他开源仓库如[mirai](https://github.com/mamoe/mirai)、[miraiGo](https://github.com/Mrs4s/MiraiGo)等。
-* 使用 酷Q/CQHTTP 风格的API，原生支持经典CQ码。
-* 实现了大部分常用协议和功能，但不会支持金钱/红包相关协议。
-* 请使用 `Node.js 12.16` 以上版本。
+* QQ(安卓)协议基于Node.js的实现，移植于 [mirai](https://github.com/mamoe/mirai)
+* 使用CQHTTP风格的API，原生支持经典CQ码，代替死去的酷Q
+* 已实现大部分常用功能，支持最低node版本为 v12.16
+* [awesome](./awesome.md) 社区相关应用收集。
 
 ----
 
@@ -53,7 +53,6 @@ client.setGroupBan(gid, uid, 3600) //禁言
 
 > 更详细的例子：[demo.js](docs/demo.js)  
 > 更多API：[index.d.ts](https://github.com/takayama-lily/oicq/blob/b600469337bf9ecd5a871413661d56c6325afce3/index.d.ts#L655)  
-> 基于此库的插件式机器人框架；[abot](https://github.com/takayama-lily/abot)  
 
 **相关文档：**
 
