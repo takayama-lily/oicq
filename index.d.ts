@@ -649,7 +649,7 @@ export class Gfs {
         max_file_count: number,
     }>;
     /** 上传文件(默认传到根目录) */
-    upload(localpath: string, pid?: string, name?: string): Promise<GfsFileStat>;
+    upload(path_or_buffer: string | Buffer | Uint8Array, pid?: string, name?: string): Promise<GfsFileStat>;
     /** 获取文件的下载链接 */
     download(fid: string): Promise<FileElem["data"]>;
 }
