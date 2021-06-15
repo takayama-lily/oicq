@@ -4,7 +4,7 @@
 [![node engine](https://img.shields.io/node/v/oicq.svg)](https://nodejs.org)
 [![discord](https://img.shields.io/static/v1?label=chat&message=on%20discord&color=7289da&logo=discord)](https://discord.gg/gKnU7BARzv)
 
-* QQ(安卓)协议基于Node.js的实现，移植于 [mirai](https://github.com/mamoe/mirai)
+* QQ(安卓)协议基于Node.js的实现，同时参考了 [mirai](https://github.com/mamoe/mirai) 等优秀开源项目
 * 使用CQHTTP风格的API，原生支持经典CQ码，代替死去的酷Q
 * 已实现大部分常用功能，支持最低node版本为 v12.16
 * [awesome](./awesome.md) 社区相关应用收集。
