@@ -346,8 +346,11 @@ export interface FileElem {
         size: number,
         md5: string,
         duration: number,
+        /** @deprecated */
         busid: number,
+        /** @deprecated */
         fileid: string,
+        fid: string,
     }
 }
 
@@ -797,7 +800,7 @@ export class Client extends EventEmitter {
 
     /** 该接口风控 */
     addGroup(group_id: number, comment?: string): Promise<Ret>;
-    /** 该接口风控(只能添加群员) */
+    /** 添加好友，只能添加群友 */
     addFriend(group_id: number, user_id: number, comment?: string): Promise<Ret>;
     /** 删除好友 */
     deleteFriend(user_id: number, block?: boolean): Promise<Ret>;
