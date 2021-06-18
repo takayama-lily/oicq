@@ -246,7 +246,7 @@ export interface ImgPttElem {
 export interface VideoElem {
     type: "video",
     data: {
-        file: string,
+        file: string, //发送仅支持本地文件
         url?: string,
     }
 }
