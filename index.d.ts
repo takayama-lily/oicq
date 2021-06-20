@@ -456,6 +456,7 @@ export interface GroupMessageEventData extends CommonMessageEventData {
     group_name: string,
     anonymous: Anonymous | null,
     sender: MemberBaseInfo,
+    at_me: boolean,
 }
 export interface Anonymous {
     id: number,
@@ -466,6 +467,7 @@ export interface DiscussMessageEventData extends CommonMessageEventData {
     message_type: "discuss",
     discuss_id: number,
     discuss_name: string,
+    at_me: boolean,
     sender: {
         user_id: number,
         nickname: string,
