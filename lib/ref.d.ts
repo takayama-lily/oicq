@@ -156,7 +156,6 @@ export interface Storage {
 //////////
 
 export class Client extends oicq.Client {
-    logining: boolean;
     status: Symbol;
 
     fl: Map<number, oicq.FriendInfo>;
@@ -165,22 +164,11 @@ export class Client extends oicq.Client {
     gml: Map<number, Map<number, oicq.MemberInfo>>;
 
     apk: ApkInfo;
-    ksid: string | Buffer;
     device: Device;
 
     seq_id: number;
     handlers: Map<number, (buf: Buffer) => void>;
     seq_cache: Map<number, Set<string>>;
-
-    session_id: Buffer;
-    random_key: Buffer;
-    captcha_sign?: Buffer;
-    t104?: Buffer;
-    t106: Buffer;
-    t174?: Buffer;
-    phone?: string;
-    t402?: Buffer;
-    t403?: Buffer;
 
     sync_finished: boolean;
     sync_cookie: Buffer;

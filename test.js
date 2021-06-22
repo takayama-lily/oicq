@@ -17,6 +17,12 @@ function account() {
                 log_level: "debug", ignore_self: false
             });
 
+            bot.on("system.login.qrcode", (data) => {
+                process.stdin.once("data", (input)=>{
+                    bot.login();
+                });
+            })
+
             //处理滑动验证码事件
             bot.on("system.login.slider", ()=>{
                 process.stdin.once("data", (input)=>{
@@ -78,8 +84,7 @@ function password() {
     console.log("请输入密码：");
     process.stdin.once("data", (input)=>{
         input = input.toString().trim();
-        const password_md5 = crypto.createHash("md5").update(input).digest();
-        bot.login(password_md5);
+        bot.login(input);
     });
 }
 function loop() {

@@ -376,6 +376,11 @@ export interface CaptchaEventData extends CommonSystemEventData {
     sub_type: "captcha",
     image: Buffer
 }
+export interface QrcodeEventData extends CommonSystemEventData {
+    system_type: "login",
+    sub_type: "qrcode",
+    image: Buffer,
+}
 export interface SliderEventData extends CommonSystemEventData {
     system_type: "login",
     sub_type: "slider",
@@ -398,7 +403,7 @@ export interface OnlineEventData extends CommonSystemEventData {
 }
 export interface OfflineEventData extends CommonSystemEventData {
     system_type: "offline",
-    sub_type: "network" | "kickoff" | "frozen" | "device" | "unknown",
+    sub_type: "network" | "kickoff" | "frozen" | "unknown",
     message: string,
 }
 
@@ -456,7 +461,7 @@ export interface GroupMessageEventData extends CommonMessageEventData {
     group_name: string,
     anonymous: Anonymous | null,
     sender: MemberBaseInfo,
-    at_me: boolean,
+    atme: boolean,
 }
 export interface Anonymous {
     id: number,
@@ -467,7 +472,7 @@ export interface DiscussMessageEventData extends CommonMessageEventData {
     message_type: "discuss",
     discuss_id: number,
     discuss_name: string,
-    at_me: boolean,
+    atme: boolean,
     sender: {
         user_id: number,
         nickname: string,
@@ -593,8 +598,8 @@ export type GroupNoticeEventData = GroupRecallEventData | GroupSettingEventData 
     GroupTransferEventData | GroupMuteEventData | GroupAdminEventData |
     MemberIncreaseEventData | MemberDecreaseEventData | GroupPokeEventData; //9
 
-export type SystemEventData = CaptchaEventData | DeviceEventData | SliderEventData | LoginErrorEventData |
-    OfflineEventData | OnlineEventData; //6(4+2)
+export type SystemEventData = CaptchaEventData | DeviceEventData | SliderEventData | LoginErrorEventData | QrcodeEventData |
+    OfflineEventData | OnlineEventData; //7(5+2)
 export type RequestEventData = FriendAddEventData | GroupAddEventData | GroupInviteEventData; //3
 export type MessageEventData = PrivateMessageEventData | GroupMessageEventData | DiscussMessageEventData; //3
 export type NoticeEventData = FriendNoticeEventData | GroupNoticeEventData; //2
@@ -668,7 +673,7 @@ export class Gfs {
 export class Client extends EventEmitter {
 
     readonly uin: number;
-    readonly password_md5: Buffer;
+    readonly password_md5?: Buffer;
     readonly nickname: string;
     readonly sex: Gender;
     readonly age: number;
@@ -694,7 +699,8 @@ export class Client extends EventEmitter {
     constructor(uin: number, config?: ConfBot);
 
     /**
-     * @param password 明文或md5后的密码，重复调用时可无需传入此参数
+     * @param password 明文或md5后的密码
+     * 使用扫码登录，或通过设备锁验证时可无需传入此参数
      */
     login(password?: Uint8Array | string): void;
 
@@ -875,8 +881,6 @@ export class Client extends EventEmitter {
     cleanCache(type?: "image" | "record"): Promise<Ret>;
     /** 获取在线状态和数据统计 */
     getStatus(): Ret<Status>;
-    /** 获取登录账号信息 */
-    getLoginInfo(): Ret<LoginInfo>;
     /** 获取等级信息(默认获取自己的) */
     getLevelInfo(user_id?: number): Promise<Ret<any>>;
 
@@ -884,13 +888,14 @@ export class Client extends EventEmitter {
     acquireGfs(group_id: number): Gfs;
 
     on(event: "system.login.captcha", listener: (this: Client, data: CaptchaEventData) => void): this;
+    on(event: "system.login.qrcode", listener: (this: Client, data: QrcodeEventData) => void): this; //扫码登录
     on(event: "system.login.slider", listener: (this: Client, data: SliderEventData) => void): this; //收到滑动验证码事件
     on(event: "system.login.device", listener: (this: Client, data: DeviceEventData) => void): this; //设备锁验证事件
     on(event: "system.login.error", listener: (this: Client, data: LoginErrorEventData) => void): this; //登录遇到错误
-    on(event: "system.login", listener: (this: Client, data: CaptchaEventData | DeviceEventData | LoginErrorEventData | SliderEventData) => void): this;
+    on(event: "system.login", listener: (this: Client, data: CaptchaEventData | DeviceEventData | LoginErrorEventData | SliderEventData | QrcodeEventData) => void): this;
     on(event: "system.online", listener: (this: Client, data: OnlineEventData) => void): this; //上线事件
     on(event: "system.offline" | "system.offline.network" | "system.offline.kickoff" | //下线事件
-        "system.offline.frozen" | "system.offline.device" | "system.offline.unknown", listener: (this: Client, data: OfflineEventData) => void): this;
+        "system.offline.frozen" | "system.offline.unknown", listener: (this: Client, data: OfflineEventData) => void): this;
     on(event: "system", listener: (this: Client, data: SystemEventData) => void): this;
 
     on(event: "request.friend" | "request.friend.add", listener: (this: Client, data: FriendAddEventData) => void): this; //收到好友申请事件
@@ -932,7 +937,7 @@ export class Client extends EventEmitter {
     reloadFriendList(): Promise<Ret>;
     reloadGroupList(): Promise<Ret>;
 
-    /** @deprecated 直接关闭连接 */
+    /** 直接关闭连接 */
     terminate(): void;
     /** @deprecated 文字验证码 */
     captchaLogin(captcha: string): void;
@@ -942,6 +947,8 @@ export class Client extends EventEmitter {
     canSendRecord(): Ret;
     /** @deprecated 获取版本信息(暂时为返回package.json中的信息) */
     getVersionInfo(): Ret<any>;
+    /** @deprecated 获取登录账号信息 */
+    getLoginInfo(): Ret<LoginInfo>;
 }
 
 /** 工厂方法 */
