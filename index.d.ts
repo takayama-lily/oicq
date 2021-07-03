@@ -762,7 +762,7 @@ export class Client extends EventEmitter {
     getForwardMsg(resid: string): Promise<Ret<Array<{
         group_id?: number,
         user_id: number,
-        nickname: number,
+        nickname: string,
         time: number,
         message: MessageElem[],
         raw_message: string,
