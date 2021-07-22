@@ -12,14 +12,21 @@ const bot = createClient(uin, {
     platform: 5, //登录设备选择为iPad
 });
 
-//监听并输入滑动验证码ticket(同一设备只需验证一次)
+//走扫码登录
+bot.on("system.login.qrcode", () => {
+    process.stdin.once("data", () => {
+        bot.login();
+    });
+});
+
+//走密码登录，监听并输入滑动验证码ticket(同一设备只需验证一次)
 bot.on("system.login.slider", () => {
     process.stdin.once("data", (input) => {
         bot.sliderLogin(input);
     });
 });
 
-//监听设备锁验证(同一设备只需验证一次)
+//走密码登录，监听设备锁验证(同一设备只需验证一次)
 bot.on("system.login.device", () => {
     bot.logger.info("验证完成后敲击Enter继续..");
     process.stdin.once("data", () => {
@@ -60,7 +67,7 @@ bot.on("notice.group.increase", (data) => {
 });
 
 // login with your password or password_md5
-bot.login("password");
+bot.login("password"); //不输入密码则走扫码登录
 
 //同一事件可以多次监听
 //更多api和事件请参考文档或index.d.ts文件

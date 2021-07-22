@@ -1,1 +1,0 @@
-请访问 [https://github.com/takayama-lily/oicq/wiki/92.事件文档](https://github.com/takayama-lily/oicq/wiki/92.%E4%BA%8B%E4%BB%B6%E6%96%87%E6%A1%A3)
