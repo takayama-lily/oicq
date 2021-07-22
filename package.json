@@ -32,7 +32,6 @@
   "homepage": "https://github.com/takayama-lily/oicq#readme",
   "changelogs": "https://github.com/takayama-lily/oicq/releases",
   "dependencies": {
-    "jce": "^0.2.3",
     "log4js": "^6.3.0",
     "long": "^4.0.0",
     "probe-image-size": "^7.2.0"
