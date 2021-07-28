@@ -30,13 +30,6 @@ function account() {
                 });
             });
 
-            //处理图片验证码事件
-            bot.on("system.login.captcha", ()=>{
-                process.stdin.once("data", (input)=>{
-                    bot.captchaLogin(input);
-                });
-            });
-
             //处理设备锁验证事件
             bot.on("system.login.device", (data)=>{
                 process.stdin.once("data", ()=>{

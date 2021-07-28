@@ -371,11 +371,6 @@ export interface CommonEventData {
 export interface CommonSystemEventData extends CommonEventData {
     post_type: "system",
 }
-export interface CaptchaEventData extends CommonSystemEventData {
-    system_type: "login",
-    sub_type: "captcha",
-    image: Buffer
-}
 export interface QrcodeEventData extends CommonSystemEventData {
     system_type: "login",
     sub_type: "qrcode",
@@ -598,8 +593,8 @@ export type GroupNoticeEventData = GroupRecallEventData | GroupSettingEventData 
     GroupTransferEventData | GroupMuteEventData | GroupAdminEventData |
     MemberIncreaseEventData | MemberDecreaseEventData | GroupPokeEventData; //9
 
-export type SystemEventData = CaptchaEventData | DeviceEventData | SliderEventData | LoginErrorEventData | QrcodeEventData |
-    OfflineEventData | OnlineEventData; //7(5+2)
+export type SystemEventData = DeviceEventData | SliderEventData | LoginErrorEventData | QrcodeEventData |
+    OfflineEventData | OnlineEventData; //6(4+2)
 export type RequestEventData = FriendAddEventData | GroupAddEventData | GroupInviteEventData; //3
 export type MessageEventData = PrivateMessageEventData | GroupMessageEventData | DiscussMessageEventData; //3
 export type NoticeEventData = FriendNoticeEventData | GroupNoticeEventData; //2
@@ -887,12 +882,11 @@ export class Client extends EventEmitter {
     /** 进入群文件系统 */
     acquireGfs(group_id: number): Gfs;
 
-    on(event: "system.login.captcha", listener: (this: Client, data: CaptchaEventData) => void): this;
     on(event: "system.login.qrcode", listener: (this: Client, data: QrcodeEventData) => void): this; //扫码登录
     on(event: "system.login.slider", listener: (this: Client, data: SliderEventData) => void): this; //收到滑动验证码事件
     on(event: "system.login.device", listener: (this: Client, data: DeviceEventData) => void): this; //设备锁验证事件
     on(event: "system.login.error", listener: (this: Client, data: LoginErrorEventData) => void): this; //登录遇到错误
-    on(event: "system.login", listener: (this: Client, data: CaptchaEventData | DeviceEventData | LoginErrorEventData | SliderEventData | QrcodeEventData) => void): this;
+    on(event: "system.login", listener: (this: Client, data: DeviceEventData | LoginErrorEventData | SliderEventData | QrcodeEventData) => void): this;
     on(event: "system.online", listener: (this: Client, data: OnlineEventData) => void): this; //上线事件
     on(event: "system.offline" | "system.offline.network" | "system.offline.kickoff" | //下线事件
         "system.offline.frozen" | "system.offline.unknown", listener: (this: Client, data: OfflineEventData) => void): this;
