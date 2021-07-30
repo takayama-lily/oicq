@@ -6,6 +6,11 @@
 
 * QQ(安卓)协议基于Node.js的实现，使用CQHTTP风格的API，原生支持CQ码
 * 已实现大部分常用功能，支持最低node版本为 v12.16
+* [API](https://github.com/takayama-lily/oicq/wiki/91.API%E6%96%87%E6%A1%A3) 和 [事件](https://github.com/takayama-lily/oicq/wiki/92.%E4%BA%8B%E4%BB%B6%E6%96%87%E6%A1%A3) 文档
+* [常见问题](https://github.com/takayama-lily/oicq/wiki/02.%E5%85%B6%E4%BB%96%E5%B8%B8%E8%A7%81%E9%97%AE%E9%A2%98) (登录、风控等相关问题)
+* [QQWebApi](./web-api.md) QQ Web Api 收集
+* [awesome](./awesome.md) 社区相关应用收集
+* [wiki列表](https://github.com/takayama-lily/oicq/wiki)
 
 ----
 
@@ -73,16 +78,6 @@ client.setGroupBan(gid, uid, 3600) //禁言
 
 > 更详细的例子：[demo.js](docs/demo.js)  
 > 更多API：[index.d.ts](https://github.com/takayama-lily/oicq/blob/b600469337bf9ecd5a871413661d56c6325afce3/index.d.ts#L655)  
-
-**相关文档：**
-
-[滑动验证码ticket教程](https://github.com/takayama-lily/oicq/wiki/01.%E6%BB%91%E5%8A%A8%E9%AA%8C%E8%AF%81%E7%A0%81%E5%92%8C%E8%AE%BE%E5%A4%87%E9%94%81)  
-[API参考文档](https://github.com/takayama-lily/oicq/wiki/91.API%E6%96%87%E6%A1%A3)  
-[事件参考文档](https://github.com/takayama-lily/oicq/wiki/92.%E4%BA%8B%E4%BB%B6%E6%96%87%E6%A1%A3)  
-[常见问题](https://github.com/takayama-lily/oicq/wiki/02.%E5%85%B6%E4%BB%96%E5%B8%B8%E8%A7%81%E9%97%AE%E9%A2%98)  
-[关于封号和风控](https://github.com/takayama-lily/oicq/wiki/98.%E5%85%B3%E4%BA%8E%E8%B4%A6%E5%8F%B7%E5%86%BB%E7%BB%93%E5%92%8C%E9%A3%8E%E6%8E%A7)  
-[wiki列表](https://github.com/takayama-lily/oicq/wiki)  
-[awesome](./awesome.md) 社区相关应用收集
 
 **其他：**
 
