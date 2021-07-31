@@ -16,9 +16,9 @@ const token = (await client.getCsrfToken()).data.token;
 |Name|Method|Url|Cookie|Domain|
 |-|-|-|-|-|
 |取QQ等级|GET|`https://club.vip.qq.com/api/vip/getQQLevelInfo?requestBody={"iUin":${QQ号}}`|YES|`vip.qq.com`
-|取群资料|GET|`https://qinfo.clt.qq.com/cgi-bin/qun_info/get_group_info_all?gc=${群号}&bkn=${token}`|YES|空
-|取群设置|GET|`https://qinfo.clt.qq.com/cgi-bin/qun_info/get_group_setting_v2?gc=${群号}&bkn=${token}`|YES|空
-|取群操作记录|GET|`https://qinfo.clt.qq.com/cgi-bin/qun_info/get_sys_msg?gc=${群号}&bkn=${token}`|YES|空
+|取群资料|GET|`https://qinfo.clt.qq.com/cgi-bin/qun_info/get_group_info_all?gc=${群号}&bkn=${token}`<br>*※陌生群也可以获取*|YES|空
+|取群设置|GET|`https://qinfo.clt.qq.com/cgi-bin/qun_info/get_group_setting_v2?gc=${群号}&bkn=${token}`<br>*※必须是群员*|YES|空
+|取群操作记录|GET|`https://qinfo.clt.qq.com/cgi-bin/qun_info/get_sys_msg?gc=${群号}&bkn=${token}`<br>*※必须是管理员*|YES|空
 |取QQ资料|GET|`https://cgi.find.qq.com/qqfind/buddy/search_v3?keyword=${QQ号}`|YES|空
 |开关匿名|GET|`https://qqweb.qq.com/c/anonymoustalk/set_anony_switch?bkn=${token}&value=${1或0}&group_code=${群号}`|YES|`qqweb.qq.com`
 |取群荣誉|GET|`https://qun.qq.com/interactive/qunhonor?gc=${群号}`|YES|`qun.qq.com`
