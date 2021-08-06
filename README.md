@@ -4,13 +4,10 @@
 [![node engine](https://img.shields.io/node/v/oicq.svg)](https://nodejs.org)
 [![discord](https://img.shields.io/static/v1?label=chat&message=on%20discord&color=7289da&logo=discord)](https://discord.gg/gKnU7BARzv)
 
-* QQ(安卓)协议基于Node.js的实现，使用CQHTTP风格的API，原生支持CQ码
+* QQ(安卓)协议基于Node.js的实现，使用CQHTTP风格的API
 * 已实现大部分常用功能，支持最低node版本为 v12.16
-* [API](https://github.com/takayama-lily/oicq/wiki/91.API%E6%96%87%E6%A1%A3) 和 [事件](https://github.com/takayama-lily/oicq/wiki/92.%E4%BA%8B%E4%BB%B6%E6%96%87%E6%A1%A3) 文档
-* [常见问题](https://github.com/takayama-lily/oicq/wiki/02.%E5%85%B6%E4%BB%96%E5%B8%B8%E8%A7%81%E9%97%AE%E9%A2%98) (登录、风控等相关问题)
-* [QQWebApi](./web-api.md) QQ Web Api 收集
-* [awesome](./awesome.md) 社区相关应用收集
-* [wiki列表](https://github.com/takayama-lily/oicq/wiki)
+* 若你不熟悉Node.js或不会组织代码，可通过 [template](https://github.com/takayama-lily/oicq-template) 创建一个简单的应用程序
+* [wiki](https://github.com/takayama-lily/oicq/wiki)
 
 ----
 
@@ -24,46 +21,42 @@
 
 ```js
 const { createClient } = require("oicq");
-const uin = 123456789; // your account
-const client = createClient(uin);
+const account = 123456789;
+const client = createClient(account);
 
 //监听上线事件
 client.on("system.online", () => console.log("Logged in!"));
 
 //监听消息并回复
-client.on("message", (data) => data.reply("hello world"));
+client.on("message", (event) => event.reply("hello world"));
 
 /****************************************
- * 手机QQ扫描二维码登录，与下面的传统密码登录二选一
+ * 手机QQ扫描二维码登录(与下面的密码登录二选一)
  * 优点是不需要过滑块和设备锁
- * 缺点是万一token失效需要重新扫码验证
+ * 缺点是万一token失效，无法自动登录，需要重新扫码
  */
-client.on("system.login.qrcode", function (data) {
-  console.log(data)
+client.on("system.login.qrcode", function (event) {
   process.stdin.once("data", () => {
     this.login(); //扫码后按回车登录
   });
-});
-client.login(); //这里不填写密码
+}).login(); //这里不填写密码
+
+//-------------------------------------------------------------------------
 
 /****************************************
- * 传统密码登录
+ * 密码登录
  * 缺点是需要过滑块，可能会报环境异常
  * 优点是一劳永逸
  */
-client.on("system.login.slider", function (data) { //监听滑动验证码事件
-  console.log(data)
+client.on("system.login.slider", function (event) { //监听滑动验证码事件
   process.stdin.once("data", (input) => {
     this.sliderLogin(input); //输入ticket
   });
-});
-client.on("system.login.device", function (data) { //监听登录保护验证事件
-  console.log(data)
+}).on("system.login.device", function (event) { //监听登录保护验证事件
   process.stdin.once("data", () => {
     this.login(); //验证完成后按回车登录
   });
-});
-client.login("password"); //需要填写密码或md5后的密码
+}).login("password"); //需要填写密码或md5后的密码
 ```
 
 **常用功能：**
@@ -76,12 +69,9 @@ client.setGroupKick(gid, uid) //踢人
 client.setGroupBan(gid, uid, 3600) //禁言
 ```
 
-> 更详细的例子：[demo.js](docs/demo.js)  
-> 更多API：[index.d.ts](https://github.com/takayama-lily/oicq/blob/b600469337bf9ecd5a871413661d56c6325afce3/index.d.ts#L655)  
+* [API](https://github.com/takayama-lily/oicq/wiki/91.API%E6%96%87%E6%A1%A3) 和 [事件](https://github.com/takayama-lily/oicq/wiki/92.%E4%BA%8B%E4%BB%B6%E6%96%87%E6%A1%A3) 文档 ([index.d.ts](https://github.com/takayama-lily/oicq/blob/b600469337bf9ecd5a871413661d56c6325afce3/index.d.ts#L655))
+* [常见问题](https://github.com/takayama-lily/oicq/wiki/02.%E5%85%B6%E4%BB%96%E5%B8%B8%E8%A7%81%E9%97%AE%E9%A2%98) (登录、风控等相关问题)
+* [QQWebApi](./web-api.md) QQ Web Api 收集
+* [awesome](./awesome.md) 社区相关应用收集
 
-**其他：**
-
-[JavaScript语言基础](https://developer.mozilla.org/zh-CN/docs/Web/JavaScript)  
-[Node.js入门教程](http://nodejs.cn/learn)  
-[5分钟上手TypeScript](https://www.tslang.cn/docs/handbook/typescript-in-5-minutes.html)  
-[![group:236172566](https://img.shields.io/badge/group-236172566-blue)](https://qm.qq.com/cgi-bin/qm/qr?k=NXw3NEA5lzPjkRhyEpjVBqMpdg1WHRKJ&jump_from=webapi)
+ [![group:236172566](https://img.shields.io/badge/group-236172566-blue)](https://qm.qq.com/cgi-bin/qm/qr?k=NXw3NEA5lzPjkRhyEpjVBqMpdg1WHRKJ&jump_from=webapi)
