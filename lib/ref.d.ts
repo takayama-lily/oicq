@@ -81,6 +81,7 @@ export interface HighwayUploadStreamObject {
     ticket?: Buffer,
     ext?: Buffer,
     encrypt?: boolean,
+    callback?: (percentage: string) => void,
 }
 
 export interface Proto {

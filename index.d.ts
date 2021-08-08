@@ -664,7 +664,7 @@ export class Gfs {
         max_file_count: number,
     }>;
     /** 上传文件(默认传到根目录),仅支持本地文件路径或Buffer */
-    upload(file: MediaFile, pid?: string, name?: string): Promise<GfsFileStat>;
+    upload(file: MediaFile, pid?: string, name?: string, process?: (percentage: string) => void): Promise<GfsFileStat>;
     /** 获取文件的下载链接 */
     download(fid: string): Promise<FileElem["data"]>;
 }
