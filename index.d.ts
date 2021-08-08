@@ -44,26 +44,26 @@ export interface ConfBot {
 }
 
 export interface Statistics {
-    readonly start_time: number,
-    readonly lost_times: number,
-    readonly recv_pkt_cnt: number,
-    readonly sent_pkt_cnt: number,
-    readonly lost_pkt_cnt: number, //超时未响应的包
-    readonly recv_msg_cnt: number,
-    readonly sent_msg_cnt: number,
+    readonly start_time: number, //启动时刻
+    readonly lost_times: number, //断线次数
+    readonly recv_pkt_cnt: number, //收到包总数
+    readonly sent_pkt_cnt: number, //发送包总数
+    readonly lost_pkt_cnt: number, //丢包总数
+    readonly recv_msg_cnt: number, //收到消息总数
+    readonly sent_msg_cnt: number, //发送消息总数
 }
 
 export interface Status {
     online: boolean,
-    status: number,
+    status: number, //在线状态
     remote_ip?: number,
     remote_port?: number,
-    msg_cnt_per_min: number,
+    msg_cnt_per_min: number, //每分钟消息数
     statistics: Statistics,
     config: ConfBot,
 }
 
-export type LoginInfo = StrangerInfo & VipInfo;
+export type LoginInfo = StrangerInfo;
 
 export type GroupRole = "owner" | "admin" | "member";
 export type Gender = "male" | "female" | "unknown";
@@ -97,56 +97,51 @@ export type RetCommon = Ret;
 
 //////////
 
-export interface VipInfo {
-    readonly user_id?: number,
-    readonly nickname?: string,
-    readonly level?: number,
-    readonly level_speed?: number,
-    readonly vip_level?: number,
-    readonly vip_growth_speed?: number,
-    readonly vip_growth_total?: string,
-}
-
+/** 陌生人资料 */
 export interface StrangerInfo {
-    readonly user_id: number,
-    readonly nickname: string,
-    readonly sex: Gender,
-    readonly age: number,
-    readonly area?: string,
-    readonly signature?: string,
-    readonly description?: string,
-    readonly group_id?: number,
+    readonly user_id: number, //账号
+    readonly nickname: string, //昵称
+    readonly sex: Gender, //性别
+    readonly age: number, //年龄
+    readonly area?: string, //地区
+    readonly signature?: string, //个性签名
+    readonly description?: string, //个人说明
+    readonly group_id?: number, //临时会话群号
 }
+/** 好友资料 */
 export interface FriendInfo extends StrangerInfo {
-    readonly remark?: string
+    readonly remark?: string //好友备注
 }
+/** 群资料 */
 export interface GroupInfo {
-    readonly group_id: number,
-    readonly group_name: string,
-    readonly member_count: number,
-    readonly max_member_count: number,
-    readonly owner_id: number,
-    readonly last_join_time: number,
-    readonly last_sent_time: number,
+    readonly group_id: number, //群号
+    readonly group_name: string, //群名
+    readonly member_count: number, //群员数
+    readonly max_member_count: number, //最大群员数
+    readonly owner_id: number, //群主账号
+    readonly last_join_time: number, //最后入群时间
+    readonly last_sent_time: number, //最后发言时间
     readonly shutup_time_whole: number, //全员禁言到期时间
     readonly shutup_time_me: number, //我的禁言到期时间
-    readonly create_time: number,
-    readonly grade: number,
-    readonly max_admin_count: number,
-    readonly active_member_count: number,
+    readonly create_time: number, //创建时间
+    readonly grade: number, //群等级
+    readonly max_admin_count: number, //最大管理员数
+    readonly active_member_count: number, //活跃群员数
     readonly update_time: number, //当前群资料的最后更新时间
 }
+/** 群员基础资料 */
 export interface MemberBaseInfo {
     readonly user_id: number,
     readonly nickname: string,
-    readonly card: string,
+    readonly card: string, //群名片
     readonly sex: Gender,
     readonly age: number,
     readonly area: string,
-    readonly level: number,
-    readonly role: GroupRole,
-    readonly title: string,
+    readonly level: number, //等级
+    readonly role: GroupRole, //权限
+    readonly title: string, //头衔
 }
+/** 群员资料 */
 export interface MemberInfo extends MemberBaseInfo {
     readonly group_id: number,
     // readonly user_id: number,
@@ -155,14 +150,16 @@ export interface MemberInfo extends MemberBaseInfo {
     // readonly sex: Gender,
     // readonly age: number,
     // readonly area: string,
-    readonly join_time: number,
-    readonly last_sent_time: number,
+    readonly join_time: number, //入群时间
+    readonly last_sent_time: number, //最后发言时间
     // readonly level: number,
     readonly rank: string,
     // readonly role: GroupRole,
+    /** @deprecated */
     readonly unfriendly: boolean,
     // readonly title: string,
-    readonly title_expire_time: number,
+    readonly title_expire_time: number, //头衔过期时间
+    /** @deprecated */
     readonly card_changeable: boolean,
     readonly shutup_time: number, //禁言到期时间
     readonly update_time: number, //此群员资料的最后更新时间
@@ -172,12 +169,13 @@ export interface MemberInfo extends MemberBaseInfo {
 
 /**
  * 使用cqhttp风格的消息元素类型
- * @see https://github.com/howmanybots/onebot/blob/master/v11/specs/message/segment.md
+ * @see https://github.com/howmanybots/onebot/blob/master/v11/specs/message/segment.md 在此基础上进行了扩展
  */
 export type MessageElem = TextElem | AtElem | FaceElem | BfaceElem | MfaceElem |
     ImgPttElem | LocationElem | MusicElem | ShareElem | JsonElem | XmlElem |
     AnonymousElem | ReplyElem | NodeElem | ShakeElem | PokeElem | FileElem | VideoElem | MiraiElem;
 
+/** 一般文本 */
 export interface TextElem {
     type: "text",
     data: {
@@ -189,11 +187,12 @@ export interface AtElem {
     type: "at",
     data: {
         qq: number | "all",
-        text?: string,
-        dummy?: boolean,
+        text?: string, //at失败时显示的文本
+        dummy?: boolean, //假at
     }
 }
 
+/** 经典表情 */
 export interface FaceElem {
     type: "face" | "sface",
     data: {
@@ -202,6 +201,7 @@ export interface FaceElem {
     }
 }
 
+/** 原创表情 */
 export interface BfaceElem {
     type: "bface",
     data: {
@@ -210,8 +210,9 @@ export interface BfaceElem {
     }
 }
 
+/** 魔法表情 */
 export interface MfaceElem {
-    type: "rps" | "dice",
+    type: "rps" | "dice", //猜拳和骰子
     data: {
         id: number,
     }
@@ -229,40 +230,41 @@ export interface MfaceElem {
  */
 export type MediaFile = string | Uint8Array | ArrayBuffer | SharedArrayBuffer;
 
+/** 图片，闪照，语音 */
 export interface ImgPttElem {
     type: "image" | "flash" | "record",
     data: {
         file: MediaFile,
-        cache?: boolean,
-        proxy?: boolean,
-        timeout?: number,
-        url?: string,
-        headers?: OutgoingHttpHeaders,
-        type?: "flash" | "show",
-        magic?: boolean,
+        cache?: boolean, //file为网络资源时是否使用缓存
+        timeout?: number, //file为网络资源时请求超时时间
+        headers?: OutgoingHttpHeaders, //file为网络资源时请求头
+        url?: string, //仅接收
     }
 }
 
+/** 视频 */
 export interface VideoElem {
     type: "video",
     data: {
-        file: string, //发送仅支持本地文件
-        url?: string,
+        file: string, //发送仅支持本地文件路径或转发
+        url?: string, //仅接收
     }
 }
 
+/** 地点分享 */
 export interface LocationElem {
     type: "location",
     data: {
         address: string,
-        lat: number,
-        lng: number,
+        lat: number, //经纬度
+        lng: number, //经纬度
         name?: string,
         id?: string,
     }
 }
 
 export type MusicType = "qq" | "163" | "migu" | "kugou" | "kuwo";
+/** 音乐分享 */
 export interface MusicElem {
     type: "music",
     data: {
@@ -271,6 +273,7 @@ export interface MusicElem {
     }
 }
 
+/** 链接分享 */
 export interface ShareElem {
     type: "share",
     data: {
@@ -298,17 +301,19 @@ export interface XmlElem {
     }
 }
 
+/** 匿名消息 */
 export interface AnonymousElem {
     type: "anonymous",
     data?: {
-        ignore?: boolean,
+        ignore?: boolean, //匿名失败时是否继续发送，default: true
     }
 }
 
+/** 回复 */
 export interface ReplyElem {
     type: "reply",
     data: {
-        id: string,
+        id: string, //message_id
     }
 }
 
@@ -319,18 +324,21 @@ export interface NodeElem {
     }
 }
 
+/** 窗口抖动 */
 export interface ShakeElem {
     type: "shake",
 }
 
+/** 戳一戳 */
 export interface PokeElem {
     type: "poke",
     data: {
-        type: number,
+        type: number, //0~6
         id?: number,
     }
 }
 
+/** 该元素仅mirai系的客户端可解析，官方客户端无法识别 */
 export interface MiraiElem {
     type: "mirai",
     data: {
@@ -338,6 +346,7 @@ export interface MiraiElem {
     }
 }
 
+/** 文件(仅接受) */
 export interface FileElem {
     type: "file",
     data: {
@@ -373,33 +382,33 @@ export interface CommonSystemEventData extends CommonEventData {
 }
 export interface QrcodeEventData extends CommonSystemEventData {
     system_type: "login",
-    sub_type: "qrcode",
+    sub_type: "qrcode", //收到二维码
     image: Buffer,
 }
 export interface SliderEventData extends CommonSystemEventData {
     system_type: "login",
-    sub_type: "slider",
-    url: string
+    sub_type: "slider", //收到滑动验证码
+    url: string, //滑动地址
 }
 export interface DeviceEventData extends CommonSystemEventData {
     system_type: "login",
-    sub_type: "device",
-    url: string,
-    phone: string,
+    sub_type: "device", //收到设备锁验证请求
+    url: string, //验证地址
+    phone: string, //密保手机
 }
 export interface LoginErrorEventData extends CommonSystemEventData {
     system_type: "login",
-    sub_type: "error",
-    code: number,
-    message: string,
+    sub_type: "error", //登录遇到错误
+    code: number, //错误码
+    message: string, //错误消息
 }
 export interface OnlineEventData extends CommonSystemEventData {
-    system_type: "online",
+    system_type: "online", //上线
 }
 export interface OfflineEventData extends CommonSystemEventData {
-    system_type: "offline",
+    system_type: "offline", //掉线
     sub_type: "network" | "kickoff" | "frozen" | "unknown",
-    message: string,
+    message: string, //掉线原因
 }
 
 // request events
@@ -407,27 +416,27 @@ interface CommonRequestEventData extends CommonEventData {
     post_type: "request",
     user_id: number,
     nickname: string,
-    flag: string,
+    flag: string, //同意或拒绝时传入
 }
 export interface FriendAddEventData extends CommonRequestEventData {
     request_type: "friend",
-    sub_type: "add",
-    comment: string,
-    source: string,
+    sub_type: "add", //加好友请求
+    comment: string, //附加信息
+    source: string, //来源(如"条件查找")
     age: number,
     sex: Gender,
 }
 export interface GroupAddEventData extends CommonRequestEventData {
     request_type: "group",
-    sub_type: "add",
+    sub_type: "add", //加群请求
     group_id: number,
     group_name: string,
-    comment: string,
-    inviter_id?: number, //邀请人
+    comment: string, //附加信息
+    inviter_id?: number, //邀请者(来自群员的邀请时)
 }
 export interface GroupInviteEventData extends CommonRequestEventData {
     request_type: "group",
-    sub_type: "invite",
+    sub_type: "invite", //群邀请
     group_id: number,
     group_name: string,
     role: GroupRole, //邀请者权限
@@ -436,25 +445,25 @@ export interface GroupInviteEventData extends CommonRequestEventData {
 // message events
 interface CommonMessageEventData extends CommonEventData {
     post_type: "message",
-    message: MessageElem[],
-    raw_message: string,
+    message: MessageElem[], //消息链
+    raw_message: string, //字符串格式的消息
     message_id: string,
     user_id: number,
     font: string,
     reply: (message: MessageElem | Iterable<MessageElem> | string, auto_escape?: boolean) => Promise<Ret<{ message_id: string }>>,
 }
 export interface PrivateMessageEventData extends CommonMessageEventData {
-    message_type: "private",
+    message_type: "private", //私聊消息
     sub_type: "friend" | "group" | "single" | "other",
     sender: FriendInfo,
-    auto_reply: boolean,
+    auto_reply: boolean, //是否自动回复
 }
 export interface GroupMessageEventData extends CommonMessageEventData {
-    message_type: "group",
+    message_type: "group", //群消息
     sub_type: "normal" | "anonymous",
     group_id: number,
     group_name: string,
-    anonymous: Anonymous | null,
+    anonymous: Anonymous | null, //匿名消息
     sender: MemberBaseInfo,
     atme: boolean,
 }
@@ -464,7 +473,7 @@ export interface Anonymous {
     flag: string,
 }
 export interface DiscussMessageEventData extends CommonMessageEventData {
-    message_type: "discuss",
+    message_type: "discuss", //讨论组消息
     discuss_id: number,
     discuss_name: string,
     atme: boolean,
@@ -481,34 +490,34 @@ interface CommonFriendNoticeEventData extends CommonEventData {
     notice_type: "friend",
 }
 export interface FriendRecallEventData extends CommonFriendNoticeEventData {
-    sub_type: "recall",
-    user_id: number,
-    operator_id: number,
+    sub_type: "recall", //好友消息撤回
+    user_id: number, //好友号
+    operator_id: number, //撤回者(好友或自己)
     message_id: string,
 }
 export interface FriendProfileEventData extends CommonFriendNoticeEventData {
-    sub_type: "profile",
+    sub_type: "profile", //好友资料变更
     user_id: number,
     nickname?: string,
     signature?: string,
 }
 export interface FriendIncreaseEventData extends CommonFriendNoticeEventData {
-    sub_type: "increase",
+    sub_type: "increase", //好友增加
     user_id: number,
     nickname: string,
 }
 export interface FriendDecreaseEventData extends CommonFriendNoticeEventData {
-    sub_type: "decrease",
+    sub_type: "decrease", //好友减少
     user_id: number,
     nickname: string,
 }
 export interface FriendPokeEventData extends CommonFriendNoticeEventData {
-    sub_type: "poke",
-    user_id: number,
-    operator_id: number,
-    target_id: number,
-    action: string,
-    suffix: string
+    sub_type: "poke", //好友戳一戳
+    user_id: number, //好友号
+    operator_id: number, //poke者
+    target_id: number, //被poke者
+    action: string, //动作名
+    suffix: string, //后缀
 }
 
 interface CommonGroupNoticeEventData extends CommonEventData {
@@ -516,32 +525,33 @@ interface CommonGroupNoticeEventData extends CommonEventData {
     notice_type: "group",
 }
 export interface GroupPokeEventData extends CommonGroupNoticeEventData {
-    sub_type: "poke",
-    group_id: number,
-    operator_id: number,
-    user_id: number,
-    action: string,
-    suffix: string
+    sub_type: "poke", //群戳一戳
+    group_id: number, //群号
+    operator_id: number, //poke者
+    user_id: number, //被poke者
+    target_id: number, //被poke者
+    action: string, //动作名
+    suffix: string, //后缀
 }
 export interface MemberIncreaseEventData extends CommonGroupNoticeEventData {
-    sub_type: "increase",
+    sub_type: "increase", //群增加或群员增加
     group_id: number,
     user_id: number,
     nickname: string,
 }
 export interface MemberDecreaseEventData extends CommonGroupNoticeEventData {
-    sub_type: "decrease",
+    sub_type: "decrease", //群减少或群员减少
     group_id: number,
-    operator_id: number,
-    user_id: number,
-    dismiss: boolean,
+    operator_id: number, //踢人者
+    user_id: number, //被踢者
+    dismiss: boolean, //是否是解散
     member?: MemberInfo,
 }
 export interface GroupRecallEventData extends CommonGroupNoticeEventData {
-    sub_type: "recall",
+    sub_type: "recall", //群消息撤回
     group_id: number,
-    operator_id: number,
-    user_id: number,
+    operator_id: number, //撤回者
+    user_id: number, //被撤回者
     message_id: string,
 }
 export interface GroupAdminEventData extends CommonGroupNoticeEventData {
@@ -551,28 +561,28 @@ export interface GroupAdminEventData extends CommonGroupNoticeEventData {
     set: boolean,
 }
 export interface GroupMuteEventData extends CommonGroupNoticeEventData {
-    sub_type: "ban",
+    sub_type: "ban", //群禁言
     group_id: number,
-    operator_id: number,
-    user_id: number,
-    nickname?: string,
-    duration: number,
+    operator_id: number, //禁言者
+    user_id: number, //被禁言者(全员禁言为0)
+    nickname?: string, //匿名者昵称(当user_id为80000000时提供)
+    duration: number, //时长
 }
 export interface GroupTransferEventData extends CommonGroupNoticeEventData {
-    sub_type: "transfer",
+    sub_type: "transfer", //群转让
     group_id: number,
-    operator_id: number,
-    user_id: number,
+    operator_id: number, //旧群主
+    user_id: number, //新群主
 }
 export interface GroupTitleEventData extends CommonGroupNoticeEventData {
-    sub_type: "title",
+    sub_type: "title", //群头衔变更(暂未实现该事件)
     group_id: number,
     user_id: number,
     nickname: string,
     title: string,
 }
 export interface GroupSettingEventData extends CommonGroupNoticeEventData {
-    sub_type: "setting",
+    sub_type: "setting", //群设置变更
     group_id: number,
     group_name?: string,
     enable_guest?: boolean,
@@ -606,19 +616,19 @@ export interface GfsBaseStat {
     fid: string, //文件(夹)id
     pid: string, //父文件夹id
     name: string,
-    user_id: number,
-    create_time: number,
+    user_id: number, //创建者
+    create_time: number, //创建时间
 }
 export interface GfsFileStat extends GfsBaseStat {
-    size: number,
+    size: number, //文件大小(字节)
     busid: number,
     md5: string,
     sha1: string,
-    duration: number,
-    download_times: number,
+    duration: number, //有效时间
+    download_times: number, //下载次数
 }
 export interface GfsDirStat extends GfsBaseStat {
-    file_count: number,
+    file_count: number, //文件数
     is_dir: true,
 }
 export type GfsStat = GfsFileStat | GfsDirStat;
@@ -661,6 +671,21 @@ export class Gfs {
 
 //////////
 
+export type Domain = "tenpay.com"
+    | "docs.qq.com"
+    | "office.qq.com"
+    | "connect.qq.com"
+    | "vip.qq.com"
+    | "mail.qq.com"
+    | "qzone.qq.com"
+    | "gamecenter.qq.com"
+    | "mma.qq.com"
+    | "game.qq.com"
+    | "qqweb.qq.com"
+    | "openmobile.qq.com"
+    | "qun.qq.com"
+    | "ti.qq.com";
+
 /**
  * 方法不会reject或抛出异常，使用retcode判断是否成功
  * @see {Ret}
@@ -690,6 +715,8 @@ export class Client extends EventEmitter {
     readonly config: ConfBot;
     /** 数据统计信息 */
     readonly stat: Statistics;
+
+    readonly bkn: Promise<number>;
 
     constructor(uin: number, config?: ConfBot);
 
@@ -837,7 +864,7 @@ export class Client extends EventEmitter {
     /** 获取漫游表情 */
     getRoamingStamp(no_cache?: boolean): Promise<Ret<string[]>>;
 
-    /** 获取群公告 */
+    /** @deprecated 获取群公告(该方法已废弃，参考web-api.md自行获取) */
     getGroupNotice(group_id: number): Promise<Ret<Array<{
         u: number, //发布者
         fid: string,
@@ -862,30 +889,23 @@ export class Client extends EventEmitter {
         is_read: number,
         is_all_confirm: number
     }>>>;
+    /** @deprecated 获取等级信息(该方法已废弃，参考web-api.md自行获取) */
+    getLevelInfo(user_id?: number): Promise<Ret<any>>;
 
-    /**
-     * 支持的域名：
-     * tenpay.com | docs.qq.com | office.qq.com | connect.qq.com
-     * vip.qq.com | mail.qq.com | qzone.qq.com | gamecenter.qq.com
-     * mma.qq.com | game.qq.com | qqweb.qq.com | openmobile.qq.com
-     * qun.qq.com | ti.qq.com |
-     */
-    getCookies(domain?: string): Promise<Ret<{ cookies: string }>>;
+    getCookies(domain?: Domain): Promise<Ret<{ cookies: string }>>;
     getCsrfToken(): Promise<Ret<{ token: number }>>;
     /** 清除 image 和 record 文件夹下的缓存文件 */
     cleanCache(type?: "image" | "record"): Promise<Ret>;
     /** 获取在线状态和数据统计 */
     getStatus(): Ret<Status>;
-    /** 获取等级信息(默认获取自己的) */
-    getLevelInfo(user_id?: number): Promise<Ret<any>>;
 
     /** 进入群文件系统 */
     acquireGfs(group_id: number): Gfs;
 
-    on(event: "system.login.qrcode", listener: (this: Client, data: QrcodeEventData) => void): this; //扫码登录
+    on(event: "system.login.qrcode", listener: (this: Client, data: QrcodeEventData) => void): this; //扫码登录收到二维码事件
     on(event: "system.login.slider", listener: (this: Client, data: SliderEventData) => void): this; //收到滑动验证码事件
     on(event: "system.login.device", listener: (this: Client, data: DeviceEventData) => void): this; //设备锁验证事件
-    on(event: "system.login.error", listener: (this: Client, data: LoginErrorEventData) => void): this; //登录遇到错误
+    on(event: "system.login.error", listener: (this: Client, data: LoginErrorEventData) => void): this; //登录遇到错误事件
     on(event: "system.login", listener: (this: Client, data: DeviceEventData | LoginErrorEventData | SliderEventData | QrcodeEventData) => void): this;
     on(event: "system.online", listener: (this: Client, data: OnlineEventData) => void): this; //上线事件
     on(event: "system.offline" | "system.offline.network" | "system.offline.kickoff" | //下线事件
@@ -906,7 +926,7 @@ export class Client extends EventEmitter {
 
     on(event: "notice.friend.increase", listener: (this: Client, data: FriendIncreaseEventData) => void): this; //新增好友事件
     on(event: "notice.friend.decrease", listener: (this: Client, data: FriendDecreaseEventData) => void): this; //好友(被)删除事件
-    on(event: "notice.friend.recall", listener: (this: Client, data: FriendRecallEventData) => void): this; //好友撤回事件
+    on(event: "notice.friend.recall", listener: (this: Client, data: FriendRecallEventData) => void): this; //好友消息撤回事件
     on(event: "notice.friend.profile", listener: (this: Client, data: FriendProfileEventData) => void): this; //好友资料变更事件
     on(event: "notice.friend.poke", listener: (this: Client, data: FriendPokeEventData) => void): this; //好友戳一戳事件
     on(event: "notice.group.increase", listener: (this: Client, data: MemberIncreaseEventData) => void): this; //入群・群员增加事件
@@ -923,6 +943,90 @@ export class Client extends EventEmitter {
     on(event: "notice", listener: (this: Client, data: NoticeEventData) => void): this; //监听以上所有notice事件
 
     on(event: string | symbol, listener: (this: Client, ...args: any[]) => void): this;
+
+    once(event: "system.login.qrcode", listener: (this: Client, data: QrcodeEventData) => void): this; //扫码登录收到二维码事件
+    once(event: "system.login.slider", listener: (this: Client, data: SliderEventData) => void): this; //收到滑动验证码事件
+    once(event: "system.login.device", listener: (this: Client, data: DeviceEventData) => void): this; //设备锁验证事件
+    once(event: "system.login.error", listener: (this: Client, data: LoginErrorEventData) => void): this; //登录遇到错误事件
+    once(event: "system.login", listener: (this: Client, data: DeviceEventData | LoginErrorEventData | SliderEventData | QrcodeEventData) => void): this;
+    once(event: "system.online", listener: (this: Client, data: OnlineEventData) => void): this; //上线事件
+    once(event: "system.offline" | "system.offline.network" | "system.offline.kickoff" | //下线事件
+      "system.offline.frozen" | "system.offline.unknown", listener: (this: Client, data: OfflineEventData) => void): this;
+    once(event: "system", listener: (this: Client, data: SystemEventData) => void): this;
+
+    once(event: "request.friend" | "request.friend.add", listener: (this: Client, data: FriendAddEventData) => void): this; //收到好友申请事件
+    once(event: "request.group.add", listener: (this: Client, data: GroupAddEventData) => void): this; //收到加群申请事件
+    once(event: "request.group.invite", listener: (this: Client, data: GroupInviteEventData) => void): this; //收到群邀请事件
+    once(event: "request.group", listener: (this: Client, data: GroupAddEventData | GroupInviteEventData) => void): this;
+    once(event: "request", listener: (this: Client, data: RequestEventData) => void): this; //监听以上所有request事件
+
+    once(event: "message.private" | "message.private.friend" | "message.private.group" |
+      "message.private.single" | "message.private.other", listener: (this: Client, data: PrivateMessageEventData) => void): this; //私聊消息事件
+    once(event: "message.group" | "message.group.normal" | "message.group.anonymous", listener: (this: Client, data: GroupMessageEventData) => void): this; //群消息事件
+    once(event: "message.discuss", listener: (this: Client, data: DiscussMessageEventData) => void): this; //讨论组消息事件
+    once(event: "message", listener: (this: Client, data: MessageEventData) => void): this; //监听以上所有message事件
+
+    once(event: "notice.friend.increase", listener: (this: Client, data: FriendIncreaseEventData) => void): this; //新增好友事件
+    once(event: "notice.friend.decrease", listener: (this: Client, data: FriendDecreaseEventData) => void): this; //好友(被)删除事件
+    once(event: "notice.friend.recall", listener: (this: Client, data: FriendRecallEventData) => void): this; //好友消息撤回事件
+    once(event: "notice.friend.profile", listener: (this: Client, data: FriendProfileEventData) => void): this; //好友资料变更事件
+    once(event: "notice.friend.poke", listener: (this: Client, data: FriendPokeEventData) => void): this; //好友戳一戳事件
+    once(event: "notice.group.increase", listener: (this: Client, data: MemberIncreaseEventData) => void): this; //入群・群员增加事件
+    once(event: "notice.group.decrease", listener: (this: Client, data: MemberDecreaseEventData) => void): this; //踢群・退群事件
+    once(event: "notice.group.recall", listener: (this: Client, data: GroupRecallEventData) => void): this; //群消息撤回事件
+    once(event: "notice.group.admin", listener: (this: Client, data: GroupAdminEventData) => void): this; //管理员变更事件
+    once(event: "notice.group.ban", listener: (this: Client, data: GroupMuteEventData) => void): this; //群禁言事件
+    once(event: "notice.group.transfer", listener: (this: Client, data: GroupTransferEventData) => void): this; //群转让事件
+    once(event: "notice.group.title", listener: (this: Client, data: GroupTitleEventData) => void): this; //群头衔变更事件
+    once(event: "notice.group.poke", listener: (this: Client, data: GroupPokeEventData) => void): this; //群戳一戳事件
+    once(event: "notice.group.setting", listener: (this: Client, data: GroupSettingEventData) => void): this; //群设置变更事件
+    once(event: "notice.friend", listener: (this: Client, data: FriendNoticeEventData) => void): this; //监听以上所有好友notice事件
+    once(event: "notice.group", listener: (this: Client, data: GroupNoticeEventData) => void): this; //监听以上所有群notice事件
+    once(event: "notice", listener: (this: Client, data: NoticeEventData) => void): this; //监听以上所有notice事件
+
+    once(event: string | symbol, listener: (this: Client, ...args: any[]) => void): this;
+
+    off(event: "system.login.qrcode", listener: (this: Client, data: QrcodeEventData) => void): this; //扫码登录收到二维码事件
+    off(event: "system.login.slider", listener: (this: Client, data: SliderEventData) => void): this; //收到滑动验证码事件
+    off(event: "system.login.device", listener: (this: Client, data: DeviceEventData) => void): this; //设备锁验证事件
+    off(event: "system.login.error", listener: (this: Client, data: LoginErrorEventData) => void): this; //登录遇到错误事件
+    off(event: "system.login", listener: (this: Client, data: DeviceEventData | LoginErrorEventData | SliderEventData | QrcodeEventData) => void): this;
+    off(event: "system.online", listener: (this: Client, data: OnlineEventData) => void): this; //上线事件
+    off(event: "system.offline" | "system.offline.network" | "system.offline.kickoff" | //下线事件
+      "system.offline.frozen" | "system.offline.unknown", listener: (this: Client, data: OfflineEventData) => void): this;
+    off(event: "system", listener: (this: Client, data: SystemEventData) => void): this;
+
+    off(event: "request.friend" | "request.friend.add", listener: (this: Client, data: FriendAddEventData) => void): this; //收到好友申请事件
+    off(event: "request.group.add", listener: (this: Client, data: GroupAddEventData) => void): this; //收到加群申请事件
+    off(event: "request.group.invite", listener: (this: Client, data: GroupInviteEventData) => void): this; //收到群邀请事件
+    off(event: "request.group", listener: (this: Client, data: GroupAddEventData | GroupInviteEventData) => void): this;
+    off(event: "request", listener: (this: Client, data: RequestEventData) => void): this; //监听以上所有request事件
+
+    off(event: "message.private" | "message.private.friend" | "message.private.group" |
+      "message.private.single" | "message.private.other", listener: (this: Client, data: PrivateMessageEventData) => void): this; //私聊消息事件
+    off(event: "message.group" | "message.group.normal" | "message.group.anonymous", listener: (this: Client, data: GroupMessageEventData) => void): this; //群消息事件
+    off(event: "message.discuss", listener: (this: Client, data: DiscussMessageEventData) => void): this; //讨论组消息事件
+    off(event: "message", listener: (this: Client, data: MessageEventData) => void): this; //监听以上所有message事件
+
+    off(event: "notice.friend.increase", listener: (this: Client, data: FriendIncreaseEventData) => void): this; //新增好友事件
+    off(event: "notice.friend.decrease", listener: (this: Client, data: FriendDecreaseEventData) => void): this; //好友(被)删除事件
+    off(event: "notice.friend.recall", listener: (this: Client, data: FriendRecallEventData) => void): this; //好友消息撤回事件
+    off(event: "notice.friend.profile", listener: (this: Client, data: FriendProfileEventData) => void): this; //好友资料变更事件
+    off(event: "notice.friend.poke", listener: (this: Client, data: FriendPokeEventData) => void): this; //好友戳一戳事件
+    off(event: "notice.group.increase", listener: (this: Client, data: MemberIncreaseEventData) => void): this; //入群・群员增加事件
+    off(event: "notice.group.decrease", listener: (this: Client, data: MemberDecreaseEventData) => void): this; //踢群・退群事件
+    off(event: "notice.group.recall", listener: (this: Client, data: GroupRecallEventData) => void): this; //群消息撤回事件
+    off(event: "notice.group.admin", listener: (this: Client, data: GroupAdminEventData) => void): this; //管理员变更事件
+    off(event: "notice.group.ban", listener: (this: Client, data: GroupMuteEventData) => void): this; //群禁言事件
+    off(event: "notice.group.transfer", listener: (this: Client, data: GroupTransferEventData) => void): this; //群转让事件
+    off(event: "notice.group.title", listener: (this: Client, data: GroupTitleEventData) => void): this; //群头衔变更事件
+    off(event: "notice.group.poke", listener: (this: Client, data: GroupPokeEventData) => void): this; //群戳一戳事件
+    off(event: "notice.group.setting", listener: (this: Client, data: GroupSettingEventData) => void): this; //群设置变更事件
+    off(event: "notice.friend", listener: (this: Client, data: FriendNoticeEventData) => void): this; //监听以上所有好友notice事件
+    off(event: "notice.group", listener: (this: Client, data: GroupNoticeEventData) => void): this; //监听以上所有群notice事件
+    off(event: "notice", listener: (this: Client, data: NoticeEventData) => void): this; //监听以上所有notice事件
+
+    off(event: string | symbol, listener: (this: Client, ...args: any[]) => void): this;
 
     /**
      * 重载好友列表和群列表

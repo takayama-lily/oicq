@@ -5,9 +5,9 @@
 [![discord](https://img.shields.io/static/v1?label=chat&message=on%20discord&color=7289da&logo=discord)](https://discord.gg/gKnU7BARzv)
 
 * QQ(安卓)协议基于Node.js的实现，使用CQHTTP风格的API
-* 已实现大部分常用功能，支持最低node版本为 v12.16
+* 高度抽象地封装了大部分常用功能，支持最低node版本为 v12.16
 * 若你不熟悉Node.js或不会组织代码，可通过 [template](https://github.com/takayama-lily/oicq-template) 创建一个简单的应用程序
-* [wiki](https://github.com/takayama-lily/oicq/wiki)
+* [wiki](https://github.com/takayama-lily/oicq/wiki) 文档
 
 ----
 
