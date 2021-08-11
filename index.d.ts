@@ -555,7 +555,7 @@ export interface GroupRecallEventData extends CommonGroupNoticeEventData {
     message_id: string,
 }
 export interface GroupAdminEventData extends CommonGroupNoticeEventData {
-    sub_type: "admin",
+    sub_type: "admin", //管理员变更
     group_id: number,
     user_id: number,
     set: boolean,
@@ -1076,6 +1076,8 @@ export namespace segment {
     function flash(file: MediaFile, cache?: boolean, timeout?: number, headers?: OutgoingHttpHeaders): ImgPttElem;
     /** 语音 */
     function record(file: MediaFile, cache?: boolean, timeout?: number, headers?: OutgoingHttpHeaders): ImgPttElem;
+    /** 视频 */
+    function video(file: string): VideoElem;
     /** 位置分享 */
     function location(lat: number, lng: number, address: string, id?: string): LocationElem;
     /** 音乐分享 */
@@ -1118,6 +1120,7 @@ export namespace cqcode {
     function image(file: string, cache?: boolean, timeout?: number, headers?: string): string;
     function flash(file: string, cache?: boolean, timeout?: number, headers?: string): string;
     function record(file: string, cache?: boolean, timeout?: number, headers?: string): string;
+    function video(file: string): string;
     function location(lat: number, lng: number, address: string, id?: string): string;
     function music(type: MusicType, id: string): string;
     function json(data: string): string;

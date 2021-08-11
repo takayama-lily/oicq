@@ -20,6 +20,7 @@ const elem_map = {
     image: ["file", "cache", "timeout", "headers"],
     flash: ["file", "cache", "timeout", "headers"],
     record: ["file", "cache", "timeout", "headers"],
+    video: ["file"],
     location: ["lat", "lng", "address", "id"],
     music: ["type", "id"],
     json: ["data"],
