@@ -373,7 +373,7 @@ export interface CommonEventData {
     request_type?: "friend" | "group",
     message_type?: "private" | "group" | "discuss",
     notice_type?: "friend" | "group",
-    sync_type?: "message" | "profile" | "status" | "setting" | "remark",
+    sync_type?: "message" | "profile" | "status" | "setting" | "remark" | "readed",
     sub_type?: string,
 }
 
@@ -603,6 +603,7 @@ export interface GroupSettingEventData extends CommonGroupNoticeEventData {
 //sync events
 export interface SyncMessageEventData extends PrivateMessageEventData {
     post_type: "sync",
+    message_type: undefined,
     sync_type: "message", //同步其他客户端发送的私聊
     reply: undefined,
 }
@@ -628,6 +629,15 @@ export interface SyncProfileEventData extends CommonEventData {
     description?: string,
     avatar?: boolean,
 }
+export interface SyncReadedEventData extends CommonEventData {
+    post_type: "sync",
+    sync_type: "readed", //同步已读
+    sub_type: "private" | "group",
+    user_id?: number,
+    timestamp?: number, //私聊以时间戳分界
+    group_id?: number,
+    seqid?: number, //群聊以seqid分界(关于seqid：https://github.com/takayama-lily/oicq/wiki/93.解析消息ID)
+}
 
 export type FriendNoticeEventData = FriendIncreaseEventData | FriendDecreaseEventData | FriendRecallEventData |
     FriendProfileEventData | FriendPokeEventData; //5
@@ -640,7 +650,7 @@ export type SystemEventData = DeviceEventData | SliderEventData | LoginErrorEven
 export type RequestEventData = FriendAddEventData | GroupAddEventData | GroupInviteEventData; //3
 export type MessageEventData = PrivateMessageEventData | GroupMessageEventData | DiscussMessageEventData; //3
 export type NoticeEventData = FriendNoticeEventData | GroupNoticeEventData; //2
-export type SyncEventData = SyncMessageEventData | SyncProfileEventData | SyncRemarkEventData | SyncStatusEventData; //4
+export type SyncEventData = SyncMessageEventData | SyncProfileEventData | SyncRemarkEventData | SyncStatusEventData | SyncReadedEventData; //5
 export type EventData = SystemEventData | RequestEventData | MessageEventData | NoticeEventData | SyncEventData; //5
 
 ////////// group file system
@@ -981,6 +991,7 @@ export class Client extends EventEmitter {
     on(event: "sync.remark", listener: (this: Client, data: SyncRemarkEventData) => void): this; //好友备注修改事件
     on(event: "sync.profile", listener: (this: Client, data: SyncProfileEventData) => void): this; //个人资料修改事件
     on(event: "sync.status", listener: (this: Client, data: SyncStatusEventData) => void): this; //在线状态修改事件
+    on(event: "sync.readed" | "sync.readed.private" | "sync.readed.group", listener: (this: Client, data: SyncReadedEventData) => void): this; //消息已读事件
     on(event: "sync", listener: (this: Client, data: SyncEventData) => void): this; //监听以上所有sync事件
 
     on(event: string | symbol, listener: (this: Client, ...args: any[]) => void): this;
@@ -1029,6 +1040,7 @@ export class Client extends EventEmitter {
     once(event: "sync.remark", listener: (this: Client, data: SyncRemarkEventData) => void): this; //好友备注修改事件
     once(event: "sync.profile", listener: (this: Client, data: SyncProfileEventData) => void): this; //个人资料修改事件
     once(event: "sync.status", listener: (this: Client, data: SyncStatusEventData) => void): this; //在线状态修改事件
+    once(event: "sync.readed" | "sync.readed.private" | "sync.readed.group", listener: (this: Client, data: SyncReadedEventData) => void): this; //消息已读事件
     once(event: "sync", listener: (this: Client, data: SyncEventData) => void): this; //监听以上所有sync事件
 
     once(event: string | symbol, listener: (this: Client, ...args: any[]) => void): this;
@@ -1077,6 +1089,7 @@ export class Client extends EventEmitter {
     off(event: "sync.remark", listener: (this: Client, data: SyncRemarkEventData) => void): this; //好友备注修改事件
     off(event: "sync.profile", listener: (this: Client, data: SyncProfileEventData) => void): this; //个人资料修改事件
     off(event: "sync.status", listener: (this: Client, data: SyncStatusEventData) => void): this; //在线状态修改事件
+    off(event: "sync.readed" | "sync.readed.private" | "sync.readed.group", listener: (this: Client, data: SyncReadedEventData) => void): this; //消息已读事件
     off(event: "sync", listener: (this: Client, data: SyncEventData) => void): this; //监听以上所有sync事件
 
     off(event: string | symbol, listener: (this: Client, ...args: any[]) => void): this;
