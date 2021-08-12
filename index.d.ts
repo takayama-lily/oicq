@@ -433,6 +433,7 @@ export interface GroupAddEventData extends CommonRequestEventData {
     group_name: string,
     comment: string, //附加信息
     inviter_id?: number, //邀请者(来自群员的邀请时)
+    tips: string, //如"该帐号存在风险，请谨慎操作"
 }
 export interface GroupInviteEventData extends CommonRequestEventData {
     request_type: "group",
@@ -912,7 +913,7 @@ export class Client extends EventEmitter {
         "system.offline.frozen" | "system.offline.unknown", listener: (this: Client, data: OfflineEventData) => void): this;
     on(event: "system", listener: (this: Client, data: SystemEventData) => void): this;
 
-    on(event: "request.friend" | "request.friend.add", listener: (this: Client, data: FriendAddEventData) => void): this; //收到好友申请事件
+    on(event: "request.friend" | "request.friend.add" | "request.friend.single", listener: (this: Client, data: FriendAddEventData) => void): this; //收到好友申请事件
     on(event: "request.group.add", listener: (this: Client, data: GroupAddEventData) => void): this; //收到加群申请事件
     on(event: "request.group.invite", listener: (this: Client, data: GroupInviteEventData) => void): this; //收到群邀请事件
     on(event: "request.group", listener: (this: Client, data: GroupAddEventData | GroupInviteEventData) => void): this;
@@ -954,7 +955,7 @@ export class Client extends EventEmitter {
       "system.offline.frozen" | "system.offline.unknown", listener: (this: Client, data: OfflineEventData) => void): this;
     once(event: "system", listener: (this: Client, data: SystemEventData) => void): this;
 
-    once(event: "request.friend" | "request.friend.add", listener: (this: Client, data: FriendAddEventData) => void): this; //收到好友申请事件
+    once(event: "request.friend" | "request.friend.add" | "request.friend.single", listener: (this: Client, data: FriendAddEventData) => void): this; //收到好友申请事件
     once(event: "request.group.add", listener: (this: Client, data: GroupAddEventData) => void): this; //收到加群申请事件
     once(event: "request.group.invite", listener: (this: Client, data: GroupInviteEventData) => void): this; //收到群邀请事件
     once(event: "request.group", listener: (this: Client, data: GroupAddEventData | GroupInviteEventData) => void): this;
@@ -996,7 +997,7 @@ export class Client extends EventEmitter {
       "system.offline.frozen" | "system.offline.unknown", listener: (this: Client, data: OfflineEventData) => void): this;
     off(event: "system", listener: (this: Client, data: SystemEventData) => void): this;
 
-    off(event: "request.friend" | "request.friend.add", listener: (this: Client, data: FriendAddEventData) => void): this; //收到好友申请事件
+    off(event: "request.friend" | "request.friend.add" | "request.friend.single", listener: (this: Client, data: FriendAddEventData) => void): this; //收到好友申请事件
     off(event: "request.group.add", listener: (this: Client, data: GroupAddEventData) => void): this; //收到加群申请事件
     off(event: "request.group.invite", listener: (this: Client, data: GroupInviteEventData) => void): this; //收到群邀请事件
     off(event: "request.group", listener: (this: Client, data: GroupAddEventData | GroupInviteEventData) => void): this;
