@@ -770,6 +770,8 @@ export class Client extends EventEmitter {
     sendDiscussMsg(discuss_id: number, message: MessageElem | Iterable<MessageElem> | string, auto_escape?: boolean): Promise<Ret>;
     /** 撤回 */
     deleteMsg(message_id: string): Promise<Ret>;
+    /** 置消息已读(message_id及之前的消息将全部变为已读) */
+    reportReaded(message_id: string): Promise<Ret>;
     /** 获取一条消息(无法获取被撤回的消息) */
     getMsg(message_id: string): Promise<Ret<PrivateMessageEventData | GroupMessageEventData>>;
 
