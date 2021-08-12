@@ -368,11 +368,12 @@ export interface FileElem {
 export interface CommonEventData {
     self_id: number,
     time: number,
-    post_type: "system" | "request" | "message" | "notice",
+    post_type: "system" | "request" | "message" | "notice" | "sync",
     system_type?: "login" | "online" | "offline",
     request_type?: "friend" | "group",
     message_type?: "private" | "group" | "discuss",
     notice_type?: "friend" | "group",
+    sync_type?: "message" | "profile" | "status" | "setting" | "remark",
     sub_type?: string,
 }
 
@@ -585,17 +586,47 @@ export interface GroupTitleEventData extends CommonGroupNoticeEventData {
 export interface GroupSettingEventData extends CommonGroupNoticeEventData {
     sub_type: "setting", //群设置变更
     group_id: number,
-    group_name?: string,
-    enable_guest?: boolean,
-    enable_anonymous?: boolean,
-    enable_upload_album?: boolean,
-    enable_upload_file?: boolean,
-    enable_temp_chat?: boolean,
-    enable_new_group?: boolean,
-    enable_show_honor?: boolean,
-    enable_show_level?: boolean,
-    enable_show_title?: boolean,
-    enable_confess?: boolean,
+    group_name?: string, //群名变更
+    enable_guest?: boolean, //允许游客
+    enable_anonymous?: boolean, //允许匿名
+    enable_upload_album?: boolean, //允许群员上传相册
+    enable_upload_file?: boolean, //允许群员上传文件
+    enable_temp_chat?: boolean, //允许发起临时会话
+    enable_new_group?: boolean, //允许发起新群
+    enable_show_honor?: boolean, //显示群员荣誉
+    enable_show_level?: boolean, //显示群员等级
+    enable_show_title?: boolean, //显示群员头衔
+    enable_confess?: boolean, //开关坦白说
+    avatar?: boolean, //头像变更
+}
+
+//sync events
+export interface SyncMessageEventData extends PrivateMessageEventData {
+    post_type: "sync",
+    sync_type: "message", //同步其他客户端发送的私聊
+    reply: undefined,
+}
+export interface SyncRemarkEventData extends CommonEventData {
+    post_type: "sync",
+    sync_type: "remark", //同步好友备注
+    user_id: number,
+    remark: string,
+}
+export interface SyncStatusEventData extends CommonEventData {
+    post_type: "sync",
+    sync_type: "status", //同步在线状态
+    old_status: number,
+    new_status: number,
+}
+export interface SyncProfileEventData extends CommonEventData {
+    post_type: "sync",
+    sync_type: "profile", //同步个人资料
+    nickname?: string,
+    sex?: Gender,
+    age?: number,
+    signature?: string,
+    description?: string,
+    avatar?: boolean,
 }
 
 export type FriendNoticeEventData = FriendIncreaseEventData | FriendDecreaseEventData | FriendRecallEventData |
@@ -609,7 +640,8 @@ export type SystemEventData = DeviceEventData | SliderEventData | LoginErrorEven
 export type RequestEventData = FriendAddEventData | GroupAddEventData | GroupInviteEventData; //3
 export type MessageEventData = PrivateMessageEventData | GroupMessageEventData | DiscussMessageEventData; //3
 export type NoticeEventData = FriendNoticeEventData | GroupNoticeEventData; //2
-export type EventData = SystemEventData | RequestEventData | MessageEventData | NoticeEventData; //4
+export type SyncEventData = SyncMessageEventData | SyncProfileEventData | SyncRemarkEventData | SyncStatusEventData; //4
+export type EventData = SystemEventData | RequestEventData | MessageEventData | NoticeEventData | SyncEventData; //5
 
 ////////// group file system
 
@@ -945,6 +977,12 @@ export class Client extends EventEmitter {
     on(event: "notice.group", listener: (this: Client, data: GroupNoticeEventData) => void): this; //监听以上所有群notice事件
     on(event: "notice", listener: (this: Client, data: NoticeEventData) => void): this; //监听以上所有notice事件
 
+    on(event: "sync.message", listener: (this: Client, data: SyncMessageEventData) => void): this; //同账号其他客户端发送私聊事件
+    on(event: "sync.remark", listener: (this: Client, data: SyncRemarkEventData) => void): this; //好友备注修改事件
+    on(event: "sync.profile", listener: (this: Client, data: SyncProfileEventData) => void): this; //个人资料修改事件
+    on(event: "sync.status", listener: (this: Client, data: SyncStatusEventData) => void): this; //在线状态修改事件
+    on(event: "sync", listener: (this: Client, data: SyncEventData) => void): this; //监听以上所有sync事件
+
     on(event: string | symbol, listener: (this: Client, ...args: any[]) => void): this;
 
     once(event: "system.login.qrcode", listener: (this: Client, data: QrcodeEventData) => void): this; //扫码登录收到二维码事件
@@ -987,6 +1025,12 @@ export class Client extends EventEmitter {
     once(event: "notice.group", listener: (this: Client, data: GroupNoticeEventData) => void): this; //监听以上所有群notice事件
     once(event: "notice", listener: (this: Client, data: NoticeEventData) => void): this; //监听以上所有notice事件
 
+    once(event: "sync.message", listener: (this: Client, data: SyncMessageEventData) => void): this; //同账号其他客户端发送私聊事件
+    once(event: "sync.remark", listener: (this: Client, data: SyncRemarkEventData) => void): this; //好友备注修改事件
+    once(event: "sync.profile", listener: (this: Client, data: SyncProfileEventData) => void): this; //个人资料修改事件
+    once(event: "sync.status", listener: (this: Client, data: SyncStatusEventData) => void): this; //在线状态修改事件
+    once(event: "sync", listener: (this: Client, data: SyncEventData) => void): this; //监听以上所有sync事件
+
     once(event: string | symbol, listener: (this: Client, ...args: any[]) => void): this;
 
     off(event: "system.login.qrcode", listener: (this: Client, data: QrcodeEventData) => void): this; //扫码登录收到二维码事件
@@ -1028,6 +1072,12 @@ export class Client extends EventEmitter {
     off(event: "notice.friend", listener: (this: Client, data: FriendNoticeEventData) => void): this; //监听以上所有好友notice事件
     off(event: "notice.group", listener: (this: Client, data: GroupNoticeEventData) => void): this; //监听以上所有群notice事件
     off(event: "notice", listener: (this: Client, data: NoticeEventData) => void): this; //监听以上所有notice事件
+
+    off(event: "sync.message", listener: (this: Client, data: SyncMessageEventData) => void): this; //同账号其他客户端发送私聊事件
+    off(event: "sync.remark", listener: (this: Client, data: SyncRemarkEventData) => void): this; //好友备注修改事件
+    off(event: "sync.profile", listener: (this: Client, data: SyncProfileEventData) => void): this; //个人资料修改事件
+    off(event: "sync.status", listener: (this: Client, data: SyncStatusEventData) => void): this; //在线状态修改事件
+    off(event: "sync", listener: (this: Client, data: SyncEventData) => void): this; //监听以上所有sync事件
 
     off(event: string | symbol, listener: (this: Client, ...args: any[]) => void): this;
 
@@ -1149,4 +1199,18 @@ export namespace cqcode {
     function node(id: string): string;
     function anonymous(ignore?: boolean): string;
     function mirai(data: string): string;
+}
+
+export namespace constants {
+    const PLATFORM_ANDROID = 1;
+    const PLATFORM_APAD = 2;
+    const PLATFORM_WATCH = 3;
+    const PLATFORM_IMAC = 4;
+    const PLATFORM_IPAD = 5;
+    const STATUS_ONLINE = 11;
+    const STATUS_ABSENT = 31;
+    const STATUS_INVISIBLE = 41;
+    const STATUS_BUSY = 50;
+    const STATUS_QME = 60;
+    const STATUS_NODISTURB = 70;
 }
