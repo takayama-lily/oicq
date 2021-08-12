@@ -1050,6 +1050,20 @@ export class Client extends EventEmitter {
     getVersionInfo(): Ret<any>;
     /** @deprecated 获取登录账号信息 */
     getLoginInfo(): Ret<LoginInfo>;
+
+    //----------以下为隐藏方法，可用于扩展协议----------\\
+    /** 发送一个未加密的uni包 */
+    sendUni(cmd: string, body: Uint8Array): Promise<Buffer>;
+    /** 发送一个未加密的oidb包 */
+    sendOidb(cmd: string, body: Uint8Array): Promise<Buffer>;
+    /** 触发一个oicq标准事件 */
+    em(name: string, data?: object): void;
+    /** 监听所有收到的包(已解密) */
+    on(event: "internal.payload", listener: (this: Client, data: {
+        cmd: string,
+        seq: number,
+        payload: Buffer,
+    }) => void): this;
 }
 
 /** 工厂方法 */
