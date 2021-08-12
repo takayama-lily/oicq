@@ -1127,6 +1127,12 @@ export class Client extends EventEmitter {
         seq: number,
         payload: Buffer,
     }) => void): this;
+
+    /** 正在输入事件(实验性) */
+    on(event: "internal.input", listener: (this: Client, data: {
+        user_id: number,
+        end: boolean, //是否为结束
+    }) => void): this;
 }
 
 /** 工厂方法 */
