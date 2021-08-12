@@ -455,7 +455,7 @@ interface CommonMessageEventData extends CommonEventData {
 }
 export interface PrivateMessageEventData extends CommonMessageEventData {
     message_type: "private", //私聊消息
-    sub_type: "friend" | "group" | "single" | "other",
+    sub_type: "friend" | "group" | "single" | "other" | "self",
     sender: FriendInfo,
     auto_reply: boolean, //是否自动回复
 }
@@ -922,7 +922,7 @@ export class Client extends EventEmitter {
     on(event: "request", listener: (this: Client, data: RequestEventData) => void): this; //监听以上所有request事件
 
     on(event: "message.private" | "message.private.friend" | "message.private.group" |
-        "message.private.single" | "message.private.other", listener: (this: Client, data: PrivateMessageEventData) => void): this; //私聊消息事件
+        "message.private.single" | "message.private.other" | "message.private.self", listener: (this: Client, data: PrivateMessageEventData) => void): this; //私聊消息事件
     on(event: "message.group" | "message.group.normal" | "message.group.anonymous", listener: (this: Client, data: GroupMessageEventData) => void): this; //群消息事件
     on(event: "message.discuss", listener: (this: Client, data: DiscussMessageEventData) => void): this; //讨论组消息事件
     on(event: "message", listener: (this: Client, data: MessageEventData) => void): this; //监听以上所有message事件
@@ -964,7 +964,7 @@ export class Client extends EventEmitter {
     once(event: "request", listener: (this: Client, data: RequestEventData) => void): this; //监听以上所有request事件
 
     once(event: "message.private" | "message.private.friend" | "message.private.group" |
-      "message.private.single" | "message.private.other", listener: (this: Client, data: PrivateMessageEventData) => void): this; //私聊消息事件
+      "message.private.single" | "message.private.other" | "message.private.self", listener: (this: Client, data: PrivateMessageEventData) => void): this; //私聊消息事件
     once(event: "message.group" | "message.group.normal" | "message.group.anonymous", listener: (this: Client, data: GroupMessageEventData) => void): this; //群消息事件
     once(event: "message.discuss", listener: (this: Client, data: DiscussMessageEventData) => void): this; //讨论组消息事件
     once(event: "message", listener: (this: Client, data: MessageEventData) => void): this; //监听以上所有message事件
@@ -1006,7 +1006,7 @@ export class Client extends EventEmitter {
     off(event: "request", listener: (this: Client, data: RequestEventData) => void): this; //监听以上所有request事件
 
     off(event: "message.private" | "message.private.friend" | "message.private.group" |
-      "message.private.single" | "message.private.other", listener: (this: Client, data: PrivateMessageEventData) => void): this; //私聊消息事件
+      "message.private.single" | "message.private.other" | "message.private.self", listener: (this: Client, data: PrivateMessageEventData) => void): this; //私聊消息事件
     off(event: "message.group" | "message.group.normal" | "message.group.anonymous", listener: (this: Client, data: GroupMessageEventData) => void): this; //群消息事件
     off(event: "message.discuss", listener: (this: Client, data: DiscussMessageEventData) => void): this; //讨论组消息事件
     off(event: "message", listener: (this: Client, data: MessageEventData) => void): this; //监听以上所有message事件
