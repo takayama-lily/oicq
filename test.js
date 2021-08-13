@@ -1,5 +1,5 @@
 "use strict";
-const crypto = require("crypto");
+const https = require("https");
 const oicq = require("./index");
 
 /**
@@ -14,7 +14,7 @@ function account() {
         try {
             input = parseInt(input.toString().trim());
             bot = oicq.createClient(input, {
-                log_level: "debug", ignore_self: false
+                log_level: "debug", ignore_self: false, platform: oicq.constants.PLATFORM_IPAD
             });
 
             bot.on("system.login.qrcode", (data) => {
@@ -65,6 +65,12 @@ function account() {
             });
             bot.on("message", (data)=>{
                 // console.log("收到message事件", data);
+            });
+            bot.on("sync", (data)=>{
+                console.log("收到sync事件", data);
+            });
+            bot.on("internal.sso", (data)=>{
+                // console.log("收到数据包", data);
             });
         } catch (e) {
             console.log(e.message);
@@ -127,4 +133,24 @@ function loop() {
 if (!bot) {
     console.log("欢迎来到调试台！");
     account();
+}
+
+async function get(url, domain) {
+    const cookie = (await bot.getCookies(domain)).data.cookies;
+    https.get(url, { headers: { cookie } }, (res) => {
+        res.setEncoding("utf-8");
+        let data = "";
+        res.on("data", chunk => data += chunk);
+        res.on("end", () => console.log(data));
+    });
+}
+
+async function post(url, domain, data) {
+    const cookie = (await bot.getCookies(domain)).data.cookies;
+    https.request(url, { headers: { cookie, "Content-Length": Buffer.byteLength(data) }, method: "POST" }, (res) => {
+        res.setEncoding("utf-8");
+        let data = "";
+        res.on("data", chunk => data += chunk);
+        res.on("end", () => console.log(data));
+    }).end(data);
 }
