@@ -29,7 +29,6 @@ export interface ConfBot {
     data_dir?: string,
 
     //触发system.offline.network事件后的重连间隔秒数，默认5(秒)，不建议设置低于3(秒)
-    //瞬间的断线重连不会触发此事件，通常你的机器真的没有网络或登陆无响应时才会触发
     //设置为0则不会自动重连，然后你可以监听此事件自己处理
     reconn_interval?: number,
 
@@ -116,7 +115,7 @@ export interface StrangerInfo {
 }
 /** 好友资料 */
 export interface FriendInfo extends StrangerInfo {
-    readonly remark?: string //好友备注
+    readonly remark: string //好友备注
 }
 /** 群资料 */
 export interface GroupInfo {
@@ -379,7 +378,7 @@ export interface CommonEventData {
     request_type?: "friend" | "group",
     message_type?: "private" | "group" | "discuss",
     notice_type?: "friend" | "group",
-    sync_type?: "message" | "profile" | "status" | "setting" | "remark" | "readed" | "black",
+    sync_type?: "message" | "profile" | "status" | "readed" | "black",
     sub_type?: string,
 }
 
@@ -613,12 +612,12 @@ export interface SyncMessageEventData extends PrivateMessageEventData {
     sync_type: "message", //同步其他客户端发送的私聊
     reply: undefined,
 }
-export interface SyncRemarkEventData extends CommonEventData {
-    post_type: "sync",
-    sync_type: "remark", //同步好友备注
-    user_id: number,
-    remark: string,
-}
+// export interface SyncRemarkEventData extends CommonEventData {
+//     post_type: "sync",
+//     sync_type: "remark", //同步好友备注
+//     user_id: number,
+//     remark: string,
+// }
 export interface SyncStatusEventData extends CommonEventData {
     post_type: "sync",
     sync_type: "status", //同步在线状态
@@ -661,7 +660,7 @@ export type SystemEventData = DeviceEventData | SliderEventData | LoginErrorEven
 export type RequestEventData = FriendAddEventData | GroupAddEventData | GroupInviteEventData; //3
 export type MessageEventData = PrivateMessageEventData | GroupMessageEventData | DiscussMessageEventData; //3
 export type NoticeEventData = FriendNoticeEventData | GroupNoticeEventData; //2
-export type SyncEventData = SyncMessageEventData | SyncProfileEventData | SyncRemarkEventData | SyncStatusEventData | SyncReadedEventData | SyncBlackEventData; //6
+export type SyncEventData = SyncMessageEventData | SyncProfileEventData | SyncStatusEventData | SyncReadedEventData | SyncBlackEventData; //5
 export type EventData = SystemEventData | RequestEventData | MessageEventData | NoticeEventData | SyncEventData; //5
 
 ////////// group file system
@@ -1001,7 +1000,7 @@ export class Client extends EventEmitter {
     on(event: "notice", listener: (this: Client, data: NoticeEventData) => void): this; //监听以上所有notice事件
 
     on(event: "sync.message", listener: (this: Client, data: SyncMessageEventData) => void): this; //同账号其他客户端发送私聊事件
-    on(event: "sync.remark", listener: (this: Client, data: SyncRemarkEventData) => void): this; //好友备注修改事件
+    // on(event: "sync.remark", listener: (this: Client, data: SyncRemarkEventData) => void): this; //好友备注修改事件
     on(event: "sync.profile", listener: (this: Client, data: SyncProfileEventData) => void): this; //个人资料修改事件
     on(event: "sync.status", listener: (this: Client, data: SyncStatusEventData) => void): this; //在线状态修改事件
     on(event: "sync.black", listener: (this: Client, data: SyncBlackEventData) => void): this; //黑名单修改事件
@@ -1051,7 +1050,7 @@ export class Client extends EventEmitter {
     once(event: "notice", listener: (this: Client, data: NoticeEventData) => void): this; //监听以上所有notice事件
 
     once(event: "sync.message", listener: (this: Client, data: SyncMessageEventData) => void): this; //同账号其他客户端发送私聊事件
-    once(event: "sync.remark", listener: (this: Client, data: SyncRemarkEventData) => void): this; //好友备注修改事件
+    // once(event: "sync.remark", listener: (this: Client, data: SyncRemarkEventData) => void): this; //好友备注修改事件
     once(event: "sync.profile", listener: (this: Client, data: SyncProfileEventData) => void): this; //个人资料修改事件
     once(event: "sync.status", listener: (this: Client, data: SyncStatusEventData) => void): this; //在线状态修改事件
     once(event: "sync.black", listener: (this: Client, data: SyncBlackEventData) => void): this; //黑名单修改事件
@@ -1101,7 +1100,7 @@ export class Client extends EventEmitter {
     off(event: "notice", listener: (this: Client, data: NoticeEventData) => void): this; //监听以上所有notice事件
 
     off(event: "sync.message", listener: (this: Client, data: SyncMessageEventData) => void): this; //同账号其他客户端发送私聊事件
-    off(event: "sync.remark", listener: (this: Client, data: SyncRemarkEventData) => void): this; //好友备注修改事件
+    // off(event: "sync.remark", listener: (this: Client, data: SyncRemarkEventData) => void): this; //好友备注修改事件
     off(event: "sync.profile", listener: (this: Client, data: SyncProfileEventData) => void): this; //个人资料修改事件
     off(event: "sync.status", listener: (this: Client, data: SyncStatusEventData) => void): this; //在线状态修改事件
     off(event: "sync.black", listener: (this: Client, data: SyncBlackEventData) => void): this; //黑名单修改事件
