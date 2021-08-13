@@ -17,8 +17,10 @@ export interface ConfBot {
     platform?: number,
     /** 被踢下线是否在3秒后重新登陆，默认false */
     kickoff?: boolean,
-    /** 群聊是否过滤自己的发言，默认true */
+    /** 群聊是否屏蔽自己的发言，默认true */
     ignore_self?: boolean,
+    /** 群聊是否屏蔽黑名单人员，默认true */
+    ignore_black?: boolean,
     /** 被风控时是否尝试用分片发送，默认true */
     resend?: boolean,
     /** raw_message里是否不使用CQ码字符串，而是使用简短易读的形式(如："[图片][表情]")，可以加快解析速度，默认false */
@@ -373,7 +375,7 @@ export interface CommonEventData {
     request_type?: "friend" | "group",
     message_type?: "private" | "group" | "discuss",
     notice_type?: "friend" | "group",
-    sync_type?: "message" | "profile" | "status" | "setting" | "remark" | "readed",
+    sync_type?: "message" | "profile" | "status" | "setting" | "remark" | "readed" | "black",
     sub_type?: string,
 }
 
@@ -600,7 +602,7 @@ export interface GroupSettingEventData extends CommonGroupNoticeEventData {
     avatar?: boolean, //头像变更
 }
 
-//sync events
+//sync events 同一账号的其他客户端做了某些操作而触发的事件
 export interface SyncMessageEventData extends PrivateMessageEventData {
     post_type: "sync",
     message_type: undefined,
@@ -638,6 +640,11 @@ export interface SyncReadedEventData extends CommonEventData {
     group_id?: number,
     seqid?: number, //群聊以seqid分界(关于seqid：https://github.com/takayama-lily/oicq/wiki/93.解析消息ID)
 }
+export interface SyncBlackEventData extends CommonEventData {
+    post_type: "sync",
+    sync_type: "black", //同步黑名单
+    blacklist: number[],
+}
 
 export type FriendNoticeEventData = FriendIncreaseEventData | FriendDecreaseEventData | FriendRecallEventData |
     FriendProfileEventData | FriendPokeEventData; //5
@@ -650,7 +657,7 @@ export type SystemEventData = DeviceEventData | SliderEventData | LoginErrorEven
 export type RequestEventData = FriendAddEventData | GroupAddEventData | GroupInviteEventData; //3
 export type MessageEventData = PrivateMessageEventData | GroupMessageEventData | DiscussMessageEventData; //3
 export type NoticeEventData = FriendNoticeEventData | GroupNoticeEventData; //2
-export type SyncEventData = SyncMessageEventData | SyncProfileEventData | SyncRemarkEventData | SyncStatusEventData | SyncReadedEventData; //5
+export type SyncEventData = SyncMessageEventData | SyncProfileEventData | SyncRemarkEventData | SyncStatusEventData | SyncReadedEventData | SyncBlackEventData; //6
 export type EventData = SystemEventData | RequestEventData | MessageEventData | NoticeEventData | SyncEventData; //5
 
 ////////// group file system
@@ -750,6 +757,8 @@ export class Client extends EventEmitter {
     readonly gl: ReadonlyMap<number, GroupInfo>;
     /** 群员列表 */
     readonly gml: ReadonlyMap<number, ReadonlyMap<number, MemberInfo>>;
+    /** 黑名单 */
+    readonly blacklist: ReadonlySet<number>;
     /** 日志记录器 */
     readonly logger: log4js.Logger;
     /** 当前账号本地存储路径 */
@@ -991,6 +1000,7 @@ export class Client extends EventEmitter {
     on(event: "sync.remark", listener: (this: Client, data: SyncRemarkEventData) => void): this; //好友备注修改事件
     on(event: "sync.profile", listener: (this: Client, data: SyncProfileEventData) => void): this; //个人资料修改事件
     on(event: "sync.status", listener: (this: Client, data: SyncStatusEventData) => void): this; //在线状态修改事件
+    on(event: "sync.black", listener: (this: Client, data: SyncBlackEventData) => void): this; //黑名单修改事件
     on(event: "sync.readed" | "sync.readed.private" | "sync.readed.group", listener: (this: Client, data: SyncReadedEventData) => void): this; //消息已读事件
     on(event: "sync", listener: (this: Client, data: SyncEventData) => void): this; //监听以上所有sync事件
 
@@ -1040,6 +1050,7 @@ export class Client extends EventEmitter {
     once(event: "sync.remark", listener: (this: Client, data: SyncRemarkEventData) => void): this; //好友备注修改事件
     once(event: "sync.profile", listener: (this: Client, data: SyncProfileEventData) => void): this; //个人资料修改事件
     once(event: "sync.status", listener: (this: Client, data: SyncStatusEventData) => void): this; //在线状态修改事件
+    once(event: "sync.black", listener: (this: Client, data: SyncBlackEventData) => void): this; //黑名单修改事件
     once(event: "sync.readed" | "sync.readed.private" | "sync.readed.group", listener: (this: Client, data: SyncReadedEventData) => void): this; //消息已读事件
     once(event: "sync", listener: (this: Client, data: SyncEventData) => void): this; //监听以上所有sync事件
 
@@ -1089,6 +1100,7 @@ export class Client extends EventEmitter {
     off(event: "sync.remark", listener: (this: Client, data: SyncRemarkEventData) => void): this; //好友备注修改事件
     off(event: "sync.profile", listener: (this: Client, data: SyncProfileEventData) => void): this; //个人资料修改事件
     off(event: "sync.status", listener: (this: Client, data: SyncStatusEventData) => void): this; //在线状态修改事件
+    off(event: "sync.black", listener: (this: Client, data: SyncBlackEventData) => void): this; //黑名单修改事件
     off(event: "sync.readed" | "sync.readed.private" | "sync.readed.group", listener: (this: Client, data: SyncReadedEventData) => void): this; //消息已读事件
     off(event: "sync", listener: (this: Client, data: SyncEventData) => void): this; //监听以上所有sync事件
 
@@ -1122,7 +1134,7 @@ export class Client extends EventEmitter {
     /** 触发一个oicq标准事件 */
     em(name: string, data?: object): void;
     /** 监听所有收到的包(已解密) */
-    on(event: "internal.payload", listener: (this: Client, data: {
+    on(event: "internal.sso", listener: (this: Client, data: {
         cmd: string,
         seq: number,
         payload: Buffer,

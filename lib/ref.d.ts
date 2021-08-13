@@ -164,6 +164,8 @@ export class Client extends oicq.Client {
     gl: Map<number, oicq.GroupInfo>;
     gml: Map<number, Map<number, oicq.MemberInfo>>;
 
+    blacklist: Set<number>;
+
     apk: ApkInfo;
     device: Device;
 
