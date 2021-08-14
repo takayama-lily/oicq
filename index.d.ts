@@ -426,7 +426,7 @@ interface CommonRequestEventData extends CommonEventData {
 }
 export interface FriendAddEventData extends CommonRequestEventData {
     request_type: "friend",
-    sub_type: "add", //加好友请求
+    sub_type: "add" | "single", //加好友请求
     comment: string, //附加信息
     source: string, //来源(如"条件查找")
     age: number,
