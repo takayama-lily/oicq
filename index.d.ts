@@ -606,7 +606,7 @@ export interface GroupSettingEventData extends CommonGroupNoticeEventData {
 }
 
 //sync events 同一账号的其他客户端做了某些操作而触发的事件
-export interface SyncMessageEventData extends PrivateMessageEventData {
+export interface SyncMessageEventData extends Omit<PrivateMessageEventData, 'post_type'> {
     post_type: "sync",
     message_type: undefined,
     sync_type: "message", //同步其他客户端发送的私聊
