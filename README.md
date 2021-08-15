@@ -9,6 +9,7 @@
 * 若你不熟悉Node.js或不会组织代码，可通过 [template](https://github.com/takayama-lily/oicq-template) 创建一个简单的应用程序
 * [API参考文档](https://github.com/takayama-lily/oicq/wiki/91.API%E6%96%87%E6%A1%A3) / [事件参考文档](https://github.com/takayama-lily/oicq/wiki/92.%E4%BA%8B%E4%BB%B6%E6%96%87%E6%A1%A3)
 * [wiki](https://github.com/takayama-lily/oicq/wiki) 列表
+* [码云镜像仓库](https://gitee.com/takayama/oicq)
 
 ----
 
