@@ -552,7 +552,8 @@ export interface MemberDecreaseEventData extends CommonGroupNoticeEventData {
     operator_id: number, //踢人者
     user_id: number, //被踢者
     dismiss: boolean, //是否是解散
-    member?: MemberInfo,
+    member?: MemberInfo, //该群员的最后资料(有缓存时提供)
+    group?: GroupInfo, //该群的最后资料(自己被踢或群解散时提供)
 }
 export interface GroupRecallEventData extends CommonGroupNoticeEventData {
     sub_type: "recall", //群消息撤回
@@ -851,7 +852,7 @@ export class Client extends EventEmitter {
         raw_message: string,
     }>>>;
 
-    /** 发群公告 */
+    /** 发简易群公告 */
     sendGroupNotice(group_id: number, content: string): Promise<Ret>;
     /** 设置群名 */
     setGroupName(group_id: number, group_name: string): Promise<Ret>;
@@ -871,9 +872,9 @@ export class Client extends EventEmitter {
     setGroupBan(group_id: number, user_id: number, duration?: number): Promise<Ret>;
     /** 禁言匿名玩家 */
     setGroupAnonymousBan(group_id: number, flag: string, duration?: number): Promise<Ret>;
-    /** 退群 */
-    setGroupLeave(group_id: number, is_dismiss?: boolean): Promise<Ret>;
-    /** 戳一戳 */
+    /** 退群(注意dismiss参数可能无效，如果你是群主无论如何群都会立即解散) */
+    setGroupLeave(group_id: number, dismiss?: boolean): Promise<Ret>;
+    /** 戳一戳(可以对好友使用) */
     sendGroupPoke(group_id: number, user_id: number): Promise<Ret>;
 
     /** 处理好友请求 */
