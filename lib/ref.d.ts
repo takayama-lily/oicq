@@ -183,10 +183,7 @@ export class Client extends oicq.Client {
 
     nextSeq(): number;
     send(): Promise<Buffer>;
-    sendOidb(cmd: string, body: Buffer): Promise<Buffer>;
-    sendUni(cmd: string, body: Buffer): Promise<Buffer>;
     writeUni(cmd: string, body: Buffer, seq?: number): void;
-    em(name: string, data: object): void;
     msgExists(from: number, type: number, seq: number, time: number): boolean;
     buildSyncCookie(): Buffer;
     parseEventType(name: string): oicq.CommonEventData;
