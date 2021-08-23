@@ -112,10 +112,12 @@ export interface MsgHead extends Proto {
     },
     9: {
         1: number, //group_id
+        2: number, //msg_type
         4: Proto, //card
         8: Proto, //group_name
     },
     10: number, //appid
+    11: number, //subid
     13: {
         1: number, //disscus_id
         4: Proto, //card

@@ -19,8 +19,6 @@ export interface ConfBot {
     kickoff?: boolean,
     /** 群聊是否屏蔽自己的发言，默认true */
     ignore_self?: boolean,
-    /** 群聊是否屏蔽黑名单人员，默认true */
-    ignore_black?: boolean,
     /** 被风控时是否尝试用分片发送，默认true */
     resend?: boolean,
     /** raw_message里是否不使用CQ码字符串，而是使用简短易读的形式(如："[图片][表情]")，可以加快解析速度，默认false */
@@ -473,6 +471,8 @@ export interface GroupMessageEventData extends CommonMessageEventData {
     anonymous: Anonymous | null, //匿名消息
     sender: MemberBaseInfo,
     atme: boolean,
+    seqid: number,
+    block: boolean, //是否已屏蔽
 }
 export interface Anonymous {
     id: number,
@@ -611,12 +611,6 @@ export interface SyncMessageEventData extends Omit<PrivateMessageEventData, "pos
     post_type: "sync",
     sync_type: "message", //同步其他客户端发送的私聊
 }
-// export interface SyncRemarkEventData extends CommonEventData {
-//     post_type: "sync",
-//     sync_type: "remark", //同步好友备注
-//     user_id: number,
-//     remark: string,
-// }
 export interface SyncStatusEventData extends CommonEventData {
     post_type: "sync",
     sync_type: "status", //同步在线状态
@@ -640,7 +634,7 @@ export interface SyncReadedEventData extends CommonEventData {
     user_id?: number,
     timestamp?: number, //私聊以时间戳分界
     group_id?: number,
-    seqid?: number, //群聊以seqid分界(关于seqid：https://github.com/takayama-lily/oicq/wiki/93.解析消息ID)
+    seqid?: number, //群聊以seqid分界
 }
 export interface SyncBlackEventData extends CommonEventData {
     post_type: "sync",
