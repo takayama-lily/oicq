@@ -732,6 +732,114 @@ export type Domain = "tenpay.com"
     | "qun.qq.com"
     | "ti.qq.com";
 
+
+export interface EventMap {
+    /**扫码登录收到二维码事件 */
+    "system.login.qrcode": (this: Client, data: QrcodeEventData) => void;
+    /**收到滑动验证码事件 */
+    "system.login.slider": (this: Client, data: SliderEventData) => void;
+    /**设备锁验证事件 */
+    "system.login.device": (this: Client, data: DeviceEventData) => void;
+    /**登录遇到错误事件 */
+    "system.login.error": (this: Client, data: LoginErrorEventData) => void;
+    "system.login": (this: Client, data: DeviceEventData | LoginErrorEventData | SliderEventData | QrcodeEventData) => void;
+    /**上线事件 */
+    "system.online": (this: Client, data: OnlineEventData) => void;
+
+    /**下线事件（网络原因） */
+    "system.offline.network": (this: Client, data: OfflineEventData) => void;
+    /**下线事件（被踢下线） */
+    "system.offline.kickoff": (this: Client, data: OfflineEventData) => void;
+    /**下线事件（账号被冻结） */
+    "system.offline.frozen": (this: Client, data: OfflineEventData) => void;
+    /**下线事件（未知原因） */
+    "system.offline.unknown": (this: Client, data: OfflineEventData) => void;
+    /**下线事件 */
+    "system.offline": (this: Client, data: OfflineEventData) => void;
+
+    "system": (this: Client, data: SystemEventData) => void;
+
+    /**收到好友申请事件 */
+    "request.friend.add": (this: Client, data: FriendAddEventData) => void;
+    /**收到好友申请事件 */
+    "request.friend.single": (this: Client, data: FriendAddEventData) => void;
+    /**收到好友申请事件 */
+    "request.friend": (this: Client, data: FriendAddEventData) => void;
+    /**收到加群申请事件 */
+    "request.group.add": (this: Client, data: GroupAddEventData) => void;
+    /**收到群邀请事件 */
+    "request.group.invite": (this: Client, data: GroupInviteEventData) => void
+    "request.group": (this: Client, data: GroupAddEventData | GroupInviteEventData) => void
+    /**监听以上所有request事件 */
+    "request": (this: Client, data: RequestEventData) => void;
+
+    /**私聊消息事件 */
+    "message.private.friend": (this: Client, data: PrivateMessageEventData) => void;
+    "message.private.group": (this: Client, data: PrivateMessageEventData) => void;
+    "message.private.single": (this: Client, data: PrivateMessageEventData) => void;
+    "message.private.other": (this: Client, data: PrivateMessageEventData) => void;
+    "message.private.self": (this: Client, data: PrivateMessageEventData) => void;
+    "message.private": (this: Client, data: PrivateMessageEventData) => void;
+
+    /**群消息事件 */
+    "message.group": (this: Client, data: GroupMessageEventData) => void;
+    "message.group.normal": (this: Client, data: GroupMessageEventData) => void;
+    "message.group.anonymous": (this: Client, data: GroupMessageEventData) => void;
+    /**讨论组消息事件 */
+    "message.discuss": (this: Client, data: DiscussMessageEventData) => void;
+    /**监听以上所有message事件 */
+    "message": (this: Client, data: MessageEventData) => void;
+
+    /**新增好友事件 */
+    "notice.friend.increase": (this: Client, data: FriendIncreaseEventData) => void;
+    /**好友(被)删除事件 */
+    "notice.friend.decrease": (this: Client, data: FriendDecreaseEventData) => void;
+    /**好友消息撤回事件 */
+    "notice.friend.recall": (this: Client, data: FriendRecallEventData) => void;
+    /**好友资料变更事件 */
+    "notice.friend.profile": (this: Client, data: FriendProfileEventData) => void;
+    /**好友戳一戳事件 */
+    "notice.friend.poke": (this: Client, data: FriendPokeEventData) => void;
+    /**入群・群员增加事件 */
+    "notice.group.increase": (this: Client, data: MemberIncreaseEventData) => void;
+    /**踢群・退群事件 */
+    "notice.group.decrease": (this: Client, data: MemberDecreaseEventData) => void;
+    /**群消息撤回事件 */
+    "notice.group.recall": (this: Client, data: GroupRecallEventData) => void;
+    /**管理员变更事件 */
+    "notice.group.admin": (this: Client, data: GroupAdminEventData) => void;
+    /**群禁言事件 */
+    "notice.group.ban": (this: Client, data: GroupMuteEventData) => void;
+    /**群转让事件 */
+    "notice.group.transfer": (this: Client, data: GroupTransferEventData) => void;
+    /**群头衔变更事件 */
+    "notice.group.title": (this: Client, data: GroupTitleEventData) => void;
+    /**群戳一戳事件 */
+    "notice.group.poke": (this: Client, data: GroupPokeEventData) => void;
+    /**群设置变更事件 */
+    "notice.group.setting": (this: Client, data: GroupSettingEventData) => void;
+    /**监听以上所有好友notice事件 */
+    "notice.friend": (this: Client, data: FriendNoticeEventData) => void;
+    /**监听以上所有群notice事件 */
+    "notice.group": (this: Client, data: GroupNoticeEventData) => void;
+    /**监听以上所有notice事件 */
+    "notice": (this: Client, data: NoticeEventData) => void;
+
+    /**同账号其他客户端发送私聊事件 */
+    "sync.message": (this: Client, data: SyncMessageEventData) => void;
+    /**个人资料修改事件 */
+    "sync.profile": (this: Client, data: SyncProfileEventData) => void;
+    /**在线状态修改事件 */
+    "sync.status": (this: Client, data: SyncStatusEventData) => void;
+    /**黑名单修改事件 */
+    "sync.black": (this: Client, data: SyncBlackEventData) => void;
+    /**消息已读事件 */
+    "sync.readed": (this: Client, data: SyncReadedEventData) => void;
+    "sync.readed.private": (this: Client, data: SyncReadedEventData) => void;
+    "sync.readed.group": (this: Client, data: SyncReadedEventData) => void;
+    /**监听以上所有sync事件 */
+    "sync": (this: Client, data: SyncEventData) => void;
+}
 /**
  * 方法不会reject或抛出异常，使用retcode判断是否成功
  * @see {Ret}
@@ -952,105 +1060,14 @@ export class Client extends EventEmitter {
     /** 进入群文件系统 */
     acquireGfs(group_id: number): Gfs;
 
-    on(event: "system.login.qrcode", listener: (this: Client, data: QrcodeEventData) => void): this; //扫码登录收到二维码事件
-    on(event: "system.login.slider", listener: (this: Client, data: SliderEventData) => void): this; //收到滑动验证码事件
-    on(event: "system.login.device", listener: (this: Client, data: DeviceEventData) => void): this; //设备锁验证事件
-    on(event: "system.login.error", listener: (this: Client, data: LoginErrorEventData) => void): this; //登录遇到错误事件
-    on(event: "system.login", listener: (this: Client, data: DeviceEventData | LoginErrorEventData | SliderEventData | QrcodeEventData) => void): this;
-    on(event: "system.online", listener: (this: Client, data: OnlineEventData) => void): this; //上线事件
-    on(event: "system.offline" | "system.offline.network" | "system.offline.kickoff" | //下线事件
-        "system.offline.frozen" | "system.offline.unknown", listener: (this: Client, data: OfflineEventData) => void): this;
-    on(event: "system", listener: (this: Client, data: SystemEventData) => void): this;
+    on<T extends keyof EventMap>(event: T, listener: EventMap[T]): this;
+    on<S extends string | symbol>(event: S & Exclude<S, keyof EventMap>, listener: (this: Client, ...args: any[]) => void): this;
 
-    on(event: "request.friend" | "request.friend.add" | "request.friend.single", listener: (this: Client, data: FriendAddEventData) => void): this; //收到好友申请事件
-    on(event: "request.group.add", listener: (this: Client, data: GroupAddEventData) => void): this; //收到加群申请事件
-    on(event: "request.group.invite", listener: (this: Client, data: GroupInviteEventData) => void): this; //收到群邀请事件
-    on(event: "request.group", listener: (this: Client, data: GroupAddEventData | GroupInviteEventData) => void): this;
-    on(event: "request", listener: (this: Client, data: RequestEventData) => void): this; //监听以上所有request事件
+    once<T extends keyof EventMap>(event: T, listener: EventMap[T]): this;
+    once<S extends string | symbol>(event: S & Exclude<S, keyof EventMap>, listener: (this: Client, ...args: any[]) => void): this;
 
-    on(event: "message.private" | "message.private.friend" | "message.private.group" |
-        "message.private.single" | "message.private.other" | "message.private.self", listener: (this: Client, data: PrivateMessageEventData) => void): this; //私聊消息事件
-    on(event: "message.group" | "message.group.normal" | "message.group.anonymous", listener: (this: Client, data: GroupMessageEventData) => void): this; //群消息事件
-    on(event: "message.discuss", listener: (this: Client, data: DiscussMessageEventData) => void): this; //讨论组消息事件
-    on(event: "message", listener: (this: Client, data: MessageEventData) => void): this; //监听以上所有message事件
-
-    on(event: "notice.friend.increase", listener: (this: Client, data: FriendIncreaseEventData) => void): this; //新增好友事件
-    on(event: "notice.friend.decrease", listener: (this: Client, data: FriendDecreaseEventData) => void): this; //好友(被)删除事件
-    on(event: "notice.friend.recall", listener: (this: Client, data: FriendRecallEventData) => void): this; //好友消息撤回事件
-    on(event: "notice.friend.profile", listener: (this: Client, data: FriendProfileEventData) => void): this; //好友资料变更事件
-    on(event: "notice.friend.poke", listener: (this: Client, data: FriendPokeEventData) => void): this; //好友戳一戳事件
-    on(event: "notice.group.increase", listener: (this: Client, data: MemberIncreaseEventData) => void): this; //入群・群员增加事件
-    on(event: "notice.group.decrease", listener: (this: Client, data: MemberDecreaseEventData) => void): this; //踢群・退群事件
-    on(event: "notice.group.recall", listener: (this: Client, data: GroupRecallEventData) => void): this; //群消息撤回事件
-    on(event: "notice.group.admin", listener: (this: Client, data: GroupAdminEventData) => void): this; //管理员变更事件
-    on(event: "notice.group.ban", listener: (this: Client, data: GroupMuteEventData) => void): this; //群禁言事件
-    on(event: "notice.group.transfer", listener: (this: Client, data: GroupTransferEventData) => void): this; //群转让事件
-    on(event: "notice.group.title", listener: (this: Client, data: GroupTitleEventData) => void): this; //群头衔变更事件
-    on(event: "notice.group.poke", listener: (this: Client, data: GroupPokeEventData) => void): this; //群戳一戳事件
-    on(event: "notice.group.setting", listener: (this: Client, data: GroupSettingEventData) => void): this; //群设置变更事件
-    on(event: "notice.friend", listener: (this: Client, data: FriendNoticeEventData) => void): this; //监听以上所有好友notice事件
-    on(event: "notice.group", listener: (this: Client, data: GroupNoticeEventData) => void): this; //监听以上所有群notice事件
-    on(event: "notice", listener: (this: Client, data: NoticeEventData) => void): this; //监听以上所有notice事件
-
-    on(event: "sync.message", listener: (this: Client, data: SyncMessageEventData) => void): this; //同账号其他客户端发送私聊事件
-    // on(event: "sync.remark", listener: (this: Client, data: SyncRemarkEventData) => void): this; //好友备注修改事件
-    on(event: "sync.profile", listener: (this: Client, data: SyncProfileEventData) => void): this; //个人资料修改事件
-    on(event: "sync.status", listener: (this: Client, data: SyncStatusEventData) => void): this; //在线状态修改事件
-    on(event: "sync.black", listener: (this: Client, data: SyncBlackEventData) => void): this; //黑名单修改事件
-    on(event: "sync.readed" | "sync.readed.private" | "sync.readed.group", listener: (this: Client, data: SyncReadedEventData) => void): this; //消息已读事件
-    on(event: "sync", listener: (this: Client, data: SyncEventData) => void): this; //监听以上所有sync事件
-
-    on(event: string | symbol, listener: (this: Client, ...args: any[]) => void): this;
-
-    once(event: "system.login.qrcode", listener: (this: Client, data: QrcodeEventData) => void): this; //扫码登录收到二维码事件
-    once(event: "system.login.slider", listener: (this: Client, data: SliderEventData) => void): this; //收到滑动验证码事件
-    once(event: "system.login.device", listener: (this: Client, data: DeviceEventData) => void): this; //设备锁验证事件
-    once(event: "system.login.error", listener: (this: Client, data: LoginErrorEventData) => void): this; //登录遇到错误事件
-    once(event: "system.login", listener: (this: Client, data: DeviceEventData | LoginErrorEventData | SliderEventData | QrcodeEventData) => void): this;
-    once(event: "system.online", listener: (this: Client, data: OnlineEventData) => void): this; //上线事件
-    once(event: "system.offline" | "system.offline.network" | "system.offline.kickoff" | //下线事件
-      "system.offline.frozen" | "system.offline.unknown", listener: (this: Client, data: OfflineEventData) => void): this;
-    once(event: "system", listener: (this: Client, data: SystemEventData) => void): this;
-
-    once(event: "request.friend" | "request.friend.add" | "request.friend.single", listener: (this: Client, data: FriendAddEventData) => void): this; //收到好友申请事件
-    once(event: "request.group.add", listener: (this: Client, data: GroupAddEventData) => void): this; //收到加群申请事件
-    once(event: "request.group.invite", listener: (this: Client, data: GroupInviteEventData) => void): this; //收到群邀请事件
-    once(event: "request.group", listener: (this: Client, data: GroupAddEventData | GroupInviteEventData) => void): this;
-    once(event: "request", listener: (this: Client, data: RequestEventData) => void): this; //监听以上所有request事件
-
-    once(event: "message.private" | "message.private.friend" | "message.private.group" |
-      "message.private.single" | "message.private.other" | "message.private.self", listener: (this: Client, data: PrivateMessageEventData) => void): this; //私聊消息事件
-    once(event: "message.group" | "message.group.normal" | "message.group.anonymous", listener: (this: Client, data: GroupMessageEventData) => void): this; //群消息事件
-    once(event: "message.discuss", listener: (this: Client, data: DiscussMessageEventData) => void): this; //讨论组消息事件
-    once(event: "message", listener: (this: Client, data: MessageEventData) => void): this; //监听以上所有message事件
-
-    once(event: "notice.friend.increase", listener: (this: Client, data: FriendIncreaseEventData) => void): this; //新增好友事件
-    once(event: "notice.friend.decrease", listener: (this: Client, data: FriendDecreaseEventData) => void): this; //好友(被)删除事件
-    once(event: "notice.friend.recall", listener: (this: Client, data: FriendRecallEventData) => void): this; //好友消息撤回事件
-    once(event: "notice.friend.profile", listener: (this: Client, data: FriendProfileEventData) => void): this; //好友资料变更事件
-    once(event: "notice.friend.poke", listener: (this: Client, data: FriendPokeEventData) => void): this; //好友戳一戳事件
-    once(event: "notice.group.increase", listener: (this: Client, data: MemberIncreaseEventData) => void): this; //入群・群员增加事件
-    once(event: "notice.group.decrease", listener: (this: Client, data: MemberDecreaseEventData) => void): this; //踢群・退群事件
-    once(event: "notice.group.recall", listener: (this: Client, data: GroupRecallEventData) => void): this; //群消息撤回事件
-    once(event: "notice.group.admin", listener: (this: Client, data: GroupAdminEventData) => void): this; //管理员变更事件
-    once(event: "notice.group.ban", listener: (this: Client, data: GroupMuteEventData) => void): this; //群禁言事件
-    once(event: "notice.group.transfer", listener: (this: Client, data: GroupTransferEventData) => void): this; //群转让事件
-    once(event: "notice.group.title", listener: (this: Client, data: GroupTitleEventData) => void): this; //群头衔变更事件
-    once(event: "notice.group.poke", listener: (this: Client, data: GroupPokeEventData) => void): this; //群戳一戳事件
-    once(event: "notice.group.setting", listener: (this: Client, data: GroupSettingEventData) => void): this; //群设置变更事件
-    once(event: "notice.friend", listener: (this: Client, data: FriendNoticeEventData) => void): this; //监听以上所有好友notice事件
-    once(event: "notice.group", listener: (this: Client, data: GroupNoticeEventData) => void): this; //监听以上所有群notice事件
-    once(event: "notice", listener: (this: Client, data: NoticeEventData) => void): this; //监听以上所有notice事件
-
-    once(event: "sync.message", listener: (this: Client, data: SyncMessageEventData) => void): this; //同账号其他客户端发送私聊事件
-    // once(event: "sync.remark", listener: (this: Client, data: SyncRemarkEventData) => void): this; //好友备注修改事件
-    once(event: "sync.profile", listener: (this: Client, data: SyncProfileEventData) => void): this; //个人资料修改事件
-    once(event: "sync.status", listener: (this: Client, data: SyncStatusEventData) => void): this; //在线状态修改事件
-    once(event: "sync.black", listener: (this: Client, data: SyncBlackEventData) => void): this; //黑名单修改事件
-    once(event: "sync.readed" | "sync.readed.private" | "sync.readed.group", listener: (this: Client, data: SyncReadedEventData) => void): this; //消息已读事件
-    once(event: "sync", listener: (this: Client, data: SyncEventData) => void): this; //监听以上所有sync事件
-
-    once(event: string | symbol, listener: (this: Client, ...args: any[]) => void): this;
+    off<T extends keyof EventMap>(event: T, listener: EventMap[T]): this;
+    off<S extends string | symbol>(event: S & Exclude<S, keyof EventMap>, listener: (this: Client, ...args: any[]) => void): this;
 
     /**
      * 重载好友列表和群列表
