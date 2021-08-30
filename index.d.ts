@@ -1066,9 +1066,6 @@ export class Client extends EventEmitter {
     once<T extends keyof EventMap>(event: T, listener: EventMap[T]): this;
     once<S extends string | symbol>(event: S & Exclude<S, keyof EventMap>, listener: (this: Client, ...args: any[]) => void): this;
 
-    off<T extends keyof EventMap>(event: T, listener: EventMap[T]): this;
-    off<S extends string | symbol>(event: S & Exclude<S, keyof EventMap>, listener: (this: Client, ...args: any[]) => void): this;
-
     /**
      * 重载好友列表和群列表
      * 完成之前无法调用任何api，也不会上报任何事件
