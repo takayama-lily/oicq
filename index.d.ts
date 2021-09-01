@@ -371,12 +371,7 @@ export interface FileElem {
 export interface CommonEventData {
     self_id: number,
     time: number,
-    post_type: "system" | "request" | "message" | "notice" | "sync",
-    system_type?: "login" | "online" | "offline",
-    request_type?: "friend" | "group",
-    message_type?: "private" | "group" | "discuss",
-    notice_type?: "friend" | "group",
-    sync_type?: "message" | "profile" | "status" | "readed" | "black",
+    post_type: "system" | "request" | "message" | "notice" | "sync" | string,
     sub_type?: string,
 }
 
@@ -831,7 +826,7 @@ export interface EventMap {
     "sync.profile": (this: Client, data: SyncProfileEventData) => void;
     /**在线状态修改事件 */
     "sync.status": (this: Client, data: SyncStatusEventData) => void;
-    /**黑名单修改事件 */
+    /** @deprecated 黑名单修改事件 */
     "sync.black": (this: Client, data: SyncBlackEventData) => void;
     /**消息已读事件 */
     "sync.readed": (this: Client, data: SyncReadedEventData) => void;
@@ -839,7 +834,13 @@ export interface EventMap {
     "sync.readed.group": (this: Client, data: SyncReadedEventData) => void;
     /**监听以上所有sync事件 */
     "sync": (this: Client, data: SyncEventData) => void;
+
+    /** 实验性事件: 监听所有收到的包(已解密) */
+    "internal.sso": (this: Client, data: { cmd: string, seq: number, payload: Buffer }) => void;
+    /** 实验性事件: 对方正在输入 */
+    "internal.input": (this: Client, data: { user_id: number, end: boolean }) => void;
 }
+
 /**
  * 方法不会reject或抛出异常，使用retcode判断是否成功
  * @see {Ret}
@@ -871,8 +872,6 @@ export class Client extends EventEmitter {
     readonly config: ConfBot;
     /** 数据统计信息 */
     readonly stat: Statistics;
-
-    readonly bkn: Promise<number>;
 
     constructor(uin: number, config?: ConfBot);
 
@@ -1023,30 +1022,7 @@ export class Client extends EventEmitter {
     getRoamingStamp(no_cache?: boolean): Promise<Ret<string[]>>;
 
     /** @deprecated 获取群公告(该方法已废弃，参考web-api.md自行获取) */
-    getGroupNotice(group_id: number): Promise<Ret<Array<{
-        u: number, //发布者
-        fid: string,
-        pubt: number, //发布时间
-        msg: {
-            text: string,
-            title: string,
-            pics?: Array<{
-                id: string,
-                w: string,
-                h: string,
-            }>,
-        },
-        type: number,
-        settings: {
-            is_show_edit_card: number,
-            remind_ts: number,
-            tip_window_type: number,
-            confirm_required: number
-        },
-        read_num: number,
-        is_read: number,
-        is_all_confirm: number
-    }>>>;
+    getGroupNotice(group_id: number): Promise<Ret<any[]>>;
     /** @deprecated 获取等级信息(该方法已废弃，参考web-api.md自行获取) */
     getLevelInfo(user_id?: number): Promise<Ret<any>>;
 
@@ -1065,6 +1041,11 @@ export class Client extends EventEmitter {
 
     once<T extends keyof EventMap>(event: T, listener: EventMap[T]): this;
     once<S extends string | symbol>(event: S & Exclude<S, keyof EventMap>, listener: (this: Client, ...args: any[]) => void): this;
+
+    prependListener<T extends keyof EventMap>(event: T, listener: EventMap[T]): this;
+    prependListener(event: string | symbol, listener: (this: Client, ...args: any[]) => void): this;
+    prependOnceListener<T extends keyof EventMap>(event: T, listener: EventMap[T]): this;
+    prependOnceListener(event: string | symbol, listener: (this: Client, ...args: any[]) => void): this;
 
     /**
      * 重载好友列表和群列表
@@ -1092,19 +1073,7 @@ export class Client extends EventEmitter {
     /** 发送一个未加密的oidb包 */
     sendOidb(cmd: string, body: Uint8Array): Promise<Buffer>;
     /** 触发一个oicq标准事件 */
-    em(name: string, data?: object): void;
-    /** 监听所有收到的包(已解密) */
-    on(event: "internal.sso", listener: (this: Client, data: {
-        cmd: string,
-        seq: number,
-        payload: Buffer,
-    }) => void): this;
-
-    /** 正在输入事件(实验性) */
-    on(event: "internal.input", listener: (this: Client, data: {
-        user_id: number,
-        end: boolean, //是否为结束
-    }) => void): this;
+    em(name: string, data?: any): void;
 }
 
 /** 工厂方法 */
