@@ -178,6 +178,8 @@ export type MessageElem = TextElem | AtElem | FaceElem | BfaceElem | MfaceElem |
     ImgPttElem | LocationElem | MusicElem | ShareElem | JsonElem | XmlElem |
     AnonymousElem | ReplyElem | NodeElem | ShakeElem | PokeElem | FileElem | VideoElem | MiraiElem;
 
+export type Sendable = string | MessageElem | Iterable<MessageElem | string>
+
 /** 一般文本 */
 export interface TextElem {
     type: "text",
@@ -450,7 +452,7 @@ interface CommonMessageEventData extends CommonEventData {
     message_id: string,
     user_id: number,
     font: string,
-    reply: (message: MessageElem | Iterable<MessageElem> | string, auto_escape?: boolean) => Promise<Ret<{ message_id: string }>>,
+    reply(message: Sendable, auto_escape?: boolean): Promise<Ret<{ message_id: string }>>,
 }
 export interface PrivateMessageEventData extends CommonMessageEventData {
     message_type: "private", //私聊消息
@@ -915,13 +917,13 @@ export class Client extends EventEmitter {
     getGroupMemberInfo(group_id: number, user_id: number, no_cache?: boolean): Promise<Ret<MemberInfo>>;
 
     /** 私聊 */
-    sendPrivateMsg(user_id: number, message: MessageElem | Iterable<MessageElem> | string, auto_escape?: boolean): Promise<Ret<{ message_id: string }>>;
+    sendPrivateMsg(user_id: number, message: Sendable, auto_escape?: boolean): Promise<Ret<{ message_id: string }>>;
     /** 群聊 */
-    sendGroupMsg(group_id: number, message: MessageElem | Iterable<MessageElem> | string, auto_escape?: boolean): Promise<Ret<{ message_id: string }>>;
+    sendGroupMsg(group_id: number, message: Sendable, auto_escape?: boolean): Promise<Ret<{ message_id: string }>>;
     /** 群临时会话，大多数时候可以使用私聊达到同样效果 */
-    sendTempMsg(group_id: number, user_id: number, message: MessageElem | Iterable<MessageElem> | string, auto_escape?: boolean): Promise<Ret<{ message_id: string }>>;
+    sendTempMsg(group_id: number, user_id: number, message: Sendable, auto_escape?: boolean): Promise<Ret<{ message_id: string }>>;
     /** 讨论组 */
-    sendDiscussMsg(discuss_id: number, message: MessageElem | Iterable<MessageElem> | string, auto_escape?: boolean): Promise<Ret>;
+    sendDiscussMsg(discuss_id: number, message: Sendable, auto_escape?: boolean): Promise<Ret>;
     /** 撤回 */
     deleteMsg(message_id: string): Promise<Ret>;
     /** 置消息已读(message_id及之前的消息将全部变为已读) */
@@ -1083,7 +1085,7 @@ export function createClient(uin: number, config?: ConfBot): Client;
  * 生成消息元素的快捷函数
  */
 export namespace segment {
-    /** 普通文本 */
+    /** @deprecated 普通文本 */
     function text(text: string): TextElem;
     /** at */
     function at(qq: number, text?: string, dummy?: boolean): AtElem;
@@ -1137,6 +1139,7 @@ export namespace segment {
  * 生成CQ码字符串的快捷函数
  */
 export namespace cqcode {
+    /** @deprecated */
     function text(text: string): string;
     function at(qq: number, text?: string, dummy?: boolean): string;
     function face(id: number, text?: string): string;
