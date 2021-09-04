@@ -1,6 +1,8 @@
 # http-api
 
-兼容 [onebot](https://cqhttp.cc) 协议 (旧称cqhttp)
+将机器人部署为独立的服务，通过http或ws与外界通信  
+兼容 [onebot](https://cqhttp.cc) 协议 (旧称cqhttp)  
+系统中需安装 [nodejs](https://nodejs.org) 12.16 以上版本，否则报错  
 
 **Install:**
 
@@ -12,6 +14,12 @@
 
 ```bash
 > oicq <account>
+```
+
+**Update:**
+
+```bash
+> npm up -g oicq
 ```
 
 > 配置等文件存储在 `/home/<username>/.oicq/` 下，Windows一般是 `C:\Users\<username>\.oicq\`  
@@ -174,3 +182,4 @@ notice事件有部分格式默认与cqhttp中的格式不同。
 * [x] [事件过滤器](https://richardchien.gitee.io/coolq-http-api/docs/4.15/#/EventFilter)
 * [x] 设置允许跨域请求
 * [x] 自动更新内核版本
+* [x] config.js 支持更多的[配置](https://github.com/takayama-lily/oicq/blob/b392e5f5088d7f281afea0e8797bcd0f60d1f3ea/index.d.ts#L11-L47)

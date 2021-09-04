@@ -1,6 +1,6 @@
 "use strict";
 /**
- * @param {import("oicq").FriendNoticeEventData | import("oicq").GroupNoticeEventData} data 
+ * @param {import("../").FriendNoticeEventData | import("../").GroupNoticeEventData} data 
  */
 module.exports = function(data) {
     if (data.sub_type === "poke") {

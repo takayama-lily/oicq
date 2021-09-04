@@ -1,6 +1,6 @@
 "use strict";
 /**
- * @type {import("oicq").Client}
+ * @type {import("../").Client}
  */
 let bot;
 class NotFoundError extends Error {}
@@ -89,7 +89,7 @@ async function runQueue() {
 const fn_signs = {};
 
 /**
- * @param {{import("oicq").Client}} client 
+ * @param {{import("../").Client}} client 
  * @param {number} rli rate_limit_interval
  */
 function setBot(client, rli) {
