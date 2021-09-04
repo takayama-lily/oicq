@@ -181,5 +181,4 @@ notice事件有部分格式默认与cqhttp中的格式不同。
 * [x] _rate_limited限速调用api
 * [x] [事件过滤器](https://richardchien.gitee.io/coolq-http-api/docs/4.15/#/EventFilter)
 * [x] 设置允许跨域请求
-* [x] 自动更新内核版本
 * [x] config.js 支持更多的[配置](https://github.com/takayama-lily/oicq/blob/b392e5f5088d7f281afea0e8797bcd0f60d1f3ea/index.d.ts#L11-L47)
