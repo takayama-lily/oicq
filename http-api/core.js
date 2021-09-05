@@ -445,6 +445,7 @@ function loop() {
     console.log(help);
     process.stdin.on("data", async (input) => {
         input = input.toString().trim();
+        if (!input) return;
         const cmd = input.split(" ")[0];
         const param = input.replace(cmd, "").trim();
         switch (cmd) {

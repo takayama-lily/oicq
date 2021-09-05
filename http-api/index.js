@@ -25,6 +25,13 @@ const help = `
 const account = parseInt(process.argv[process.argv.length - 1]);
 if (account > 10000 && account < 0xffffffff) {
     process.title = "OICQ/OneBot - " + account;
+    console.log(`
+  *******************************************************************
+  * 欢迎使用 node-onebot
+  * 你可以将本程序作为一个无头机器人，或利用本程序进行调试
+  * Docs: https://github.com/takayama-lily/oicq/tree/master/http-api
+  *******************************************************************
+`);
     const config = require(confpath);
     require("./core")(account, Object.assign(config.general, config[account]));
 } else {

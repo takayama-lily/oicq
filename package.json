@@ -53,7 +53,7 @@
   "files": [
     "/bin",
     "/lib",
-    "/server",
+    "/http-api",
     "/index.js",
     "/index.d.ts",
     "/util.js"
