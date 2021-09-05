@@ -5,8 +5,8 @@ module.exports = {
 
     //通用配置
     general: {
-        platform:           1,      //1:安卓手机 2:aPad 3:安卓手表 4:MacOS 5:iPad
-        debug:              false,  //开启debug
+        platform:           1,       //1:安卓手机 2:aPad 3:安卓手表 4:MacOS 5:iPad
+        log_level:          "info",  //trace,debug,info,warn,error,mark
         use_cqhttp_notice:  false,   //是否使用cqhttp标准的notice事件格式
 
         host:               "0.0.0.0",  //监听主机名

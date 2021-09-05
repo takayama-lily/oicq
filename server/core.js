@@ -42,8 +42,6 @@ function startup(arg1, arg2) {
     account = arg1;
     Object.assign(config, arg2);
     config.data_dir = path.join(os.homedir(), ".oicq");
-    if (config.debug && !config.log_level)
-        config.log_level = "debug";
     passdir = path.join(os.homedir(), ".oicq", String(account));
     console.log("已加载配置文件：", config);
     if (config.enable_heartbeat && (config.use_ws || config.ws_reverse_url.length)) {
@@ -151,10 +149,6 @@ function createBot() {
             meta_event_type: "lifecycle",
             sub_type: "disable",
         });
-        if (data.sub_type === "unknown") {
-            bot.logger.warn("5秒后尝试重新连接。");
-            setTimeout(bot.login.bind(bot), 5000);
-        }
     });
 
     bot.on("request", dipatch);
@@ -446,7 +440,7 @@ function debug(msg) {
 function loop() {
     const help = `※你已成功登录，此控制台有简单的指令可用于调试。
 ※发言: send <target> <message>
-※结束: bye
+※下线结束程序: bye
 ※执行任意代码: eval <code>`;
     console.log(help);
     process.stdin.on("data", async (input) => {
@@ -460,17 +454,15 @@ function loop() {
         case "send":
             const abc = param.split(" ");
             const target = parseInt(abc[0]);
-            let res;
             if (bot.gl.has(target))
-                res = await bot.sendGroupMsg(target, abc[1]);
+                bot.sendGroupMsg(target, abc[1]);
             else
-                res = await bot.sendPrivateMsg(target, abc[1]);
-            console.log("Result: ", res);
+                bot.sendPrivateMsg(target, abc[1]);
             break;
         case "eval":
             try {
                 let res = await eval(param);
-                console.log("Result: ", res);
+                console.log("Result:", res);
             } catch (e) {
                 console.log(e);
             }

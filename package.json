@@ -10,7 +10,7 @@
   "types": "index.d.ts",
   "type": "commonjs",
   "scripts": {
-    "test": "node ./test.js",
+    "test": "node ./bin/oicq",
     "bench": "node ./test/benchmark",
     "mocha": "./node_modules/.bin/_mocha"
   },
@@ -56,7 +56,6 @@
     "/server",
     "/index.js",
     "/index.d.ts",
-    "/test.js",
     "/util.js"
   ],
   "bin": "bin/oicq"
