@@ -244,6 +244,7 @@ export interface ImgPttElem {
         timeout?: number, //file为网络资源时请求超时时间
         headers?: OutgoingHttpHeaders, //file为网络资源时请求头
         url?: string, //仅接收
+        small?: boolean, //使图片看山去变小(PC)
     }
 }
 
