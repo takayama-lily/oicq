@@ -4,25 +4,23 @@
 兼容 [onebot](https://cqhttp.cc) 协议 (旧称cqhttp)  
 系统中需安装 [nodejs](https://nodejs.org) 12.16 以上版本，否则报错  
 
-**Install:**
-
-```bash
-> npm i oicq -g
-```
-
 **Usage:**
 
 ```bash
+# install
+> npm i oicq -g
+
+# startup
 > oicq <account>
-```
 
-**Update:**
+# startup with pm2
+> pm2 start "oicq <account>"
 
-```bash
+# update
 > npm up -g oicq
 ```
 
-> 配置等文件存储在 `/home/<username>/.oicq/` 下，Windows一般是 `C:\Users\<username>\.oicq\`  
+> 配置等文件存储在 `/home/<user>/.oicq/` 下，Windows下一般是 `C:\Users\<user>\.oicq\`  
 > 可以用扫码或密码登录，如需切换登录方式，请删除 `%HOME%/.oicq/<account>/password` 文件
 
 ----

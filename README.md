@@ -8,9 +8,7 @@
 * QQ(安卓)协议基于Node.js的实现，使用CQHTTP风格的API
 * 高度抽象地封装了大部分常用功能，支持最低node版本为 v12.16
 * 若你不熟悉Node.js或不会组织代码，可通过 [template](https://github.com/takayama-lily/oicq-template) 创建一个简单的应用程序
-* [API参考文档](https://github.com/takayama-lily/oicq/wiki/91.API%E6%96%87%E6%A1%A3) / [事件参考文档](https://github.com/takayama-lily/oicq/wiki/92.%E4%BA%8B%E4%BB%B6%E6%96%87%E6%A1%A3)
-* [wiki](https://github.com/takayama-lily/oicq/wiki) 列表
-* [码云镜像仓库](https://gitee.com/takayama/oicq)
+* [API参考文档](https://github.com/takayama-lily/oicq/wiki/91.API%E6%96%87%E6%A1%A3) / [事件参考文档](https://github.com/takayama-lily/oicq/wiki/92.%E4%BA%8B%E4%BB%B6%E6%96%87%E6%A1%A3) / [wiki列表](https://github.com/takayama-lily/oicq/wiki)
 
 ----
 
@@ -72,10 +70,24 @@ client.setGroupKick(gid, uid) //踢人
 client.setGroupBan(gid, uid, 3600) //禁言
 ```
 
+----
+
+**全局安装并启动：**
+
+可作为 [http-api](./http-api) 或调试程序使用
+
+```bash
+> npm i -g oicq
+> oicq <account>
+```
+
+----
+
 **其他：**
 
 * [常见问题](https://github.com/takayama-lily/oicq/wiki/02.%E5%85%B6%E4%BB%96%E5%B8%B8%E8%A7%81%E9%97%AE%E9%A2%98) (登录、风控等相关问题)
 * [QQWebApi](./web-api.md) QQ Web Api 收集
 * [awesome](./awesome.md) 社区相关应用收集
+* [码云镜像仓库](https://gitee.com/takayama/oicq)
 
  [![group:236172566](https://img.shields.io/badge/group-236172566-blue)](https://qm.qq.com/cgi-bin/qm/qr?k=NXw3NEA5lzPjkRhyEpjVBqMpdg1WHRKJ&jump_from=webapi)
