@@ -2,7 +2,9 @@
 
 将机器人部署为独立的服务，通过http或ws与外界通信  
 兼容 [onebot](https://cqhttp.cc) 协议 (旧称cqhttp)  
-系统中需安装 [nodejs](https://nodejs.org) 12.16 以上版本，否则报错  
+系统中需安装 [nodejs](https://nodejs.org) 12.16 以上版本，否则报错
+
+![usage](https://user-images.githubusercontent.com/12014361/132395633-0677c3ef-56f6-407c-87a2-8cd37c598bc1.gif)
 
 **Usage:**
 
