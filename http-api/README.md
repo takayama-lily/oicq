@@ -1,4 +1,4 @@
-# http-api
+# http-api (node-onebot)
 
 将机器人部署为独立的服务，通过http或ws与外界通信  
 兼容 [onebot](https://cqhttp.cc) 协议 (旧称cqhttp)  
