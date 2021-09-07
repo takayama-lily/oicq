@@ -1,9 +1,9 @@
 {
   "name": "oicq",
   "app_name": "oicq",
-  "version": "1.19.7",
-  "app_version": "1.19.7",
-  "upday": "2021/9/1",
+  "version": "1.20.0",
+  "app_version": "1.20.0",
+  "upday": "2021/9/8",
   "protocol_version": "v11",
   "description": "QQ protocol!",
   "main": "index.js",
@@ -38,14 +38,13 @@
     "pngjs": "^6.0.0",
     "probe-image-size": "^7.2.1",
     "qrcode-terminal": "^0.12.0",
-    "ws": "^8.2.1"
+    "ws": "^7.5.4"
   },
   "devDependencies": {
+    "@types/node": "^16.7.13",
     "@types/probe-image-size": "^7.0.1",
     "@types/ws": "^7.4.7",
-    "babel-eslint": "^10.1.0",
     "chai": "^4.3.4",
-    "eslint": "^7.32.0",
     "mocha": "^8.4.0",
     "mockjs": "^1.1.0",
     "protobufjs": "^6.11.2"
