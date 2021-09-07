@@ -316,8 +316,10 @@ function createWSClient(url, headers) {
             onWSOpen(ws);
         });
         ws.on("close", (code)=>{
-            bot.logger.error(`反向ws连接(${url})被关闭，关闭码${code}，将在${config.ws_reverse_reconnect_interval}毫秒后尝试连接。`);
             websockets.delete(ws);
+            if ((code === 1000 & config.ws_reverse_reconnect_on_code_1000 === false) || config.ws_reverse_reconnect_interval >= 0 === false)
+                return bot.logger.info(`反向ws连接(${url})被关闭，关闭码${code}。不再重连。`);
+            bot.logger.error(`反向ws连接(${url})被关闭，关闭码${code}，将在${config.ws_reverse_reconnect_interval}毫秒后尝试连接。`);
             setTimeout(()=>{
                 createWSClient(url, headers);
             }, config.ws_reverse_reconnect_interval);
