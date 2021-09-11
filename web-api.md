@@ -1,6 +1,7 @@
 # QQ Web Api 收集
 
-web api 是需要 cookie 或 csrf-token 才可正常访问，用于实现一些扩展功能的 api
+web api 是需要 cookie 或 csrf-token 才可正常访问，用于实现一些扩展功能的 api  
+如果你知道一些尚未收集到的有用api，欢迎提交pr到这个文件
 
 ----
 

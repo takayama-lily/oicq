@@ -86,7 +86,8 @@ client.setGroupBan(gid, uid, 3600) //禁言
 **其他：**
 
 * [常见问题](https://github.com/takayama-lily/oicq/wiki/02.%E5%85%B6%E4%BB%96%E5%B8%B8%E8%A7%81%E9%97%AE%E9%A2%98) (登录、风控等相关问题)
-* [QQWebApi](./web-api.md) QQ Web Api 收集
+* [QQWebApi](./web-api.md) QQ Web Api 收集整理 (途中)
+* [ErrorCode](./error-code.md) 错误码错误信息 收集整理 (途中)
 * [awesome](./awesome.md) 社区相关应用收集
 * [码云镜像仓库](https://gitee.com/takayama/oicq)
 
