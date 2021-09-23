@@ -54,8 +54,12 @@ export interface Statistics {
     readonly lost_pkt_cnt: number, //丢包总数
     readonly recv_msg_cnt: number, //收到消息总数
     readonly sent_msg_cnt: number, //发送消息总数
+    readonly msg_cnt_per_min: number, //每分钟消息数
+    readonly remote_ip: string,
+    readonly remote_port: number,
 }
 
+/** @deprecated */
 export interface Status {
     online: boolean,
     status: number, //在线状态
@@ -66,6 +70,7 @@ export interface Status {
     config: ConfBot,
 }
 
+/** @deprecated */
 export type LoginInfo = StrangerInfo;
 
 export type GroupRole = "owner" | "admin" | "member";
@@ -728,8 +733,23 @@ export type Domain = "tenpay.com"
     | "qqweb.qq.com"
     | "openmobile.qq.com"
     | "qun.qq.com"
-    | "ti.qq.com";
+    | "ti.qq.com"
+    | "";
 
+export interface Sig {
+    srm_token: Buffer,
+    tgt: Buffer,
+    tgt_key: Buffer,
+    st_key: Buffer,
+    st_web_sig: Buffer,
+    skey: Buffer,
+    d2: Buffer,
+    d2key: Buffer,
+    sig_key: Buffer,
+    ticket_key: Buffer,
+    device_token?: Buffer,
+    emp_time: number,
+}
 
 export interface EventMap {
     /**扫码登录收到二维码事件 */
@@ -752,16 +772,14 @@ export interface EventMap {
     "system.offline.frozen": (this: Client, data: OfflineEventData) => void;
     /**下线事件（未知原因） */
     "system.offline.unknown": (this: Client, data: OfflineEventData) => void;
-    /**下线事件 */
     "system.offline": (this: Client, data: OfflineEventData) => void;
 
     "system": (this: Client, data: SystemEventData) => void;
 
     /**收到好友申请事件 */
     "request.friend.add": (this: Client, data: FriendAddEventData) => void;
-    /**收到好友申请事件 */
+    /**收到好友申请事件(对方已将你加为单向好友，可回添对方) */
     "request.friend.single": (this: Client, data: FriendAddEventData) => void;
-    /**收到好友申请事件 */
     "request.friend": (this: Client, data: FriendAddEventData) => void;
     /**收到加群申请事件 */
     "request.group.add": (this: Client, data: GroupAddEventData) => void;
@@ -772,17 +790,17 @@ export interface EventMap {
     "request": (this: Client, data: RequestEventData) => void;
 
     /**私聊消息事件 */
-    "message.private.friend": (this: Client, data: PrivateMessageEventData) => void;
-    "message.private.group": (this: Client, data: PrivateMessageEventData) => void;
-    "message.private.single": (this: Client, data: PrivateMessageEventData) => void;
+    "message.private.friend": (this: Client, data: PrivateMessageEventData) => void; //从双向好友
+    "message.private.group": (this: Client, data: PrivateMessageEventData) => void; //从群临时会话
+    "message.private.single": (this: Client, data: PrivateMessageEventData) => void; //从单向好友
     "message.private.other": (this: Client, data: PrivateMessageEventData) => void;
-    "message.private.self": (this: Client, data: PrivateMessageEventData) => void;
+    "message.private.self": (this: Client, data: PrivateMessageEventData) => void; //从我的设备
     "message.private": (this: Client, data: PrivateMessageEventData) => void;
 
     /**群消息事件 */
     "message.group": (this: Client, data: GroupMessageEventData) => void;
-    "message.group.normal": (this: Client, data: GroupMessageEventData) => void;
-    "message.group.anonymous": (this: Client, data: GroupMessageEventData) => void;
+    "message.group.normal": (this: Client, data: GroupMessageEventData) => void; //普通消息
+    "message.group.anonymous": (this: Client, data: GroupMessageEventData) => void; //匿名消息
     /**讨论组消息事件 */
     "message.discuss": (this: Client, data: DiscussMessageEventData) => void;
     /**监听以上所有message事件 */
@@ -855,6 +873,9 @@ export class Client extends EventEmitter {
     readonly nickname: string;
     readonly sex: Gender;
     readonly age: number;
+    readonly bkn: number; //csrf token
+    cookie(domain?: Domain): string;
+    readonly sig: Sig;
     /** 在线状态 */
     readonly online_status: number;
     /** 好友列表 */
@@ -863,7 +884,7 @@ export class Client extends EventEmitter {
     readonly sl: ReadonlyMap<number, StrangerInfo>;
     /** 群列表 */
     readonly gl: ReadonlyMap<number, GroupInfo>;
-    /** 群员列表 */
+    /** 群员列表缓存 */
     readonly gml: ReadonlyMap<number, ReadonlyMap<number, MemberInfo>>;
     /** 黑名单 */
     readonly blacklist: ReadonlySet<number>;
@@ -879,8 +900,7 @@ export class Client extends EventEmitter {
     constructor(uin: number, config?: ConfBot);
 
     /**
-     * @param password 明文或md5后的密码
-     * 使用扫码登录，或通过设备锁验证时可无需传入此参数
+     * @param password 明文或md5后的密码，使用扫码登录可无需传入此参数
      */
     login(password?: Uint8Array | string): void;
 
@@ -888,6 +908,8 @@ export class Client extends EventEmitter {
     sliderLogin(ticket: string): void;
     /** 先下线再关闭连接 */
     logout(): Promise<void>;
+    /** 直接关闭连接 */
+    terminate(): void;
     isOnline(): boolean;
 
     /** 发验证码给密保手机，用于发短信过设备锁 */
@@ -901,21 +923,14 @@ export class Client extends EventEmitter {
      */
     setOnlineStatus(status: number): Promise<Ret>;
 
-    /** @deprecated 获取好友列表，请直接访问 this.fl */
-    getFriendList(): Ret<Client["fl"]>;
-    /** @deprecated 获取陌生人列表，请直接访问 this.sl */
-    getStrangerList(): Ret<Client["sl"]>;
-    /** @deprecated 获取群列表，请直接访问 this.gl */
-    getGroupList(): Ret<Client["gl"]>;
-    /** 获取群成员列表 */
+    /** 获取群员列表 */
     getGroupMemberList(group_id: number, no_cache?: boolean): Promise<Ret<ReadonlyMap<number, MemberInfo>>>;
-
-    /** 获取陌生人资料 */
-    getStrangerInfo(user_id: number, no_cache?: boolean): Promise<Ret<StrangerInfo>>;
-    /** 获取群资料 */
-    getGroupInfo(group_id: number, no_cache?: boolean): Promise<Ret<GroupInfo>>;
     /** 获取群员资料 */
     getGroupMemberInfo(group_id: number, user_id: number, no_cache?: boolean): Promise<Ret<MemberInfo>>;
+    /** 获取陌生人资料 */
+    getStrangerInfo(user_id: number, no_cache?: boolean): Promise<Ret<StrangerInfo>>;
+    /** 获取群资料(该方法一般用于刷新群资料缓存，从缓存中获取直接访问 this.gl.get(gid) 即可) */
+    getGroupInfo(group_id: number, no_cache?: boolean): Promise<Ret<GroupInfo>>;
 
     /** 私聊 */
     sendPrivateMsg(user_id: number, message: Sendable, auto_escape?: boolean): Promise<Ret<{ message_id: string }>>;
@@ -1024,17 +1039,8 @@ export class Client extends EventEmitter {
     /** 获取漫游表情 */
     getRoamingStamp(no_cache?: boolean): Promise<Ret<string[]>>;
 
-    /** @deprecated 获取群公告(该方法已废弃，参考web-api.md自行获取) */
-    getGroupNotice(group_id: number): Promise<Ret<any[]>>;
-    /** @deprecated 获取等级信息(该方法已废弃，参考web-api.md自行获取) */
-    getLevelInfo(user_id?: number): Promise<Ret<any>>;
-
-    getCookies(domain?: Domain): Promise<Ret<{ cookies: string }>>;
-    getCsrfToken(): Promise<Ret<{ token: number }>>;
     /** 清除 image 和 record 文件夹下的缓存文件 */
     cleanCache(type?: "image" | "record"): Promise<Ret>;
-    /** 获取在线状态和数据统计 */
-    getStatus(): Ret<Status>;
 
     /** 进入群文件系统 */
     acquireGfs(group_id: number): Gfs;
@@ -1057,17 +1063,31 @@ export class Client extends EventEmitter {
     reloadFriendList(): Promise<Ret>;
     reloadGroupList(): Promise<Ret>;
 
-    /** 直接关闭连接 */
-    terminate(): void;
-    /** @deprecated 文字验证码 */
+    /** @deprecated 该方法已废弃，请直接访问 this.fl */
+    getFriendList(): Ret<Client["fl"]>;
+    /** @deprecated 该方法已废弃，请直接访问 this.sl */
+    getStrangerList(): Ret<Client["sl"]>;
+    /** @deprecated 该方法已废弃，请直接访问 this.gl */
+    getGroupList(): Ret<Client["gl"]>;
+    /** @deprecated 该方法已废弃，参考web-api.md自行获取 */
+    getGroupNotice(group_id: number): Promise<Ret<any[]>>;
+    /** @deprecated 该方法已废弃，参考web-api.md自行获取 */
+    getLevelInfo(user_id?: number): Promise<Ret<any>>;
+    /** @deprecated 该方法已废弃，请使用 this.cookie(domain) */
+    getCookies(domain?: Domain): Promise<Ret<{ cookies: string }>>;
+    /** @deprecated 该方法已废弃，请使用 this.bkn */
+    getCsrfToken(): Promise<Ret<{ token: number }>>;
+    /** @deprecated 该方法已废弃，请使用 this.stat */
+    getStatus(): Ret<Status>;
+    /** @deprecated */
     captchaLogin(captcha: string): void;
     /** @deprecated */
     canSendImage(): Ret;
     /** @deprecated */
     canSendRecord(): Ret;
-    /** @deprecated 获取版本信息(暂时为返回package.json中的信息) */
+    /** @deprecated */
     getVersionInfo(): Ret<any>;
-    /** @deprecated 获取登录账号信息 */
+    /** @deprecated */
     getLoginInfo(): Ret<LoginInfo>;
 
     //----------以下为隐藏方法，可用于扩展协议----------\\

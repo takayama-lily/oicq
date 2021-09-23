@@ -39,21 +39,6 @@ export interface Device {
     guid: Buffer;
 }
 
-export interface Sig {
-    srm_token: Buffer,
-    tgt: Buffer,
-    tgt_key: Buffer,
-    st_key: Buffer,
-    st_web_sig: Buffer,
-    skey: Buffer,
-    d2: Buffer,
-    d2key: Buffer,
-    sig_key: Buffer,
-    ticket_key: Buffer,
-    device_token?: Buffer,
-    emp_time: number,
-}
-
 export interface ApkInfo {
     id: string,
     name: string,
@@ -178,7 +163,6 @@ export class Client extends oicq.Client {
     sync_finished: boolean;
     sync_cookie: Buffer;
 
-    sig: Sig;
     cookies: object;
 
     storage: Storage;
