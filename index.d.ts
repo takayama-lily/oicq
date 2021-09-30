@@ -874,7 +874,7 @@ export class Client extends EventEmitter {
     readonly sex: Gender;
     readonly age: number;
     readonly bkn: number; //csrf token
-    cookie(domain?: Domain): string;
+    readonly cookies: {[k in Domain]: string};
     readonly sig: Sig;
     /** 在线状态 */
     readonly online_status: number;
@@ -971,6 +971,12 @@ export class Client extends EventEmitter {
         raw_message: string,
     }>>>;
 
+    /**
+     * 上传合并转发消息，得到的XmlElem可直接发送
+     * @param dm 默认(false)以群模式上传图片，设为true则以私聊模式上传图片
+     */
+    makeForwardMsg(messages: FakeMessage | Iterable<FakeMessage>, dm?: boolean): Promise<Ret<XmlElem>>;
+
     /** 发简易群公告 */
     sendGroupNotice(group_id: number, content: string): Promise<Ret>;
     /** 设置群名 */
@@ -1030,6 +1036,7 @@ export class Client extends EventEmitter {
     setGroupPortrait(group_id: number, file: MediaFile): Promise<Ret>;
 
     /**
+     * @deprecated
      * 预先上传图片以备发送
      * 通常图片在发送时一并上传
      * 提前上传可用于加快发送速度，实现秒发
@@ -1073,7 +1080,7 @@ export class Client extends EventEmitter {
     getGroupNotice(group_id: number): Promise<Ret<any[]>>;
     /** @deprecated 该方法已废弃，参考web-api.md自行获取 */
     getLevelInfo(user_id?: number): Promise<Ret<any>>;
-    /** @deprecated 该方法已废弃，请使用 this.cookie(domain) */
+    /** @deprecated 该方法已废弃，请使用 this.cookies[domain] */
     getCookies(domain?: Domain): Promise<Ret<{ cookies: string }>>;
     /** @deprecated 该方法已废弃，请使用 this.bkn */
     getCsrfToken(): Promise<Ret<{ token: number }>>;
@@ -1197,4 +1204,11 @@ export namespace constants {
     const STATUS_BUSY = 50;
     const STATUS_QME = 60;
     const STATUS_NODISTURB = 70;
+}
+
+export interface FakeMessage {
+    user_id: number,
+    message: Sendable, //可转发的有效元素理论上只有[文字、表情、图片]，不支持CQ码
+    nickname?: string,
+    time?: number, //时间戳(秒)，默认：当前时间
 }

@@ -29,7 +29,10 @@ const client = createClient(account);
 client.on("system.online", () => console.log("Logged in!"));
 
 //监听消息并回复
-client.on("message", (event) => event.reply("hello world"));
+client.on("message", (event) => {
+  event.reply("hello world")
+  console.log(event)
+});
 
 /****************************************
  * 手机QQ扫描二维码登录(与下面的密码登录二选一)

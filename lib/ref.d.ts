@@ -163,8 +163,6 @@ export class Client extends oicq.Client {
     sync_finished: boolean;
     sync_cookie: Buffer;
 
-    cookies: object;
-
     storage: Storage;
 
     nextSeq(): number;

@@ -1,5 +1,5 @@
 "use strict";
-const Client = require("./lib/oicq");
+const { Client } = require("./lib/oicq");
 const { segment, cqcode } = require("./util");
 const { checkUin, NOOP } = require("./lib/common");
 
