@@ -1,0 +1,35 @@
+name: Bug Report
+description: Bug Report
+body: 
+  - type: markdown
+    attributes:
+      value: |
+        请提供以下信息
+  - type: input
+    attributes:
+      label: Node.js Version
+      description: Output of `node -v`
+  - type: input
+    attributes:
+      label: Package Version
+      description: Installed by npm or yarn
+      placeholder: latest?
+  - type: dropdown
+    attributes:
+      label: Login Protocol
+      options:
+        - Android
+        - aPad
+        - Watch
+        - iMac
+        - iPad
+  - type: markdown
+    attributes:
+      value: |
+        * [x] 我已确认过官方客户端不存在此问题，库的行为存在问题。
+  - type: textarea
+    attributes:
+      label: Bug Description
+  - type: textarea
+    attributes:
+      label: Log Details
