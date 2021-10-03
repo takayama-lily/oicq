@@ -972,10 +972,10 @@ export class Client extends EventEmitter {
     }>>>;
 
     /**
-     * 上传合并转发消息，得到的XmlElem可直接发送
+     * 制作一个合并转发消息，得到的XmlElem可直接发送
      * @param dm 默认(false)以群模式上传图片，设为true则以私聊模式上传图片
      */
-    makeForwardMsg(messages: FakeMessage | Iterable<FakeMessage>, dm?: boolean): Promise<Ret<XmlElem>>;
+    makeForwardMsg(fakes: FakeMessage | Iterable<FakeMessage>, dm?: boolean): Promise<Ret<XmlElem>>;
 
     /** 发简易群公告 */
     sendGroupNotice(group_id: number, content: string): Promise<Ret>;
