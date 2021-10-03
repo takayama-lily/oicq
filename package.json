@@ -1,9 +1,9 @@
 {
   "name": "oicq",
   "app_name": "oicq",
-  "version": "1.20.2",
-  "app_version": "1.20.2",
-  "upday": "2021/9/12",
+  "version": "1.21.0",
+  "app_version": "1.21.0",
+  "upday": "2021/10/03",
   "protocol_version": "v11",
   "description": "QQ protocol!",
   "main": "index.js",
@@ -38,7 +38,7 @@
     "pngjs": "^6.0.0",
     "probe-image-size": "^7.2.1",
     "qrcode-terminal": "^0.12.0",
-    "ws": "^7.5.4"
+    "ws": "^7.5.5"
   },
   "devDependencies": {
     "@types/node": "^16.7.13",
