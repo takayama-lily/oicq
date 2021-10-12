@@ -31,3 +31,4 @@ const bkn = client.bkn;
 |取群历史头像|GET|`https://p.qlogo.cn/gh/${群号}/${群号}_${1}/${0(size)}`|NO||
 |取QQ头像|GET|`https://q1.qlogo.cn/g?b=qq&s=${0(size)}&nk=${QQ号}`|NO||
 |换群头像|POST|`http://htdata3.qq.com/cgi-bin/httpconn?htcmd=0x6ff0072&ver=5520&ukey=${client.sig.skey}&range=0&uin=${client.uin}&seq=1&groupuin=${群号}&filetype=3&imagetype=5&userdata=0&subcmd=1&subver=101&clip=0_0_0_0&filesize=${字节数}`<br>POST数据：图片字节集|NO||
+|取资料(both)|POST|`https://find.qq.com/proxy/domain/cgi.find.qq.com/qqfind/find_v11?backver=2`<br>*※搜索QQ号和群号 且有个性签名等更多信息*<br>POST数据：`bnum=15&pagesize=15&id=0&sid=0&page=0&pageindex=0&ext=&guagua=1&gnum=12&guaguan=2&type=2&ver=4903&longitude=116.405285&latitude=39.904989&lbs_addr_country=%E4%B8%AD%E5%9B%BD&lbs_addr_province=%E5%8C%97%E4%BA%AC&lbs_addr_city=%E5%8C%97%E4%BA%AC%E5%B8%82&keyword=${QQ号}&nf=0&of=0&ldw=${bkn}`|YES|空|
