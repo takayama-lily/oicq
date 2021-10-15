@@ -11,7 +11,25 @@ web api 是需要 cookie 或 csrf-token(bkn) 才可正常访问，用于实现�
 let domain = ""; //支持qun.qq.com等多个domain
 const cookie = client.cookies[domain];
 const bkn = client.bkn;
+
 // cookie需要设置在http请求头部
+```
+**以下是qzone相关API所需参数:**
+```js
+//bnk一样的算法 用于生成API需要的g_tk参数
+function get_gtk(str) {
+  let hash = 5381;
+  for (let i = 0, len = str.length; i < len; ++i) {
+    hash += (hash << 5) + str.charAt(i).charCodeAt();
+  }
+  return hash & 0x7fffffff;
+}
+//获取qzone的cookie
+const qzone_cookie = client.cookies["qzone.qq.com"];
+//正则取出p_skey
+const qzone_p_skey = qzone_cookie.match("p_skey=(.*?);")[1];
+//传入p_skey来计算出g_tk
+const qzone_gtk = get_gtk(qzone_p_skey);
 ```
 
 |Name|Method|Url|Cookie|Domain|
@@ -32,3 +50,4 @@ const bkn = client.bkn;
 |取QQ头像|GET|`https://q1.qlogo.cn/g?b=qq&s=${0(size)}&nk=${QQ号}`|NO||
 |换群头像|POST|`http://htdata3.qq.com/cgi-bin/httpconn?htcmd=0x6ff0072&ver=5520&ukey=${client.sig.skey}&range=0&uin=${client.uin}&seq=1&groupuin=${群号}&filetype=3&imagetype=5&userdata=0&subcmd=1&subver=101&clip=0_0_0_0&filesize=${字节数}`<br>POST数据：图片字节集|NO||
 |取资料(both)|POST|`https://find.qq.com/proxy/domain/cgi.find.qq.com/qqfind/find_v11?backver=2`<br>*※搜索QQ号和群号 且有个性签名等更多信息*<br>POST数据：`bnum=15&pagesize=15&id=0&sid=0&page=0&pageindex=0&ext=&guagua=1&gnum=12&guaguan=2&type=2&ver=4903&longitude=116.405285&latitude=39.904989&lbs_addr_country=%E4%B8%AD%E5%9B%BD&lbs_addr_province=%E5%8C%97%E4%BA%AC&lbs_addr_city=%E5%8C%97%E4%BA%AC%E5%B8%82&keyword=${QQ号}&nf=0&of=0&ldw=${bkn}`|YES|空|
+|取好友和分组(qzone)|GET|`https://mobile.qzone.qq.com/friend/mfriend_list?g_tk=${qzone_gtk}&res_uin=${client.uin}&res_type=normal&format=json&count_per_page=10&page_index=0&page_type=0`<br>*※`qzone_gtk`参数请参考上面的代码来获取*<br>*※需要翻页的请修改参数自行摸索*|YES|`qzone.qq.com`|
