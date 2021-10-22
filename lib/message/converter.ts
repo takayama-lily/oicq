@@ -1,0 +1,378 @@
+import { deflateSync } from "zlib"
+import { FACE_OLD_BUF, facemap } from "./face"
+import { Image } from "./image"
+import { AtElem, BfaceElem, Quotable, MessageElem,
+	FaceElem, FlashElem, ImageElem, JsonElem, LocationElem, MfaceElem,
+	MiraiElem, PokeElem, PttElem, Sendable, ShareElem, VideoElem, XmlElem, FileElem } from "./elements"
+import { pb } from "../core"
+import { escapeXml, NOOP } from "../common"
+import { Anonymous } from "./message"
+
+// const EMOJI_NOT_ENDING = ["\uD835", "\uD83C", "\uD83D", "\uD83E", "\u200D"]
+// const EMOJI_NOT_STARTING = ["\uFE0F", "\u200D", "\u20E3"]
+
+const PB_RESERVER = pb.encode({
+	37: {
+		17: 0,
+		19: {
+			15: 0,
+			31: 0,
+			41: 0
+		},
+	}
+})
+
+const AT_BUF = Buffer.from([0, 1, 0, 0, 0])
+const BUF1 = Buffer.from([1])
+const BUF2 = Buffer.alloc(2)
+
+const rand = (a: number, b: number) => Math.floor(Math.random() * (b - a) + a)
+
+export interface ConverterExt {
+	/** 是否是私聊(default:false) */
+	dm?: boolean,
+	/** 网络图片缓存路径 */
+	cachedir?: string,
+	/** 群员列表(用于AT时查询card) */
+	mlist?: Map<number, {
+		card?: string
+		nickname?: string
+	}>
+}
+
+/** 将消息元素转换为protobuf */
+export class Converter {
+
+	elems: pb.Encodable[] = []
+	/** 用于最终发送 */
+	rich: pb.Encodable = { 2: this.elems, 4: null }
+	/** 长度(字符) */
+	length = 0
+	/** 异步任务，完成后才能发送 */
+	tasks: Promise<void>[] = []
+	/** 包含的图片(可能需要上传) */
+	imgs: Image[] = []
+	/** 预览文字 */
+	brief = ""
+
+	static async from(content: Sendable, ext?: ConverterExt) {
+		const converter = new Converter(content, ext)
+		await Promise.allSettled(converter.tasks).catch(NOOP)
+		return converter
+	}
+
+	public constructor(content: Sendable, private ext?: ConverterExt) {
+		if (typeof content === "string") {
+			this.text(content)
+		} else if (Array.isArray(content)) {
+			for (let elem of content)
+				this._convert(elem)
+		} else {
+			this._convert(content)
+		}
+		if (!this.elems.length && !this.rich[4])
+			throw new Error("empty message")
+		this.elems.push(PB_RESERVER)
+	}
+
+	private _convert(elem: MessageElem | string) {
+		if (typeof elem === "string")
+			this.text(elem)
+		else if (Reflect.has(this, elem.type))
+			this[elem.type](elem as any)
+		else
+			throw new Error("不支持的元素类型：" + elem.type)
+	}
+
+	private text(text: string, attr6?: Buffer) {
+		text = String(text)
+		this.elems.push({
+			1: {
+				1: text,
+				3: attr6
+			}
+		})
+		this.length += text.length
+		this.brief += text
+	}
+
+	private at(elem: AtElem) {
+		let { qq, text, dummy } = elem
+		if (qq === "all") {
+			var q = 0, flag = 1, display = "@全体成员"
+		} else {
+			var q = Number(qq), flag = 0, display = text || ("@" + q)
+			if (!text) {
+				const member = this.ext?.mlist?.get(q)
+				text = member?.card || member?.nickname || String(q)
+				display = "@" + display
+			}
+		}
+		if (dummy)
+			return this.text(display)
+		const buf = Buffer.allocUnsafe(6)
+		buf.writeUInt8(display.length)
+		buf.writeUInt8(flag, 1)
+		buf.writeUInt32BE(q, 2)
+		const attr6 = Buffer.concat([AT_BUF, buf, BUF2])
+		this.text(display, attr6)
+	}
+
+	private face(elem: FaceElem) {
+		let { id, text } = elem
+		id = Number(id)
+		if (id < 0 || id > 0xffff || isNaN(id))
+			throw new Error("不正确的表情ID: " + id)
+		if (id <= 0xff) {
+			const old = Buffer.allocUnsafe(2)
+			old.writeUInt16BE(0x1441 + id)
+			this.elems.push({
+				2: {
+					1: id,
+					2: old,
+					11: FACE_OLD_BUF
+				}
+			})
+		} else {
+			if (facemap[id])
+				text = facemap[id]
+			else if (!text)
+				text = "/" + id
+			this.elems.push({
+				53: {
+					1: 33,
+					2: {
+						1: id,
+						2: text,
+						3: text
+					},
+					3: 1
+				}
+			})
+		}
+		this.brief += "[表情]"
+	}
+
+	private sface(elem: FaceElem) {
+		let { id, text } = elem
+		if (!text)
+			text = String(id)
+		text = "[" + text + "]"
+		this.elems.push({
+			34: {
+				1: Number(id),
+				2: 1,
+			}
+		})
+		this.text(text)
+	}
+
+	private bface(elem: BfaceElem, magic?: Buffer) {
+		let { file, text } = elem
+		if (!text) text = "原创表情"
+		text = "[" + String(text).slice(0, 5) + "]"
+		const o = {
+			1: text,
+			2: 6,
+			3: 1,
+			4: Buffer.from(file.slice(0, 32), "hex"),
+			5: parseInt(file.slice(64)),
+			6: 3,
+			7: Buffer.from(file.slice(32, 64), "hex"),
+			9: 0,
+			10: 200,
+			11: 200,
+			12: magic || null
+		}
+		this.elems.push({ 6: o })
+		this.text(text)
+	}
+
+	private dice(elem: MfaceElem) {
+		const id = (elem.id! >= 1 && elem.id! <= 6) ? (elem.id! - 1) : rand(0, 6)
+		return this.bface({
+			type: "bface", file: "4823d3adb15df08014ce5d6796b76ee13430396532613639623136393138663911464", text: "骰子"
+		}, Buffer.from([0x72, 0x73, 0x63, 0x54, 0x79, 0x70, 0x65, 0x3f, 0x31, 0x3b, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x3d, 0x30 + id]))
+	}
+
+	private rps(elem: MfaceElem) {
+		const id = (elem.id! >= 1 && elem.id! <= 3) ? (elem.id! - 1) : rand(0, 3)
+		return this.bface({
+			type: "bface", file: "83c8a293ae65ca140f348120a77448ee3764653339666562636634356536646211415", text: "猜拳"
+		}, Buffer.from([0x72, 0x73, 0x63, 0x54, 0x79, 0x70, 0x65, 0x3f, 0x31, 0x3b, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x3d, 0x30 + id]))
+	}
+
+	private image(elem: ImageElem) {
+		const img = new Image(elem, this.ext?.dm, this.ext?.cachedir)
+		this.tasks.push(img.task.then(()=>{this.imgs.push(img)}))
+		this.elems.push(
+			this.ext?.dm ? { 4: img.proto } : { 8: img.proto }
+		)
+		this.brief += "[图片]"
+	}
+
+	private flash(elem: FlashElem) {
+		const img = new Image(elem, this.ext?.dm, this.ext?.cachedir)
+		this.tasks.push(img.task.then(()=>{this.imgs.push(img)}))
+		this.elems.push({
+			53: {
+				1: 3,
+				2: this.ext?.dm ? { 2: img.proto } : { 1: img.proto },
+				3: 0,
+			}
+		})
+		this.elems.push({
+			1: {
+				1: "[闪照]请使用新版手机QQ查看闪照。"
+			}
+		})
+		this.brief += "[闪照]"
+	}
+
+	private record(elem: PttElem) {
+		let file = String(elem.file)
+		if (!file.startsWith("protobuf://"))
+			return
+		const buf = Buffer.from(file.replace("protobuf://", ""), "base64")
+		this.rich[4] = buf
+		this.brief += "[语音]"
+	}
+
+	private video(elem: VideoElem) {
+		let file = String(elem.file)
+		if (!file.startsWith("protobuf://"))
+			return
+		const buf = Buffer.from(file.replace("protobuf://", ""), "base64")
+		this.elems.push({ 19: buf })
+		this.elems.push({ 1: {
+			1: "你的QQ暂不支持查看视频短片，请期待后续版本。"
+		} })
+		this.brief += "[视频]"
+	}
+
+	private location(elem: LocationElem) {
+		let { address, lat, lng, name, id } = elem
+		if (!address || !lat || !lng)
+			throw new Error("位置分享需要address和lat和lng")
+		let data = {
+			config: { forward: true, type: "card", autosize: true },
+			prompt: "[应用]地图",
+			from: 1,
+			app: "com.tencent.map",
+			ver: "1.0.3.5",
+			view: "LocationShare",
+			meta: {
+				"Location.Search": {
+					from: "plusPanel",
+					id: id || "",
+					lat, lng, address,
+					name: name || "位置分享"
+				}
+			},
+			desc: "地图"
+		}
+		this.json({
+			type: "json", data
+		})
+	}
+
+	private share(elem: ShareElem) {
+		let { url, title, content, image } = elem
+		if (!url || !title)
+			throw new Error("分享需要title和url")
+		if (title.length > 26)
+			title = title.substr(0, 25) + "…"
+		title = escapeXml(title)
+		const data = `<?xml version="1.0" encoding="utf-8"?>
+		<msg templateID="12345" action="web" brief="[分享] ${title}" serviceID="1" sourceName="QQ浏览器" url="${escapeXml(url)}"><item layout="2">${image ? `<picture cover="${escapeXml(image)}"/>` : ""}<title>${title}</title><summary>${content ? escapeXml(content) : title}</summary></item><source action="app" name="QQ浏览器" icon="http://url.cn/PWkhNu" i_actionData="tencent100446242://" a_actionData="com.tencent.mtt" appid="100446242" url="http://url.cn/UQoBHn"/></msg>`
+		this.xml({
+			type: "xml", data, id: 1
+		})
+	}
+
+	private json(elem: JsonElem) {
+		this.elems.push({
+			51: {
+				1: Buffer.concat([BUF1, deflateSync(typeof elem.data === "string" ? elem.data : JSON.stringify(elem.data))])
+			}
+		})
+		this.brief += "[json消息]"
+	}
+
+	private xml(elem: XmlElem) {
+		this.elems.push({
+			12: {
+				1: Buffer.concat([BUF1, deflateSync(elem.data)]),
+				2: elem.id as number > 0 ? elem.id : 60,
+			}
+		})
+		this.brief += "[xml消息]"
+	}
+
+	private poke(elem: PokeElem) {
+		let { id } = elem
+		if (!(id >= 0 && id <= 6))
+			throw new Error("不正确的poke id (只支持0-6)")
+		this.elems.push([{
+			53: {
+				1: 2,
+				2: {
+					3: 0,
+					7: 0,
+					10: 0,
+				},
+				3: id,
+			}
+		}])
+		this.brief += "[戳一戳]"
+	}
+
+	private mirai(elem: MiraiElem) {
+		const { data } = elem
+		this.elems.push({
+			31: {
+				2: String(data),
+				3: 103904510
+			}
+		})
+		this.brief += data
+	}
+
+	private file(elem: FileElem) {
+		throw new Error("暂不支持发送或转发file元素，请调用文件相关API完成该操作")
+	}
+
+	/** 转换为分片消息 */
+	toFragments(): Uint8Array[] {
+		// todo
+		return 1 as any
+	}
+
+	/** 匿名化 */
+	anonymize(anon: Omit<Anonymous, "flag">) {
+		this.elems.unshift({
+			21: {
+				1: 2,
+				3: anon.name,
+				4: anon.id2,
+				5: anon.expire_time,
+				6: anon.id,
+			}
+		})
+	}
+
+	/** 引用回复 todo */
+	quote(source: Quotable) {
+		const rich = new Converter(source.message || source.raw_message!, this.ext).rich
+		this.elems.unshift({
+			45: {
+				1: [source.seq],
+				2: source.user_id,
+				3: source.time,
+				4: 1,
+				5: rich,
+				6: 0,
+			}
+		})
+	}
+}

@@ -1,23 +1,17 @@
 {
   "name": "oicq",
-  "app_name": "oicq",
-  "version": "1.21.2",
-  "app_version": "1.21.2",
-  "upday": "2021/10/10",
-  "protocol_version": "v11",
+  "version": "2.0.0-alpha",
+  "upday": "2021/12/25",
   "description": "QQ protocol!",
-  "main": "index.js",
-  "types": "index.d.ts",
-  "type": "commonjs",
+  "main": "lib/index.js",
+  "types": "lib/index.d.ts",
   "scripts": {
-    "test": "node ./bin/oicq",
-    "bench": "node ./test/benchmark",
-    "mocha": "./node_modules/.bin/_mocha"
+    "test": "tsc && node ./bin/oicq"
   },
   "engines": {
-    "node": ">= v12.16"
+    "node": ">= v14"
   },
-  "repository": "https://github.com/takayama-lily/oicq.git",
+  "repository": "https://github.com/takayama-lily/oicq",
   "keywords": [
     "qq",
     "oicq",
@@ -32,30 +26,29 @@
   "homepage": "https://github.com/takayama-lily/oicq#readme",
   "changelogs": "https://github.com/takayama-lily/oicq/releases",
   "dependencies": {
+    "axios": "^0.23.0",
     "jsqr": "^1.4.0",
     "log4js": "^6.3.0",
     "long": "^4.0.0",
     "pngjs": "^6.0.0",
     "probe-image-size": "^7.2.1",
     "qrcode-terminal": "^0.12.0",
-    "ws": "^7.5.5"
+    "ws": "^8.2.3"
   },
   "devDependencies": {
-    "@types/node": "^16.7.13",
+    "@types/node": "^16.7.2",
+    "@types/pngjs": "^6.0.1",
     "@types/probe-image-size": "^7.0.1",
-    "@types/ws": "^7.4.7",
-    "chai": "^4.3.4",
-    "mocha": "^8.4.0",
-    "mockjs": "^1.1.0",
+    "@types/qrcode-terminal": "^0.12.0",
+    "@types/ws": "^8.2.0",
     "protobufjs": "^6.11.2"
   },
   "files": [
+    "/lib/**/*.js",
+    "/lib/**/*.d.ts",
+    "/lib/**/LICENSE",
     "/bin",
-    "/lib",
-    "/http-api",
-    "/index.js",
-    "/index.d.ts",
-    "/util.js"
+    "/http-api"
   ],
   "bin": "bin/oicq"
 }
