@@ -50,10 +50,10 @@ export class User extends ShitMountain {
 		const nested = jce.decodeWrapper(payload)
 		for (let v of nested) {
 			return {
-				user_id: v[1],
-				nickname: v[5] || "",
+				user_id: v[1] as number,
+				nickname: (v[5] || "") as string,
 				sex: (v[3] ? (v[3] === -1 ? "unknown" : "female") : "male") as Gender,
-				age: v[4] || 0,
+				age: (v[4] || 0) as number,
 				area: (v[13] + " " + v[14] + " " + v[15]).trim(),
 			}
 		}

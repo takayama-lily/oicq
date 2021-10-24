@@ -4,7 +4,7 @@ import { pb, jce } from "./core"
 import { ErrorCode, drop } from "./errors"
 import { timestamp, code2uin, PB_CONTENT, NOOP } from "./common"
 import { ShitMountain } from "./internal"
-import { GroupMember } from "./member"
+import { Member } from "./member"
 import { Sendable, GroupMessage, ImageElem, Image, buildMusic, MusicPlatform, Converter, Anonymous, parseGroupMessageId } from "./message"
 import { Gfs } from "./gfs"
 import { MessageRet } from "./events"
@@ -105,7 +105,7 @@ export class Group extends Discuss {
 
 	/** 获取一枚群员实例 */
 	acquireMember(uid: number) {
-		return GroupMember.as.call(this.c, this.gid, uid)
+		return Member.as.call(this.c, this.gid, uid)
 	}
 
 	/** 强制刷新资料 */
@@ -448,7 +448,7 @@ export class Group extends Discuss {
 			5: this.gid,
 		})
 		const payload = await this.c.sendOidb("OidbSvc.0x8a7_0", body)
-		return pb.decode(payload)[4][2]
+		return pb.decode(payload)[4][2] as number
 	}
 
 	private async _getLastSeq() {

@@ -7,10 +7,10 @@ import { User } from "./friend"
 
 type Client = import("./client").Client
 
-const weakmap = new WeakMap<MemberInfo, GroupMember>()
+const weakmap = new WeakMap<MemberInfo, Member>()
 
 /** @ts-ignore ts(2417)?? */
-export class GroupMember extends User {
+export class Member extends User {
 
 	/** 群员资料 */
 	get info() {
@@ -20,12 +20,12 @@ export class GroupMember extends User {
 		return this._info
 	}
 
-	/** 若gid,uid相同，企鹅默认开启群员列表缓存，则每次返回同一对象 */
+	/** 若gid,uid相同，且默认开启群员列表缓存，则每次返回同一对象 */
 	static as(this: Client, gid: number, uid: number) {
 		const info = this.gml.get(gid)?.get(uid)
 		let member = weakmap.get(info!)
 		if (member) return member
-		member = new GroupMember(this, Number(gid), Number(uid), info)
+		member = new Member(this, Number(gid), Number(uid), info)
 		if (info) 
 			weakmap.set(info, member)
 		return member

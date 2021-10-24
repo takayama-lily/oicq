@@ -7,7 +7,7 @@ import { md5, timestamp, NOOP, hide, Gender, OnlineStatus } from "./common"
 import { bindInternalListeners, parseFriendRequestFlag, parseGroupRequestFlag, getSystemMessage, Internal } from "./internal"
 import { EventMap } from "./events"
 import { Group, Discuss } from "./group"
-import { GroupMember } from "./member"
+import { Member } from "./member"
 import { Friend, User } from "./friend"
 import { Forwardable, Sendable, parseDmMessageId, parseGroupMessageId } from "./message"
 
@@ -63,7 +63,7 @@ export class Client extends BaseClient {
 	readonly asDiscuss = Discuss.as.bind(this)
 	readonly asUser = User.as.bind(this)
 	readonly asFriend = Friend.as.bind(this)
-	readonly asMember = GroupMember.as.bind(this)
+	readonly asMember = Member.as.bind(this)
 	readonly internal = new Internal(this)
 
 	logger: Logger | log4js.Logger
