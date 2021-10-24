@@ -10,6 +10,7 @@ export function uuid() {
 	return hex.substr(0, 8) + "-" + hex.substr(8, 4) + "-" + hex.substr(12, 4) + "-" + hex.substr(16, 4) + "-" + hex.substr(20)
 }
 
+/** 计算流的md5 */
 export function md5Stream(readable: stream.Readable) {
 	return new Promise((resolve, reject) => {
 		readable.on("error", reject)
@@ -21,6 +22,7 @@ export function md5Stream(readable: stream.Readable) {
 	}) as Promise<Buffer>
 }
 
+/** 计算文件的md5和sha */
 export function fileHash(filepath: string) {
 	const readable = fs.createReadStream(filepath)
 	const sha = new Promise((resolve, reject) => {
@@ -34,8 +36,9 @@ export function fileHash(filepath: string) {
 	return Promise.all([md5Stream(readable), sha])
 }
 
-export function code2uin(group_code: number) {
-	let left = Math.floor(group_code / 1000000)
+/** 群号转uin */
+export function code2uin(code: number) {
+	let left = Math.floor(code / 1000000)
 	if (left >= 0 && left <= 10)
 		left += 202
 	else if (left >= 11 && left <= 19)
@@ -55,11 +58,12 @@ export function code2uin(group_code: number) {
 	else if (left >= 387 && left <= 499)
 		left += 3490
 
-	return left * 1000000 + group_code % 1000000
+	return left * 1000000 + code % 1000000
 }
 
-export function uin2code(group_uin: number) {
-	let left = Math.floor(group_uin / 1000000)
+/** uin转群号 */
+export function uin2code(uin: number) {
+	let left = Math.floor(uin / 1000000)
 	if (left >= 202 && left <= 212)
 		left -= 202
 	else if (left >= 480 && left <= 488)
@@ -76,7 +80,7 @@ export function uin2code(group_uin: number) {
 		left -= 3490
 	else if (left >= 4100 && left <= 4199)
 		left -= 3890
-	return left * 1000000 + group_uin % 1000000
+	return left * 1000000 + uin % 1000000
 }
 
 /** 解析彩色群名片 */
@@ -98,6 +102,7 @@ export function parseFunString(buf: Buffer) {
 	}
 }
 
+/** xml转义 */
 export function escapeXml(str: string) {
 	return str.replace(/[&"><]/g, function (s: string) {
 		if (s === "&") return "&amp;"
@@ -108,18 +113,29 @@ export function escapeXml(str: string) {
 	})
 }
 
+/** 无死角打印变量 */
 export function log(any: any) {
+	if (any instanceof Buffer)
+		any = any.toString("hex").replace(/(.)(.)/g, '$1$2 ')
 	console.log(util.inspect(any, { depth: 20, showHidden: false, maxArrayLength: 1000, maxStringLength: 20000 }))
 }
 
 export const PB_CONTENT = pb.encode({ 1: 1, 2: 0, 3: 0 })
 export const IS_WIN = os.platform().includes("win")
+
+/** 系统临时目录，用于临时存放下载的图片等内容 */
 export const TMP_DIR = os.tmpdir()
+
+/** 最大上传和下载大小，以图片上传限制为准：30MB */
 export const MAX_UPLOAD_SIZE = 31457280
 
+/** 性别 */
 export type Gender = "male" | "female" | "unknown"
+
+/** 群内权限 */
 export type GroupRole = "owner" | "admin" | "member"
 
+/** 可设置的在线状态 */
 export enum OnlineStatus {
 	Online = 11,
 	Absent = 31,

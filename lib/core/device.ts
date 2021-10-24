@@ -31,6 +31,7 @@ function generateImei(uin: number) {
 	return imei + calcSP(imei)
 }
 
+/** 生成短设备信息 */
 export function generateShortDevice(uin: number) {
 	const hash = md5(String(uin))
 	const hex = hash.toString("hex")
@@ -54,6 +55,7 @@ export function generateShortDevice(uin: number) {
 	}
 }
 
+/** 生成完整设备信息 */
 export function generateFullDevice(d: ShortDevice | number) {
 	if (typeof d === "number")
 		d = generateShortDevice(d)
@@ -94,6 +96,7 @@ export type Device = ReturnType<typeof generateFullDevice>
 
 // ----------
 
+/** 支持的登录设备平台 */
 export enum Platform {
 	Android = 1,
 	aPad = 2,

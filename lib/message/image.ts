@@ -31,7 +31,8 @@ const EXT: {[type: number]: string} = {
 	2001: "png",
 }
 
-export function buildFileParam(md5: string, size?: number, width?: number, height?: number, type?: number) {
+/** 构造图片file */
+export function buildImageFileParam(md5: string, size?: number, width?: number, height?: number, type?: number) {
 	size = size || 0
 	width = width || 0
 	height = height || 0
@@ -39,7 +40,8 @@ export function buildFileParam(md5: string, size?: number, width?: number, heigh
 	return md5 + size + "-" + width + "-" + height + "." + ext
 }
 
-export function parseFileParam(file: string) {
+/** 从图片的file中解析出图片属性参数 */
+export function parseImageFileParam(file: string) {
 	let md5: string, size: number, width: number, height: number, ext: string
 	let sp = file.split("-")
 	md5 = sp[0].slice(0, 32)
@@ -113,7 +115,7 @@ export class Image {
 	}
 
 	private parseFileParam(file: string) {
-		const { md5, size, width, height, ext } = parseFileParam(file)
+		const { md5, size, width, height, ext } = parseImageFileParam(file)
 		this.md5 = Buffer.from(md5, "hex")
 		if (this.md5.length !== 16)
 			throw new Error("bad file param: " + file)
@@ -179,7 +181,7 @@ export class Image {
 		await this.fromReadable(readable, timeout)
 		this.cachefile && fs.writeFile(
 			this.cachefile,
-			buildFileParam(this.md5.toString("hex"), this.size, this.width, this.height, this.type),
+			buildImageFileParam(this.md5.toString("hex"), this.size, this.width, this.height, this.type),
 			NOOP
 		)
 	}

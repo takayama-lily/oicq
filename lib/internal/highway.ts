@@ -18,6 +18,7 @@ export enum CmdID {
 	GroupFile = 71,
 }
 
+/** 上传时的附加数据，必须知道流的size和md5 */
 export interface HighwayUploadExt {
 	cmdid: CmdID
 	size: number
@@ -84,6 +85,7 @@ class HighwayTransform extends stream.Transform {
 	}
 }
 
+/** highway上传数据 (只能上传流) */
 export function highwayUpload(this: Client, readable: stream.Readable, obj: HighwayUploadExt, ip?: string | number, port?: number) {
 	ip = int32ip2str(ip || this.sig.bigdata.ip)
 	port = port || this.sig.bigdata.port

@@ -8,26 +8,32 @@ import { exec } from "child_process"
 import { pb, ApiRejection } from "../core"
 import { ErrorCode, drop } from "../errors"
 import { escapeXml, md5, NOOP, timestamp, uuid, md5Stream, IS_WIN, log } from "../common"
-import { Sendable, PrivateMessage, MessageElem, Forwardable, Image, ImageElem, VideoElem, PttElem, Converter, XmlElem, rand2uuid } from "../message"
+import { Sendable, PrivateMessage, MessageElem, Forwardable, Image, VideoElem, PttElem, Converter, XmlElem, rand2uuid } from "../message"
 import { CmdID, highwayUpload } from "./highway"
 
 type Client = import("../client").Client
 
-/** 优雅接口背后必有龌龊实现 */
-export class ShitMountain {
+/** 所有联系人和群的基类 */
+export class Contactable {
 
+	/** 对方QQ号 */
 	protected uid?: number
+	/** 对方群号 */
 	protected gid?: number
 
+	// 对方账号，可能是群号也可能是QQ号
 	private get uin() {
 		return this.uid || this.gid || this.c.uin
 	}
+
+	// 是否是 Direct Message (私聊)
 	private get dm() {
 		return !!this.uid
 	}
 
 	protected constructor(protected readonly c: Client) { }
 
+	// 取私聊图片fid
 	private async _offPicUp(imgs: Image[]) {
 		const req: pb.Encodable[] = []
 		for (const img of imgs) {
@@ -60,6 +66,7 @@ export class ShitMountain {
 		return pb.decode(payload)[2] as pb.Proto | pb.Proto[]
 	}
 
+	// 取群聊图片fid
 	private async _groupPicUp(imgs: Image[]) {
 		const req = []
 		for (const img of imgs) {
@@ -108,7 +115,7 @@ export class ShitMountain {
 			const tasks = []
 			for (let i = n; i < imgs.length; ++i) {
 				if (i >= n + 20) break
-				tasks.push(this._imageShit(imgs[i], rsp[i%20]))
+				tasks.push(this._uploadImage(imgs[i], rsp[i%20]))
 			}
 			results = [ ...results, ...await Promise.allSettled(tasks)]
 			this.c.logger.debug("请求图片上传结束")
@@ -117,7 +124,8 @@ export class ShitMountain {
 		return results
 	}
 
-	private async _imageShit(img: Image, rsp: pb.Proto) {
+	// 上传单张
+	private async _uploadImage(img: Image, rsp: pb.Proto) {
 		const j = this.dm ? 1 : 0
 		if (rsp[2+j] !== 0)
 			throw new Error(String(rsp[3+j]))
@@ -280,6 +288,7 @@ export class ShitMountain {
 		return elem
 	}
 
+	// 上传合并转发消息
 	private async _uploadMultiMsg(compressed: Buffer) {
 		const body = pb.encode({
 			1: 1,
@@ -323,7 +332,7 @@ export class ShitMountain {
 		return rsp[2].toString() as string
 	}
 
-	/** 制作一条xml转发消息 */
+	/** 制作一条合并转发消息以备发送 */
 	async makeForwardMessage(iterable: Forwardable[]): Promise<XmlElem> {
 		const nodes = []
 		const makers: Converter[] = []
@@ -392,6 +401,7 @@ export class ShitMountain {
 	}
 }
 
+// 两个文件合并到一个流
 function createReadable(file1: string, file2: string) {
 	return Readable.from(
 		concatStreams(
@@ -400,6 +410,8 @@ function createReadable(file1: string, file2: string) {
 		)
 	)
 }
+
+// 合并两个流
 async function* concatStreams(readable1: Readable, readable2: Readable) {
 	for await (const chunk of readable1)
 		yield chunk

@@ -29,6 +29,9 @@ const ErrorMessage: {[code: number]: string} = {
 	[ErrorCode.MemberNotExists]: "幽灵群员",
 	[ErrorCode.RiskMessageFailure]: "群消息发送失败，可能被风控",
 	[ErrorCode.SensitiveWordsFailure]: "群消息发送失败，请检查消息内容",
+	10: "消息过长",
+	34: "消息过长",
+	120: "在该群被禁言",
 }
 
 export function drop(code: number, message?: string): never {

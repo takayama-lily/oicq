@@ -2,21 +2,26 @@ import { unzipSync } from "zlib"
 import { pb } from "../core"
 import * as T from "./elements"
 import { facemap, pokemap } from "./face"
-import { buildFileParam } from "./image"
+import { buildImageFileParam } from "./image"
 
+/** 解析消息 */
 export function parse(rich: pb.Proto | pb.Proto[], uin?: number) {
 	return new Parser(rich, uin)
 }
 
+/** 消息解析器 */
 export class Parser {
 
 	content: T.MessageElem[] = []
 	brief = ""
+	/** 匿名情报 */
 	anon?: pb.Proto
+	/** 额外情报 */
 	extra?: pb.Proto
-	general?: pb.Proto
+	// general?: pb.Proto
 	atme = false
 	atall = false
+	/** 引用回复 */
 	quotation?: T.Quotable
 
 	private exclusive = false
@@ -236,8 +241,8 @@ export class Parser {
 				this.extra = proto
 			} else if (type === 21) { //anonGroupMsg
 				this.anon = proto
-			} else if (type === 37) { //generalFlags
-				this.general = proto
+			// } else if (type === 37) { //generalFlags
+			// 	this.general = proto
 				// if (proto[6] === 1 && proto[7])
 			} else if (!this.exclusive) {
 				switch (type) {
@@ -280,7 +285,7 @@ export class Parser {
 		if (proto[7]?.toHex) {
 			elem = {
 				type,
-				file: buildFileParam(proto[7].toHex(), proto[2], proto[9], proto[8], proto[5]),
+				file: buildImageFileParam(proto[7].toHex(), proto[2], proto[9], proto[8], proto[5]),
 				url: "",
 			}
 			if (proto[15])
@@ -292,7 +297,7 @@ export class Parser {
 		} else { //群图
 			elem = {
 				type,
-				file: buildFileParam(proto[13].toHex(), proto[25], proto[22], proto[23], proto[20]),
+				file: buildImageFileParam(proto[13].toHex(), proto[25], proto[22], proto[23], proto[20]),
 				url: proto[16] ? `https://gchat.qpic.cn${proto[16]}` : `https://gchat.qpic.cn/gchatpic_new/0/0-0-${proto[13].toHex().toUpperCase()}/0`,
 			}
 			if (elem.type === "image")

@@ -76,8 +76,10 @@ async function getKuwoSong(id: string) {
 	} as any
 }
 
+/** 支持的音乐平台 */
 export type MusicPlatform = "qq" | "163" | "migu" | "kugou" | "kuwo"
 
+/** 构造b77音乐分享 */
 export async function buildMusic(target: number, platform: MusicPlatform, id: string, bu: number) {
 	var appid, appname, appsign, style = 4
 	try {

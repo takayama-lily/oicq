@@ -2,25 +2,16 @@ import { pb, jce } from "./core"
 import { ErrorCode, drop } from "./errors"
 import { timestamp, parseFunString, NOOP } from "./common"
 import { MemberInfo } from "./entities"
-import { Group } from "./group"
 import { User } from "./friend"
 
 type Client = import("./client").Client
 
 const weakmap = new WeakMap<MemberInfo, Member>()
 
-/** @ts-ignore ts(2417)?? */
+/** @ts-ignore ts(2417) 群员(继承联系人) */
 export class Member extends User {
 
-	/** 群员资料 */
-	get info() {
-		if (!this.c.config.cache_group_member) return this._info
-		if (!this._info || timestamp() - this._info?.update_time! >= 900)
-			this.fetchInfo().catch(NOOP)
-		return this._info
-	}
-
-	/** 若gid,uid相同，且默认开启群员列表缓存，则每次返回同一对象 */
+	/** 创建一个群员对象，若gid,uid相同，且默认开启群员列表缓存，则每次返回同一对象，不会重复创建 */
 	static as(this: Client, gid: number, uid: number) {
 		const info = this.gml.get(gid)?.get(uid)
 		let member = weakmap.get(info!)
@@ -31,19 +22,47 @@ export class Member extends User {
 		return member
 	}
 
-	private constructor(c: Client, public readonly gid: number, uid: number, private _info?: MemberInfo) {
-		super(c, uid)
+	/** 群员资料 */
+	get info() {
+		if (!this.c.config.cache_group_member) return this._info
+		if (!this._info || timestamp() - this._info?.update_time! >= 900)
+			this.fetchInfo().catch(NOOP)
+		return this._info
 	}
 
-	/** 获取所在群的实例 */
-	acquireGroup() {
-		return Group.as.call(this.c, this.gid)
+	get card() {
+		return this.info?.card || this._info?.nickname
+	}
+	get title() {
+		return this._info?.title
+	}
+	get is_friend() {
+		return this.c.fl.has(this.uid)
+	}
+	get is_owner() {
+		return this._info?.role === "owner"
+	}
+	get is_admin() {
+		return this._info?.role === "owner" || this._info?.role === "admin"
+	}
+	get mute_left() {
+		const t = this._info?.shutup_time! - timestamp()
+		return t > 0 ? t : 0
+	}
+
+	/** 获取所在群的对象实例 */
+	get group() {
+		return this.c.asGroup(this.gid)
+	}
+
+	protected constructor(c: Client, public readonly gid: number, uid: number, protected _info?: MemberInfo) {
+		super(c, uid)
 	}
 
 	/** 强制刷新资料 */
 	async fetchInfo(): Promise<MemberInfo> {
 		if (!this.c.gml.has(this.gid) && this.c.config.cache_group_member)
-			this.acquireGroup().getMemberList()
+			this.group.getMemberList()
 		const body = pb.encode({
 			1: this.gid,
 			2: this.uid,

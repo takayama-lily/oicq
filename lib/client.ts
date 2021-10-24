@@ -11,6 +11,7 @@ import { Member } from "./member"
 import { Friend, User } from "./friend"
 import { Forwardable, Sendable, parseDmMessageId, parseGroupMessageId } from "./message"
 
+/** 日志记录器接口 */
 export interface Logger {
 	trace(msg: any, ...args: any[]): any
 	debug(msg: any, ...args: any[]): any
@@ -21,8 +22,10 @@ export interface Logger {
 	mark(msg: any, ...args: any[]): any
 }
 
+/** 日志等级 */
 export type LogLevel = "trace" | "debug" | "info" | "warn" | "error" | "fatal" | "mark" | "off"
 
+/** 配置项 */
 export interface Config {
 	/** 日志等级，默认info (打印日志会降低性能，若消息量巨大建议修改此参数) */
 	log_level?: LogLevel
@@ -46,6 +49,7 @@ export interface Config {
 	ffprobe_path?: string
 }
 
+/** 一个客户端 */
 export interface Client extends BaseClient {
 	on<T extends keyof EventMap>(event: T, listener: EventMap<this>[T]): this
 	on<S extends string | symbol>(event: S & Exclude<S, keyof EventMap>, listener: (this: this, ...args: any[]) => void): this
@@ -57,52 +61,71 @@ export interface Client extends BaseClient {
 	prependOnceListener(event: string | symbol, listener: (this: this, ...args: any[]) => void): this
 }
 
+/** 一个客户端 */
 export class Client extends BaseClient {
 
+	/** 得到一个群对象 */
 	readonly asGroup = Group.as.bind(this)
-	readonly asDiscuss = Discuss.as.bind(this)
-	readonly asUser = User.as.bind(this)
+	/** 得到一个好友对象 */
 	readonly asFriend = Friend.as.bind(this)
+	/** 得到一个群员对象 */
 	readonly asMember = Member.as.bind(this)
+	/** 得到一个联系人对象 */
+	readonly asUser = User.as.bind(this)
+	/** 得到一个讨论组对象 */
+	readonly asDiscuss = Discuss.as.bind(this)
 	readonly internal = new Internal(this)
 
+	/** 日志记录器 */
 	logger: Logger | log4js.Logger
+	/** 账号存储目录 */
 	readonly dir: string
+	/** 配置(支持热修改) */
 	readonly config: Required<Config>
 
-	private readonly _cache = new Map<number, Set<string>>()
+	protected readonly _cache = new Map<number, Set<string>>()
 	protected _sync_cookie?: Uint8Array
 
 	get [Symbol.toStringTag]() {
 		return "OicqClient"
 	}
+	/** 好友列表 */
 	get fl() {
 		return this.internal.fl
 	}
+	/** 群列表 */
 	get gl() {
 		return this.internal.gl
 	}
-	get gml() {
-		return this.internal.gml
-	}
+	/** 陌生人列表 */
 	get sl() {
 		return this.internal.sl
 	}
+	/** 群员缓存列表 */
+	get gml() {
+		return this.internal.gml
+	}
+	/** 黑名单列表 */
 	get blacklist() {
 		return this.internal.blacklist
 	}
+	/** 在线状态 */
 	get status() {
 		return this.internal.status
 	}
+	/** 昵称 */
 	get nickname() {
 		return this.internal.nickname
 	}
+	/** 性别 */
 	get sex() {
 		return this.internal.sex
 	}
+	/** 年龄 */
 	get age() {
 		return this.internal.age
 	}
+	/** csrf token */
 	get bkn() {
 		let bkn = 5381
 		for (let v of this.sig.skey)
@@ -121,8 +144,9 @@ export class Client extends BaseClient {
 			return false
 		}
 	})
+	/** 数据统计 */
 	get stat() {
-		this.statistics.msg_cnt_per_min = this.calcMsgCntPerMin()
+		this.statistics.msg_cnt_per_min = this._calcMsgCntPerMin()
 		return this.statistics
 	}
 
@@ -136,7 +160,7 @@ export class Client extends BaseClient {
 			resend: true,
 			cache_group_member: true,
 			reconn_interval: 5,
-			data_dir: path.join(require.main ? require.main.path : process.cwd(), "data"),
+			data_dir: path.join(require?.main?.path || process.cwd(), "data"),
 			...conf,
 		}
 
@@ -182,7 +206,7 @@ export class Client extends BaseClient {
 
 		let n = 0
 		this.heartbeat = () => {
-			this.calcMsgCntPerMin()
+			this._calcMsgCntPerMin()
 			n++
 			if (n > 10) {
 				n = 0
@@ -217,7 +241,7 @@ export class Client extends BaseClient {
 		}
 	}
 
-	msgExists(from: number, type: number, seq: number, time: number) {
+	protected _msgExists(from: number, type: number, seq: number, time: number) {
 		if (timestamp() - time >= 60 || time < this.stat.start_time)
 			return true
 		const id = [from, type, seq].join("-")
@@ -234,7 +258,7 @@ export class Client extends BaseClient {
 		}
 	}
 
-	protected calcMsgCntPerMin() {
+	protected _calcMsgCntPerMin() {
 		let cnt = 0
 		for (let [time, set] of this._cache) {
 			 if (timestamp() - time >= 60)
@@ -245,6 +269,18 @@ export class Client extends BaseClient {
 		return cnt
 	}
 
+	/**
+	 * 会优先尝试使用token登录 (token在上次登录成功后存放在`this.dir`下)
+	 * 
+	 * 无token或token失效时：
+	 * * 传了`password`则尝试密码登录
+	 * * 不传`password`则尝试扫码登录
+	 * 
+	 * 掉线重连时也是自动调用此函数，走相同逻辑  
+	 * 你也可以在配置中修改`reconn_interval`，关闭掉线重连并自行处理
+	 * 
+	 * @param password 可以为密码原文，或密码的md5值
+	 */
 	async login(password?: string | Buffer) {
 		if (password && password.length > 0) {
 			let md5pass
@@ -522,6 +558,7 @@ export class Client extends BaseClient {
 	}
 }
 
+/** 数据统计 */
 export type Statistics = Client["stat"]
 
 function createDataDir(dir: string, uin: number) {
@@ -539,6 +576,7 @@ function createDataDir(dir: string, uin: number) {
 	return uin_path
 }
 
+/** 创建一个客户端 */
 export function createClient(uin: number, config?: Config) {
 	if (isNaN(Number(uin)))
 		throw new Error(uin + " is not an OICQ account")

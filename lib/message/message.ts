@@ -4,6 +4,7 @@ import { hide, parseFunString, GroupRole, Gender, log } from "../common"
 import { Parser, parse} from "./parser"
 import { Quotable, Forwardable, MessageElem } from "./elements"
 
+/** 匿名者情报 */
 export interface Anonymous {
 	flag: string
 	id: number
@@ -20,6 +21,7 @@ export function uuid2rand(uuid: bigint) {
 	return Number(BigInt(uuid) & 0xffffffffn)
 }
 
+/** 生成私聊消息id */
 export function genDmMessageId(uid: number, seq: number, rand: number, time: number, flag = 0) {
 	const buf = Buffer.allocUnsafe(17)
 	buf.writeUInt32BE(uid)
@@ -29,6 +31,8 @@ export function genDmMessageId(uid: number, seq: number, rand: number, time: num
 	buf.writeUInt8(flag, 16) //接收为0 发送为1
 	return buf.toString("base64")
 }
+
+/** 解析私聊消息id */
 export function parseDmMessageId(msgid: string) {
 	const buf = Buffer.from(msgid, "base64")
 	const user_id = buf.readUInt32BE(),
@@ -38,6 +42,8 @@ export function parseDmMessageId(msgid: string) {
 		flag = buf.length >= 17 ? buf.readUInt8(16) : 0
 	return { user_id, seq, rand, time, flag }
 }
+
+/** 生成群消息id */
 export function genGroupMessageId(gid: number, uid: number, seq: number, rand: number, time: number, pktnum = 1) {
 	const buf = Buffer.allocUnsafe(21)
 	buf.writeUInt32BE(gid)
@@ -48,6 +54,8 @@ export function genGroupMessageId(gid: number, uid: number, seq: number, rand: n
 	buf.writeUInt8(pktnum > 1 ? pktnum : 1, 20)
 	return buf.toString("base64")
 }
+
+/** 解析群消息id */
 export function parseGroupMessageId(msgid: string) {
 	const buf = Buffer.from(msgid, "base64")
 	const group_id = buf.readUInt32BE(),
@@ -59,6 +67,7 @@ export function parseGroupMessageId(msgid: string) {
 	return { group_id, user_id, seq, rand, time, pktnum }
 }
 
+/** 一条消息 */
 export abstract class Message implements Quotable, Forwardable {
 
 	protected readonly parsed: Parser
@@ -90,6 +99,7 @@ export abstract class Message implements Quotable, Forwardable {
 	index: number
 	div: number
 
+	/** 反序列化一条消息 */
 	static unserialize(serialized: Buffer) {
 		const proto = pb.decode(serialized)
 		switch (proto[1][3]) {
@@ -124,19 +134,23 @@ export abstract class Message implements Quotable, Forwardable {
 		hide(this, "div")
 	}
 
+	/** 将消息序列化保存 */
 	serialize() {
 		return this.proto.toBuffer()
 	}
 
+	/** 以人类可读的形式输出 */
 	toString() {
 		return this.raw_message
 	}
 
+	/** @deprecated 转换为CQ码 */
 	toCqcode() {
 		return genCqcode(this.message)
 	}
 }
 
+/** 一条私聊消息 */
 export class PrivateMessage extends Message {
 
 	message_type = "private" as "private"
@@ -151,7 +165,7 @@ export class PrivateMessage extends Message {
 		discuss_id: undefined as number | undefined,
 	}
 
-	/** 你需要传入你的uin，否则无法知道你是发送者还是接收者 */
+	/** 反序列化一条私聊消息，你需要传入你的uin，否则无法知道你是发送者还是接收者 */
 	static unserialize(serialized: Buffer, uin?: number) {
 		return new PrivateMessage(pb.decode(serialized), uin)
 	}
@@ -196,6 +210,7 @@ export class PrivateMessage extends Message {
 	}
 }
 
+/** 一条群消息 */
 export class GroupMessage extends Message {
 
 	message_type = "group" as "group"
@@ -221,6 +236,7 @@ export class GroupMessage extends Message {
 		title: ""
 	}
 
+	/** 反序列化一条群消息 */
 	static unserialize(serialized: Buffer) {
 		return new GroupMessage(pb.decode(serialized))
 	}
@@ -282,6 +298,7 @@ export class GroupMessage extends Message {
 	}
 }
 
+/** 一条讨论组消息 */
 export class DiscussMessage extends Message {
 
 	message_type = "discuss" as "discuss"
@@ -294,6 +311,7 @@ export class DiscussMessage extends Message {
 		card: string,
 	}
 
+	/** 反序列化一条讨论组消息 */
 	static unserialize(serialized: Buffer) {
 		return new DiscussMessage(pb.decode(serialized))
 	}
@@ -314,6 +332,7 @@ export class DiscussMessage extends Message {
 	}
 }
 
+/** 一条转发消息 */
 export class ForwardMessage implements Forwardable {
 
 	user_id: number
@@ -322,6 +341,7 @@ export class ForwardMessage implements Forwardable {
 	message: MessageElem[]
 	raw_message: string
 
+	/** 反序列化一条转发消息 */
 	static unserialize(serialized: Buffer) {
 		return new ForwardMessage(pb.decode(serialized))
 	}
@@ -338,16 +358,19 @@ export class ForwardMessage implements Forwardable {
 		hide(this, "proto")
 	}
 
+	/** 将转发消息序列化保存 */
 	serialize() {
 		return this.proto.toBuffer()
 	}
 
-	toCqcode() {
-		return genCqcode(this.message)
-	}
-
+	/** 以人类可读的形式输出 */
 	toString() {
 		return this.raw_message
+	}
+
+	/** @deprecated 转换为CQ码 */
+	toCqcode() {
+		return genCqcode(this.message)
 	}
 }
 

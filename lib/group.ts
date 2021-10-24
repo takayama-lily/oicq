@@ -3,16 +3,18 @@ import axios from "axios"
 import { pb, jce } from "./core"
 import { ErrorCode, drop } from "./errors"
 import { timestamp, code2uin, PB_CONTENT, NOOP } from "./common"
-import { ShitMountain } from "./internal"
+import { Contactable } from "./internal"
 import { Member } from "./member"
-import { Sendable, GroupMessage, ImageElem, Image, buildMusic, MusicPlatform, Converter, Anonymous, parseGroupMessageId } from "./message"
+import { Sendable, GroupMessage, ImageElem, Image, buildMusic, MusicPlatform, Anonymous, parseGroupMessageId } from "./message"
 import { Gfs } from "./gfs"
 import { MessageRet } from "./events"
 import { GroupInfo, MemberInfo } from "./entities"
 
 type Client = import("./client").Client
 
+/** 我的匿名情报 */
 export interface AnonymousInfo extends Omit<Anonymous, "flag"> {
+	/** 是否可以匿名发言 */
 	enable: boolean
 }
 
@@ -35,9 +37,15 @@ const GI_BUF = pb.encode({
 	89: "",
 })
 
-export class Discuss extends ShitMountain {
+/** 讨论组 */
+export class Discuss extends Contactable {
+	/** 创建一个讨论组对象 */
 	static as(this: Client, gid: number) {
 		return new Discuss(this, Number(gid))
+	}
+	/** this.gid的别名 */
+	get group_id() {
+		return this.gid
 	}
 	protected constructor(c: Client, public readonly gid: number) {
 		super(c)
@@ -69,25 +77,17 @@ export class Discuss extends ShitMountain {
 	}
 }
 
+/** 群 */
 export interface Group {
 	recallMessage(msg: GroupMessage): Promise<boolean>
 	recallMessage(msgid: string): Promise<boolean>
 	recallMessage(seq: number, rand: number, pktnum?: number): Promise<boolean>
 }
 
+/** 群 */
 export class Group extends Discuss {
 
-	/** 群资料 */
-	get info() {
-		if (!this._info || timestamp() - this._info?.update_time! >= 900)
-			this.fetchInfo().catch(NOOP)
-		return this._info
-	}
-
-	/** 文件系统 */
-	readonly fs: Gfs
-
-	/** 若gid相同则每次返回同一对象 */
+	/** 创建一个群对象，若gid相同则每次返回同一对象，不会重复创建 */
 	static as(this: Client, gid: number) {
 		const info = this.gl.get(gid)
 		let group = weakmap.get(info!)
@@ -98,7 +98,28 @@ export class Group extends Discuss {
 		return group
 	}
 
-	private constructor(c: Client, gid: number, private _info?: GroupInfo) {
+	/** 群资料 */
+	get info() {
+		if (!this._info || timestamp() - this._info?.update_time! >= 900)
+			this.fetchInfo().catch(NOOP)
+		return this._info
+	}
+
+	get name() {
+		return this._info?.group_name
+	}
+	get all_muted() {
+		return this._info?.shutup_time_whole! > timestamp()
+	}
+	get mute_left() {
+		const t = this._info?.shutup_time_me! - timestamp()
+		return t > 0 ? t : 0
+	}
+
+	/** 文件系统 */
+	readonly fs: Gfs
+
+	protected constructor(c: Client, gid: number, protected _info?: GroupInfo) {
 		super(c, gid)
 		this.fs = new Gfs(c, gid)
 	}
@@ -149,43 +170,48 @@ export class Group extends Discuss {
 		return info
 	}
 
-	private async _fetchMemberList() {
+	protected async _fetchMemberList() {
 		let next = 0
-		while (true) {
-			const GTML = jce.encodeStruct([
-				this.c.uin, this.gid, next, code2uin(this.gid), 2, 0, 0, 0
-			])
-			const body = jce.encodeWrapper({ GTML }, "mqq.IMService.FriendListServiceServantObj", "GetTroopMemberListReq")
-			const payload = await this.c.sendUni("friendlist.GetTroopMemberListReq", body, 10)
-			const nested = jce.decodeWrapper(payload)
-			next = nested[4]
-			if (!this.c.gml.has(this.gid))
-				this.c.gml.set(this.gid, new Map)
-			for (let v of nested[3]) {
-				let info: MemberInfo = {
-					group_id: this.gid,
-					user_id: v[0],
-					nickname: v[4] || "",
-					card: v[8] || "",
-					sex: (v[3] ? (v[3] === -1 ? "unknown" : "female") : "male"),
-					age: v[2] || 0,
-					join_time: v[15],
-					last_sent_time: v[16],
-					level: v[14],
-					role: v[18] % 2 === 1 ? "admin" : "member",
-					title: v[23],
-					title_expire_time: v[24] & 0xffffffff,
-					shutup_time: v[30] > timestamp() ? v[30] : 0,
-					update_time: 0,
+		try {
+			while (true) {
+				const GTML = jce.encodeStruct([
+					this.c.uin, this.gid, next, code2uin(this.gid), 2, 0, 0, 0
+				])
+				const body = jce.encodeWrapper({ GTML }, "mqq.IMService.FriendListServiceServantObj", "GetTroopMemberListReq")
+				const payload = await this.c.sendUni("friendlist.GetTroopMemberListReq", body, 10)
+				const nested = jce.decodeWrapper(payload)
+				next = nested[4]
+				if (!this.c.gml.has(this.gid))
+					this.c.gml.set(this.gid, new Map)
+				for (let v of nested[3]) {
+					let info: MemberInfo = {
+						group_id: this.gid,
+						user_id: v[0],
+						nickname: v[4] || "",
+						card: v[8] || "",
+						sex: (v[3] ? (v[3] === -1 ? "unknown" : "female") : "male"),
+						age: v[2] || 0,
+						join_time: v[15],
+						last_sent_time: v[16],
+						level: v[14],
+						role: v[18] % 2 === 1 ? "admin" : "member",
+						title: v[23],
+						title_expire_time: v[24] & 0xffffffff,
+						shutup_time: v[30] > timestamp() ? v[30] : 0,
+						update_time: 0,
+					}
+					const list = this.c.gml.get(this.gid)!
+					info = Object.assign(list.get(v[0]) || { }, info)
+					if (this.c.gl.get(this.gid)?.owner_id === v[0])
+						info.role = "owner"
+					list.set(v[0], info)
 				}
-				const list = this.c.gml.get(this.gid)!
-				info = Object.assign(list.get(v[0]) || { }, info)
-				if (this.c.gl.get(this.gid)?.owner_id === v[0])
-					info.role = "owner"
-				list.set(v[0], info)
+				if (!next) break
 			}
-			if (!next) break
+		} catch {
+			this.c.logger.error("加载群员列表超时")
 		}
+		fetchmap.delete(this.c.uin + "-" + this.gid)
 		const mlist = this.c.gml.get(this.gid)!
 		if (!mlist.size || !this.c.config.cache_group_member)
 			this.c.gml.delete(this.gid)
@@ -368,7 +394,7 @@ export class Group extends Discuss {
 	announce(content: string) {
 		return this._setting({ 4: String(content) })
 	}
-	private async _setting(obj: {[tag: number]: any}) {
+	protected async _setting(obj: {[tag: number]: any}) {
 		const body = pb.encode({
 			1: this.gid,
 			2: obj
@@ -451,7 +477,7 @@ export class Group extends Discuss {
 		return pb.decode(payload)[4][2] as number
 	}
 
-	private async _getLastSeq() {
+	protected async _getLastSeq() {
 		const body = pb.encode({
 			1: this.c.apk.subid,
 			2: {
@@ -555,4 +581,8 @@ export class Group extends Discuss {
 	pokeMember(uid: number) {
 		return this.acquireMember(uid).poke()
 	}
+}
+
+class A extends Group {
+
 }

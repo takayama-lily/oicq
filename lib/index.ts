@@ -12,7 +12,7 @@ export { Message, PrivateMessage, GroupMessage, DiscussMessage, ForwardMessage, 
 	MusicPlatform, Sendable, Anonymous, MessageElem, FileElem,
 	TextElem, AtElem, FaceElem, BfaceElem, MfaceElem, ImageElem, MiraiElem,
 	FlashElem, PttElem, VideoElem, XmlElem, JsonElem, ShareElem, LocationElem, PokeElem,
-	parseDmMessageId, parseGroupMessageId, Image } from "./message"
+	parseDmMessageId, parseGroupMessageId, Image, parseImageFileParam } from "./message"
 export { PrivateMessageEvent, GroupMessageEvent, DiscussMessageEvent, MessageRet,
 	FriendAddReqEvent, GroupAddReqEvent, GroupInviteReqEvent, EventMap,
 	FriendIncreaseEvent, FriendDecreaseEvent, FriendRecallEvent, FriendPokeEvent,

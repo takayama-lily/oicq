@@ -9,12 +9,14 @@ export interface AtElem {
 	type: "at"
 	qq: number | "all"
 	text?: string
+	/** 假at */
 	dummy?: boolean
 }
 
 /** 表情 */
 export interface FaceElem {
 	type: "face" | "sface"
+	/** face为0~324，sface不明 */
 	id: number
 	text?: string
 }
@@ -22,6 +24,7 @@ export interface FaceElem {
 /** 原创表情 */
 export interface BfaceElem {
 	type: "bface"
+	/** 暂时只能发收到的file */
 	file: string
 	text: string
 }
@@ -35,12 +38,18 @@ export interface MfaceElem {
 /** 图片 */
 export interface ImageElem {
 	type: "image"
+	/** 为string时，支持 "http(s)://" "base:64//" 本地文件和收到的file */
 	file: string | Buffer | import("stream").Readable
+	/** 网络图片是否使用缓存 */
 	cache?: boolean
+	/** 下载超时时间 */
 	timeout?: number
-	headers?: import("http").OutgoingHttpHeaders,
+	headers?: import("http").OutgoingHttpHeaders
+	/** 这个参数只有在接收时有用 */
 	url?: string
+	/** 是否作为表情发送 */
 	asface?: boolean
+	/** 是否显示下载原图按钮 */
 	origin?: boolean
 }
 
@@ -52,10 +61,11 @@ export interface FlashElem extends Omit<ImageElem, "type"> {
 /** 语音 */
 export interface PttElem {
 	type: "record"
+	/** 为string时，支持 "http(s)://" "base:64//" 本地文件和收到的file */
 	file: string | Buffer
 	cache?: boolean
 	timeout?: number
-	headers?: import("http").OutgoingHttpHeaders,
+	headers?: import("http").OutgoingHttpHeaders
 	url?: string
 	md5?: string
 	size?: number
@@ -65,6 +75,7 @@ export interface PttElem {
 /** 视频 */
 export interface VideoElem {
 	type: "video"
+	/** 仅支持本地文件与收到的file */
 	file: string
 	name?: string
 	fid?: string
@@ -108,17 +119,18 @@ export interface XmlElem {
 /** 戳一戳 */
 export interface PokeElem {
 	type: "poke"
+	/** 0~6 */
 	id: number
 	text?: string
 }
 
-/** 特殊 */
+/** 特殊 (官方客户端无法解析此消息) */
 export interface MiraiElem {
 	type: "mirai"
 	data: string
 }
 
-/** 文件 */
+/** 文件 (暂时只支持接收，发送请使用文件专用API) */
 export interface FileElem {
 	type: "file"
 	name: string
@@ -128,7 +140,7 @@ export interface FileElem {
 	duration: number
 }
 
-/** todo */
+/** 可引用回复的消息 todo */
 export interface Quotable {
 	user_id: number
 	time: number
@@ -137,6 +149,7 @@ export interface Quotable {
 	raw_message?: string
 }
 
+/** 可转发的消息 */
 export interface Forwardable {
 	user_id: number,
 	message: Sendable,
@@ -144,7 +157,11 @@ export interface Forwardable {
 	time?: number,
 }
 
+/** 注意：只有这7个元素可以组合发送，其他元素只能单独发送 */
+export type ChainElem = TextElem | FaceElem | BfaceElem | MfaceElem | ImageElem | AtElem | MiraiElem
+
 export type MessageElem = TextElem | FaceElem | BfaceElem | MfaceElem | ImageElem | AtElem | MiraiElem |
 	FlashElem | PttElem | VideoElem | JsonElem | XmlElem | PokeElem | LocationElem | ShareElem | FileElem
 
+/** 可以传递给sendMessage方法 */
 export type Sendable = string | MessageElem | (string | MessageElem)[]

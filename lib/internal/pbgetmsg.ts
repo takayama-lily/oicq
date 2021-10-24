@@ -74,7 +74,7 @@ async function handleSyncMsg(this: Client, proto: pb.Proto) {
 		return
 	if (!typelist.includes(type))
 		return
-	if (this.msgExists(from, type, head[5], head[6]))
+	if (this._msgExists(from, type, head[5], head[6]))
 		return
 
 	//群员入群

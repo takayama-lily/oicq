@@ -125,7 +125,7 @@ export async function getFriendSystemMessage(this: Client) {
 		for (const proto of rsp) {
 			try {
 				const e = parseFrdSysMsg(proto)
-				if (this.msgExists(e.user_id, 0, proto[3], e.time))
+				if (this._msgExists(e.user_id, 0, proto[3], e.time))
 					continue
 				if (e.sub_type === "single") {
 					this.sl.set(e.user_id, {
@@ -222,7 +222,7 @@ export async function getGroupSystemMessage(this: Client) {
 		for (let proto of arr) {
 			try {
 				const e = parseGrpSysMsg(proto)
-				if (this.msgExists(e.group_id, proto[50][12], proto[3], e.time))
+				if (this._msgExists(e.group_id, proto[50][12], proto[3], e.time))
 					continue
 				if (e.sub_type === "add") {
 					this.logger.info(`用户 ${e.user_id}(${e.nickname}) 请求加入群 ${e.group_id}(${e.group_name}) (flag: ${e.flag})`)

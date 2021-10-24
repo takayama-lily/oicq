@@ -1,19 +1,19 @@
 import { Gender, GroupRole } from "./common"
 
-/** 陌生人 */
+/** 陌生人资料 */
 export interface StrangerInfo {
 	user_id: number
 	nickname: string
 }
 
-/** 好友 */
+/** 好友资料 */
 export interface FriendInfo extends StrangerInfo {
 	sex: Gender
 	remark: string
 	grouping: number
 }
 
-/** 群 */
+/** 群资料 */
 export interface GroupInfo {
 	group_id: number
 	group_name: string
@@ -31,7 +31,7 @@ export interface GroupInfo {
 	update_time: number
 }
 
-/** 群员 */
+/** 群员资料 */
 export interface MemberInfo {
 	group_id: number
 	user_id: number

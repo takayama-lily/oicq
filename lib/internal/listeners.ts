@@ -112,7 +112,7 @@ function verifyListener(this: Client, url: string, phone: string) {
 }
 
 /**
- * @param code -1没有网络 -2服务器忙 -3上线失败
+ * @param code -2服务器忙 -3上线失败(需要删token)
  */
 function loginErrorListener(this: Client, code: number, message: string) {
 	// toke expired

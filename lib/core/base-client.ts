@@ -25,7 +25,7 @@ export enum VerboseLevel {
 }
 
 export class ApiRejection {
-	constructor(public code: number, public message: any = "unknown") {
+	constructor(public code: number, public message = "unknown") {
 		this.code = Number(this.code)
 		this.message = this.message?.toString() || "unknown"
 	}

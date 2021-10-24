@@ -1,6 +1,7 @@
 import { Gender, GroupRole } from "./common"
 import { PrivateMessage, GroupMessage, DiscussMessage, Sendable } from "./message"
 
+/** 发消息的返回值 */
 export interface MessageRet {
 	message_id: string
 	seq: number
@@ -13,10 +14,14 @@ interface MessageEvent {
 	reply(content: Sendable): Promise<MessageRet>
 }
 
+/** 私聊消息事件 */
 export interface PrivateMessageEvent extends PrivateMessage, MessageEvent { }
+/** 群消息事件 */
 export interface GroupMessageEvent extends GroupMessage, MessageEvent { }
+/** 讨论组消息事件 */
 export interface DiscussMessageEvent extends DiscussMessage, MessageEvent { }
 
+/** 好友申请 */
 export interface FriendAddReqEvent {
 	request_type: "friend"
 	sub_type: "add" | "single"
@@ -31,6 +36,7 @@ export interface FriendAddReqEvent {
 	time: number
 }
 
+/** 群申请 */
 export interface GroupAddReqEvent {
 	request_type: "group"
 	sub_type: "add"
@@ -46,6 +52,7 @@ export interface GroupAddReqEvent {
 	time: number
 }
 
+/** 群邀请 */
 export interface GroupInviteReqEvent {
 	request_type: "group"
 	sub_type: "invite"
@@ -59,29 +66,35 @@ export interface GroupInviteReqEvent {
 	time: number
 }
 
+/** 好友增加 */
 export interface FriendIncreaseEvent {
 	notice_type: "friend"
 	sub_type: "increase"
 	user_id: number
 	nickname: string
 }
+
+/** 好友减少 */
 export interface FriendDecreaseEvent {
 	notice_type: "friend"
 	sub_type: "decrease"
 	user_id: number
 	nickname: string
 }
+
+/** 好友消息撤回 */
 export interface FriendRecallEvent {
 	notice_type: "friend"
 	sub_type: "recall"
 	user_id: number
 	operator_id: number
-	/** @deprecated */
 	message_id: string
 	seq: number
 	rand: number
 	time: number
 }
+
+/** 好友戳一戳 */
 export interface FriendPokeEvent {
 	notice_type: "friend"
 	sub_type: "poke"
@@ -92,6 +105,7 @@ export interface FriendPokeEvent {
 	suffix: string
 }
 
+/** 群员增加 */
 export interface MemberIncreaseEvent {
 	notice_type: "group"
 	sub_type: "increase"
@@ -99,6 +113,8 @@ export interface MemberIncreaseEvent {
 	user_id: number
 	nickname: string
 }
+
+/** 群员减少 */
 export interface MemberDecreaseEvent {
 	notice_type: "group"
 	sub_type: "decrease"
@@ -107,18 +123,21 @@ export interface MemberDecreaseEvent {
 	user_id: number
 	dismiss: boolean
 }
+
+/** 群消息撤回 */
 export interface GroupRecallEvent {
 	notice_type: "group"
 	sub_type: "recall"
 	group_id: number
 	user_id: number
 	operator_id: number
-	/** @deprecated */
 	message_id: string
 	seq: number
 	rand: number
 	time: number
 }
+
+/** 群戳一戳 */
 export interface GroupPokeEvent {
 	notice_type: "group"
 	sub_type: "poke"
@@ -130,6 +149,8 @@ export interface GroupPokeEvent {
 	action: string
 	suffix: string
 }
+
+/** 管理员变更 */
 export interface GroupAdminEvent {
 	notice_type: "group"
 	sub_type: "admin"
@@ -137,6 +158,8 @@ export interface GroupAdminEvent {
 	user_id: number
 	set: boolean
 }
+
+/** 群禁言 */
 export interface GroupMuteEvent {
 	notice_type: "group"
 	sub_type: "ban"
@@ -146,6 +169,8 @@ export interface GroupMuteEvent {
 	nickname?: string
 	duration: number
 }
+
+/** 群转让 */
 export interface GroupTransferEvent {
 	notice_type: "group"
 	sub_type: "transfer"
@@ -154,6 +179,7 @@ export interface GroupTransferEvent {
 	user_id: number
 }
 
+/** 事件地图 */
 export interface EventMap<T = any> {
 
 	/** 收到二维码 */
