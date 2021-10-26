@@ -292,8 +292,11 @@ export class Friend extends Contact {
 	get remark() {
 		return this._info?.remark
 	}
-	get grouping() {
-		return this._info?.grouping
+	get class_id() {
+		return this._info?.class_id
+	}
+	get class_name() {
+		return this.c.class.get(this._info?.class_id!)
 	}
 
 	protected constructor(c: Client, uid: number, protected _info?: FriendInfo) {
@@ -308,7 +311,7 @@ export class Friend extends Contact {
 	}
 
 	/** 设置分组(注意：如果分组id不存在也会成功) */
-	async setGrouping(id: number) {
+	async setClass(id: number) {
 		const buf = Buffer.alloc(10)
 		buf[0] = 1, buf[2] = 5
 		buf.writeUInt32BE(this.uid, 3), buf[7] = id

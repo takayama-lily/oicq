@@ -29,18 +29,18 @@ type OnlinePushEvent = [name: string, event: any]
 
 const sub0x27: {[k: number]: (this: Client, data: pb.Proto) => OnlinePushEvent | void} = {
 	0: function (data) { //add
-		this.internal.groupings.set(data[3][1], String(data[3][3]))
+		this.internal.class.set(data[3][1], String(data[3][3]))
 	},
 	1: function (data) { //delete
-		this.internal.groupings.delete(data[4][1])
+		this.internal.class.delete(data[4][1])
 	},
 	2: function (data) { //rename
-		this.internal.groupings.set(data[5][1], String(data[5][2]))
+		this.internal.class.set(data[5][1], String(data[5][2]))
 	},
 	4: function (data) { //move
 		const arr = Array.isArray(data[7][1]) ? data[7][1] : [data[7][1]]
 		for (let v of arr)
-			this.fl.has(v[1]) && (this.fl.get(v[1])!.grouping = v[3])
+			this.fl.has(v[1]) && (this.fl.get(v[1])!.class_id = v[3])
 	},
 	80: function (data) {
 		const o = data[12]
@@ -123,7 +123,7 @@ const push528: {[k: number]: (this: Client, buf: Buffer) =>  OnlinePushEvent | v
 			user_id, nickname,
 			sex: "unknown",
 			remark: nickname,
-			grouping: data[7]
+			class_id: data[7]
 		})
 		this.sl.delete(user_id)
 		this.logger.info(`更新了好友列表，新增了好友 ${user_id}(${nickname})`)

@@ -34,7 +34,7 @@ export class Internal {
 	stamp = new Set<string>()
 
 	/** 好友分组 */
-	groupings = new Map<number, string>()
+	class = new Map<number, string>()
 
 	constructor(private c: Client) { }
 
@@ -288,7 +288,7 @@ export class Internal {
 	}
 
 	/** 添加好友分组 */
-	async addGrouping(name: string) {
+	async addClass(name: string) {
 		const len = Buffer.byteLength(name)
 		const buf = Buffer.allocUnsafe(2 + len)
 		buf.writeUInt8(0xd)
@@ -301,7 +301,7 @@ export class Internal {
 		await this.sendUni("friendlist.SetGroupReq", body)
 	}
 	/** 删除好友分组 */
-	async deleteGrouping(id: number) {
+	async deleteClass(id: number) {
 		const SetGroupReq = jce.encodeStruct([
 			2, this.uin, Buffer.from([id])
 		])
@@ -309,7 +309,7 @@ export class Internal {
 		await this.sendUni("friendlist.SetGroupReq", body)
 	}
 	/** 重命名好友分组 */
-	async renameGrouping(id: number, name: string) {
+	async renameClass(id: number, name: string) {
 		const len = Buffer.byteLength(name)
 		const buf = Buffer.allocUnsafe(2 + len)
 		buf.writeUInt8(id)
@@ -337,9 +337,9 @@ export class Internal {
 			const body = jce.encodeWrapper({ FL }, "mqq.IMService.FriendListServiceServantObj", "GetFriendListReq")
 			const payload = await this.sendUni("friendlist.getFriendGroupList", body, 10)
 			const nested = jce.decodeWrapper(payload)
-			this.groupings.clear()
+			this.class.clear()
 			for (let v of nested[14])
-				this.groupings.set(v[0], v[1])
+				this.class.set(v[0], v[1])
 			for (let v of nested[7]) {
 				const uid = v[0]
 				const info = {
@@ -347,7 +347,7 @@ export class Internal {
 					nickname: v[14] || "",
 					sex: v[31] ? (v[31] === 1 ? "male" : "female") : "unknown" as Gender,
 					remark: v[3] || "",
-					grouping: v[1],
+					class_id: v[1],
 				}
 				this.fl.set(uid, Object.assign(this.fl.get(uid) || { }, info))
 				set.add(uid)

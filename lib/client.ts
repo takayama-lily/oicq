@@ -89,6 +89,10 @@ export class Client extends BaseClient {
 	get [Symbol.toStringTag]() {
 		return "OicqClient"
 	}
+	/** 好友分组 */
+	get class() {
+		return this.internal.class
+	}
 	/** 好友列表 */
 	get fl() {
 		return this.internal.fl

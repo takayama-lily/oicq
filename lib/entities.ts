@@ -10,7 +10,7 @@ export interface StrangerInfo {
 export interface FriendInfo extends StrangerInfo {
 	sex: Gender
 	remark: string
-	grouping: number
+	class_id: number
 }
 
 /** 群资料 */
