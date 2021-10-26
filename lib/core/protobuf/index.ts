@@ -5,7 +5,7 @@ export interface Encodable {
 	[tag: number]: Encodable | number | bigint | string | Uint8Array | null | undefined
 }
 
-export class Proto {
+export class Proto implements Encodable {
 	[tag: number]: any
 	constructor(protected encoded: Buffer, decoded?: Proto) {
 		if (decoded)

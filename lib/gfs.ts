@@ -47,6 +47,15 @@ function checkRsp(rsp: pb.Proto) {
 /** 群文件系统 */
 export class Gfs {
 
+	/** this.gid的别名 */
+	get group_id() {
+		return this.gid
+	}
+	/** 获取所在群的对象实例 */
+	get group() {
+		return this.c.asGroup(this.gid)
+	}
+
 	constructor(private c: Client, public readonly gid: number) { }
 
 	/** 获取使用空间和文件数 */

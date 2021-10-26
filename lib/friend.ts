@@ -6,21 +6,20 @@ import { Sendable, PrivateMessage, Image, buildMusic, MusicPlatform, Converter, 
 import { buildSyncCookie, Contactable } from "./internal"
 import { MessageRet } from "./events"
 import { FriendInfo } from "./entities"
-import { Group } from "."
 
 type Client = import("./client").Client
 
 const weakmap = new WeakMap<FriendInfo, Friend>()
 
 /** 联系人 */
-export interface User {
+export interface Contact {
 	recallMessage(msg: PrivateMessage): Promise<boolean>
 	recallMessage(msgid: string): Promise<boolean>
 	recallMessage(seq: number, rand: number, time: number): Promise<boolean>
 }
 
 /** 联系人 */
-export class User extends Contactable {
+export class Contact extends Contactable {
 
 	/** this.uid的别名 */
 	get user_id() {
@@ -29,7 +28,7 @@ export class User extends Contactable {
 
 	/** 创建一个联系人对象 */
 	static as(this: Client, uid: number) {
-		return new User(this, Number(uid))
+		return new Contact(this, Number(uid))
 	}
 
 	protected constructor(c: Client, public readonly uid: number) {
@@ -44,6 +43,11 @@ export class User extends Contactable {
 	/** 获取作为某群群员的对象实例 */
 	asMember(gid: number) {
 		return this.c.asMember(gid, this.uid)
+	}
+
+	/** 获取头像url */
+	getAvatarUrl(size: 0 | 40 | 100 | 140 = 0) {
+		return `https://q1.qlogo.cn/g?b=qq&s=${size}&nk=` + this.uid
 	}
 
 	async getAddFriendSetting() {
@@ -261,7 +265,7 @@ export class User extends Contactable {
 }
 
 /** 好友(继承联系人) */
-export class Friend extends User {
+export class Friend extends Contact {
 
 	/** 创建一个好友对象，若uid相同则每次返回同一对象，不会重复创建 */
 	static as(this: Client, uid: number) {

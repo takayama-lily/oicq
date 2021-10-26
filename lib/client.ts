@@ -6,9 +6,9 @@ const pkg = require("../package.json")
 import { md5, timestamp, NOOP, hide, Gender, OnlineStatus } from "./common"
 import { bindInternalListeners, parseFriendRequestFlag, parseGroupRequestFlag, getSystemMessage, Internal } from "./internal"
 import { EventMap } from "./events"
-import { Group, Discuss } from "./group"
+import { Contact, Friend } from "./friend"
+import { Discuss, Group } from "./group"
 import { Member } from "./member"
-import { Friend, User } from "./friend"
 import { Forwardable, Sendable, parseDmMessageId, parseGroupMessageId } from "./message"
 
 /** 日志记录器接口 */
@@ -71,7 +71,7 @@ export class Client extends BaseClient {
 	/** 得到一个群员对象 */
 	readonly asMember = Member.as.bind(this)
 	/** 得到一个联系人对象 */
-	readonly asUser = User.as.bind(this)
+	readonly asUser = Contact.as.bind(this)
 	/** 得到一个讨论组对象 */
 	readonly asDiscuss = Discuss.as.bind(this)
 	readonly internal = new Internal(this)
@@ -464,8 +464,8 @@ export class Client extends BaseClient {
 		return this.asFriend(user_id).thumbUp(times)
 	}
 	/** @deprecated use group.setPortrait() */
-	async setGroupPortrait(group_id: number, file: Parameters<Group["setPortrait"]>[0]) {
-		return this.asGroup(group_id).setPortrait(file)
+	async setGroupPortrait(group_id: number, file: Parameters<Group["setAvatar"]>[0]) {
+		return this.asGroup(group_id).setAvatar(file)
 	}
 	/** @deprecated use group.fs */
 	acquireGfs(group_id: number) {
@@ -524,8 +524,8 @@ export class Client extends BaseClient {
 		return this.internal.setDescription(description)
 	}
 	/** 设置头像 */
-	async setPortrait(file: Parameters<Internal["setPortrait"]>[0]) {
-		return this.internal.setPortrait(file)
+	async setPortrait(file: Parameters<Internal["setAvatar"]>[0]) {
+		return this.internal.setAvatar(file)
 	}
 	/** 获取漫游表情 */
 	async getRoamingStamp(no_cache = false) {

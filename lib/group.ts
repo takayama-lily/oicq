@@ -129,6 +129,11 @@ export class Group extends Discuss {
 		return Member.as.call(this.c, this.gid, uid)
 	}
 
+	/** 获取头像url (history=1,2,3...) */
+	getAvatarUrl(size: 0 | 40 | 100 | 140 = 0, history = 0) {
+		return `https://p.qlogo.cn/gh/${this.gid}/${this.gid}${history?"_"+history:""}/` + size
+	}
+
 	/** 强制刷新资料 */
 	async fetchInfo(): Promise<GroupInfo> {
 		const body = pb.encode({
@@ -299,7 +304,6 @@ export class Group extends Discuss {
 		}
 	}
 
-	// 分片专属屎山
 	private async _sendMessageByFragments(fragments: Uint8Array[]) {
 		let n = 0
 		const rand = randomBytes(4).readUInt32BE()
@@ -386,7 +390,7 @@ export class Group extends Discuss {
 	setName(name: string) {
 		return this._setting({ 3: String(name) })
 	}
-	/** 群员禁言 */
+	/** 全员禁言 */
 	muteAll(yes: boolean) {
 		return this._setting({ 17: yes ? 0xffffffff : 0 })
 	}
@@ -491,7 +495,7 @@ export class Group extends Discuss {
 		return pb.decode(payload)[4][1][3][22]
 	}
 
-	/** 标记seq之前为已读 */
+	/** 标记seq之前为已读，默认为当前最新seq */
 	async markRead(seq = 0) {
 		const body = pb.encode({
 			1: {
@@ -530,7 +534,7 @@ export class Group extends Discuss {
 	}
 
 	/** 设置群头像 */
-	async setPortrait(file: ImageElem["file"]) {
+	async setAvatar(file: ImageElem["file"]) {
 		const img = new Image({ type: "image", file })
 		await img.task
 		const url = `http://htdata3.qq.com/cgi-bin/httpconn?htcmd=0x6ff0072&ver=5520&ukey=${this.c.sig.skey}&range=0&uin=${this.c.uin}&seq=1&groupuin=${this.gid}&filetype=3&imagetype=5&userdata=0&subcmd=1&subver=101&clip=0_0_0_0&filesize=` + img.size
@@ -581,8 +585,4 @@ export class Group extends Discuss {
 	pokeMember(uid: number) {
 		return this.acquireMember(uid).poke()
 	}
-}
-
-class A extends Group {
-
 }

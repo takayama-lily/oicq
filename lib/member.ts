@@ -2,14 +2,14 @@ import { pb, jce } from "./core"
 import { ErrorCode, drop } from "./errors"
 import { timestamp, parseFunString, NOOP } from "./common"
 import { MemberInfo } from "./entities"
-import { User } from "./friend"
+import { Contact } from "./friend"
 
 type Client = import("./client").Client
 
 const weakmap = new WeakMap<MemberInfo, Member>()
 
 /** @ts-ignore ts(2417) 群员(继承联系人) */
-export class Member extends User {
+export class Member extends Contact {
 
 	/** 创建一个群员对象，若gid,uid相同，且默认开启群员列表缓存，则每次返回同一对象，不会重复创建 */
 	static as(this: Client, gid: number, uid: number) {
@@ -30,6 +30,10 @@ export class Member extends User {
 		return this._info
 	}
 
+	/** this.gid的别名 */
+	get group_id() {
+		return this.gid
+	}
 	get card() {
 		return this.info?.card || this._info?.nickname
 	}

@@ -22,7 +22,7 @@ export class Contactable {
 	protected gid?: number
 
 	// 对方账号，可能是群号也可能是QQ号
-	private get uin() {
+	private get target() {
 		return this.uid || this.gid || this.c.uin
 	}
 
@@ -214,7 +214,7 @@ export class Contactable {
 		const thumbsize = (await fs.promises.stat(thumb)).size
 		const ext = pb.encode({
 			1: this.c.uin,
-			2: this.uin,
+			2: this.target,
 			3: 1,
 			4: 2,
 			5: {
@@ -228,7 +228,7 @@ export class Contactable {
 				8: seconds,
 				9: thumbsize,
 			},
-			6: this.uin,
+			6: this.target,
 			20: 1,
 		})
 		const body = pb.encode({
@@ -297,7 +297,7 @@ export class Contactable {
 			4: 3,
 			5: this.c.apk.version,
 			6: [{
-				1: this.uin,
+				1: this.target,
 				2: compressed.length,
 				3: md5(compressed),
 				4: 3,
@@ -315,7 +315,7 @@ export class Contactable {
 			3: 9,
 			4: [{
 				//1: 3,
-				2: this.uin,
+				2: this.target,
 				4: compressed,
 				5: 2,
 				6: rsp[3].toBuffer(),
@@ -356,14 +356,14 @@ export class Contactable {
 			nodes.push({
 				1: {
 					1: fake.user_id,
-					2: this.uin,
+					2: this.target,
 					3: this.dm ? 166 : 82,
 					4: this.dm ? 11 : null,
 					5: seq,
 					6: fake.time || timestamp(),
 					7: rand2uuid(rand),
 					9: this.dm ? null : {
-						1: this.uin,
+						1: this.target,
 						4: nickname,
 					},
 					14: nickname,

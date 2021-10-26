@@ -122,7 +122,7 @@ export class Internal {
 	}
 
 	/** 设置头像 */
-	async setPortrait(file: ImageElem["file"]) {
+	async setAvatar(file: ImageElem["file"]) {
 		const img = new Image({ type: "image", file })
 		await img.task
 		const body = pb.encode({
