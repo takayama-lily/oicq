@@ -39,3 +39,15 @@ export function drop(code: number, message?: string): never {
 		message = ErrorMessage[code]
 	throw new ApiRejection(code, message)
 }
+
+/** 不在内的都属于未知错误，暂时不在解决范围 */
+export enum LoginErrorCode {
+	ScanUinError = 0,
+	ScanTimeout = 17,
+	ScanCancelled = 54,
+	WrongPassword = 1,
+	AccountFrozen = 40,
+	TooManySms = 162,
+	WrongSmsCode = 163,
+	WrongTicket = 237,
+}

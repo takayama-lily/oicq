@@ -11,7 +11,7 @@ import { dmMsgSyncListener, groupMsgListener, discussMsgListener, onlinePushList
 
 type Client = import("../client").Client
 
-function pushNotifyListener(this: Client, payload: Buffer) {
+async function pushNotifyListener(this: Client, payload: Buffer) {
 	if (!this._sync_cookie) return
 	const nested = jce.decodeWrapper(payload.slice(15))
 	switch (nested[5]) {
@@ -32,7 +32,7 @@ function pushNotifyListener(this: Client, payload: Buffer) {
 	case 191: //单向好友增加
 		return getFriendSystemMessage.call(this)
 	case 528: //黑名单同步
-		return this.internal.loadBlackList().catch(NOOP)
+		return this.self.loadBlackList()
 	}
 }
 
@@ -46,6 +46,7 @@ const events = {
 	"MessageSvc.PushReaded": pushReadedListener,
 }
 
+/** 事件总线, 在这里捕获奇怪的错误 */
 async function eventsListener(this: Client, cmd: string, payload: Buffer, seq: number) {
 	try {
 		await Reflect.get(events, cmd)?.call(this, payload, seq)
@@ -54,24 +55,25 @@ async function eventsListener(this: Client, cmd: string, payload: Buffer, seq: n
 	}
 }
 
+/** 上线后加载资源 */
 async function onlineListener(this: Client, token: Buffer, nickname: string, gender: number, age: number) {
-	this.internal.status = this.internal.status || OnlineStatus.Online
-	this.internal.nickname = nickname
-	this.internal.age = age
-	this.internal.sex = gender ? (gender === 1 ? "male" : "female") : "unknown"
-	this.internal.setStatus(this.internal.status)
+	this.self.nickname = nickname
+	this.self.age = age
+	this.self.sex = gender ? (gender === 1 ? "male" : "female") : "unknown"
+	// 恢复之前的状态
+	this.self.status = this.self.status || OnlineStatus.Online
+	this.self.setStatus(this.self.status).catch(NOOP)
+	// 存token
 	tokenUpdatedListener.call(this, token)
-	this.logger.mark(`Welcome, ${this.nickname} ! 开始初始化资源...`)
+	this.logger.mark(`Welcome, ${this.nickname} ! 正在加载资源...`)
 	await Promise.allSettled([
-		this.internal.loadFriendList(),
-		this.internal.loadGroupList(),
-		this.internal.loadStrangerList(),
-		this.internal.loadBlackList(),
+		this.self.loadFriendList(),
+		this.self.loadGroupList(),
+		this.self.loadStrangerList(),
+		this.self.loadBlackList(),
 	])
-	this.logger.mark(`加载了${this.fl.size}个好友，${this.gl.size}个群，${this.sl.size}个陌生人。`)
-	this.logger.mark("初始化完毕，开始处理消息")
-	this.internal.setStatus(this.status)
-	pbGetMsg.call(this)
+	this.logger.mark(`加载了${this.fl.size}个好友，${this.gl.size}个群，${this.sl.size}个陌生人`)
+	pbGetMsg.call(this).catch(NOOP)
 	this.em("system.online")
 }
 
@@ -112,6 +114,7 @@ function verifyListener(this: Client, url: string, phone: string) {
 }
 
 /**
+ * 登录相关错误
  * @param code -2服务器忙 -3上线失败(需要删token)
  */
 function loginErrorListener(this: Client, code: number, message: string) {

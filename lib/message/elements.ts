@@ -63,9 +63,6 @@ export interface PttElem {
 	type: "record"
 	/** 为string时，支持 "http(s)://" "base:64//" 本地文件和收到的file */
 	file: string | Buffer
-	cache?: boolean
-	timeout?: number
-	headers?: import("http").OutgoingHttpHeaders
 	url?: string
 	md5?: string
 	size?: number
@@ -140,13 +137,19 @@ export interface FileElem {
 	duration: number
 }
 
-/** 可引用回复的消息 todo */
+/** @deprecated 旧版引用回复(已弃用)，仅做一定程度的兼容 */
+export interface ReplyElem {
+	type: "reply"
+	id: string
+}
+
+/** 可引用回复的消息 */
 export interface Quotable {
 	user_id: number
 	time: number
 	seq: number
-	message?: Sendable
-	raw_message?: string
+	rand: number
+	message: Sendable
 }
 
 /** 可转发的消息 */
@@ -157,10 +160,11 @@ export interface Forwardable {
 	time?: number,
 }
 
-/** 注意：只有这7个元素可以组合发送，其他元素只能单独发送 */
-export type ChainElem = TextElem | FaceElem | BfaceElem | MfaceElem | ImageElem | AtElem | MiraiElem
+/** 可以组合发送的元素 */
+export type ChainElem = TextElem | FaceElem | BfaceElem | MfaceElem | ImageElem | AtElem | MiraiElem | ReplyElem
 
-export type MessageElem = TextElem | FaceElem | BfaceElem | MfaceElem | ImageElem | AtElem | MiraiElem |
+/** 注意：只有`ChainElem`中的元素可以组合发送，其他元素只能单独发送 */
+export type MessageElem = TextElem | FaceElem | BfaceElem | MfaceElem | ImageElem | AtElem | MiraiElem | ReplyElem |
 	FlashElem | PttElem | VideoElem | JsonElem | XmlElem | PokeElem | LocationElem | ShareElem | FileElem
 
 /** 可以传递给sendMessage方法 */

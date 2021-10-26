@@ -29,13 +29,13 @@ type OnlinePushEvent = [name: string, event: any]
 
 const sub0x27: {[k: number]: (this: Client, data: pb.Proto) => OnlinePushEvent | void} = {
 	0: function (data) { //add
-		this.internal.class.set(data[3][1], String(data[3][3]))
+		this.self.class.set(data[3][1], String(data[3][3]))
 	},
 	1: function (data) { //delete
-		this.internal.class.delete(data[4][1])
+		this.self.class.delete(data[4][1])
 	},
 	2: function (data) { //rename
-		this.internal.class.set(data[5][1], String(data[5][2]))
+		this.self.class.set(data[5][1], String(data[5][2]))
 	},
 	4: function (data) { //move
 		const arr = Array.isArray(data[7][1]) ? data[7][1] : [data[7][1]]
@@ -76,8 +76,8 @@ const sub0x27: {[k: number]: (this: Client, data: pb.Proto) => OnlinePushEvent |
 			value = new Date().getFullYear() - o[2].toBuffer().readUInt16BE()
 		} else if (o[1] === 27372 && user_id === this.uin) {
 			const status = o[2].toBuffer()[o[2].toBuffer().length - 1]
-			const old_status = this.internal.status, new_status = statuslist[status] || 11
-			this.internal.status = new_status
+			const old_status = this.self.status, new_status = statuslist[status] || 11
+			this.self.status = new_status
 			if (old_status !== new_status)
 				this.em("sync.status", { old_status, new_status })
 			return
@@ -85,7 +85,7 @@ const sub0x27: {[k: number]: (this: Client, data: pb.Proto) => OnlinePushEvent |
 			return
 		}
 		if (user_id === this.uin)
-			this.internal[key as "nickname"] = value
+			this.self[key as "nickname"] = value
 	},
 	40: function (data) {
 		const o = data[9][1], user_id = o[2]
@@ -340,26 +340,22 @@ const fragmap = new Map<string, GroupMessage[]>()
 export function groupMsgListener(this: Client, payload: Buffer) {
 	this.stat.recv_msg_cnt++
 	if (!this._sync_cookie) return
-	const proto = pb.decode(payload)[1]
+	let msg = new GroupMessage(pb.decode(payload)[1])
+	this.emit(`internal.${msg.group_id}.${msg.rand}`, msg.message_id)
 
-	//消息id屎山
-	const head = proto[1], content = proto[2], body = proto[3]
-	const user_id = head[1], time = head[6], seq = head[5]
-	const group_id = head[9][1], rand = body[1][1][3], pktnum = content[1]
-	const message_id = genGroupMessageId(group_id, user_id, seq, rand, time, pktnum)
-	this.emit(`internal.${group_id}.${rand}`, message_id)
-
-	let msg = new GroupMessage(proto)
+	if (msg.user_id === this.uin && this.config.ignore_self)
+		return
 
 	//分片专属屎山
-	if (content[1] > 1) {
-		!fragmap.has(message_id) && fragmap.set(message_id, [])
-		const arr = fragmap.get(message_id)!
+	if (msg.pktnum > 1) {
+		const k = [this.uin, msg.group_id, msg.user_id, msg.div].join()
+		if (!fragmap.has(k))
+			fragmap.set(k, [])
+		const arr = fragmap.get(k)!
 		arr.push(msg)
-		setTimeout(()=>fragmap.delete(message_id), 5000)
-		if (arr.length !== pktnum)
+		setTimeout(()=>fragmap.delete(k), 5000)
+		if (arr.length !== msg.pktnum)
 			return
-		arr.sort((a, b) => a.index - b.index)
 		msg = GroupMessage.combine(arr)
 	}
 
@@ -367,8 +363,6 @@ export function groupMsgListener(this: Client, payload: Buffer) {
 	this.config.cache_group_member && this.asMember(msg.group_id, msg.sender.user_id).info
 
 	if (msg.raw_message) {
-		this.emit("internal.group.noise", group_id, user_id)
-		msg.message_id = message_id
 		const _ = this.asGroup(msg.group_id)
 		;(msg as GroupMessageEvent).reply = _.sendMessage.bind(_)
 		const sender = msg.sender
@@ -394,6 +388,8 @@ export function discussMsgListener(this: Client, payload: Buffer, seq: number) {
 	handleOnlinePush.call(this, proto[2], seq)
 	if (!this._sync_cookie) return
 	const msg = new DiscussMessage(proto[1]) as DiscussMessageEvent
+	if (msg.user_id === this.uin && this.config.ignore_self)
+		return
 	if (msg.raw_message) {
 		const _ = this.asDiscuss(msg.discuss_id)
 		msg.reply = _.sendMessage.bind(_)

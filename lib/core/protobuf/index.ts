@@ -2,11 +2,14 @@
 import pb from "./protobuf.min.js"
 
 export interface Encodable {
-	[tag: number]: Encodable | number | bigint | string | Uint8Array | null | undefined
+	[tag: number]: any
 }
 
 export class Proto implements Encodable {
 	[tag: number]: any
+	get length() {
+		return this.encoded.length
+	}
 	constructor(protected encoded: Buffer, decoded?: Proto) {
 		if (decoded)
 			Reflect.setPrototypeOf(this, decoded)

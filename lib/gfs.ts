@@ -55,6 +55,10 @@ export class Gfs {
 	get group() {
 		return this.c.asGroup(this.gid)
 	}
+	/** 返回所属的客户端对象 */
+	get client() {
+		return this.c
+	}
 
 	constructor(private c: Client, public readonly gid: number) { }
 
@@ -101,8 +105,7 @@ export class Gfs {
 		})
 		const payload = await this.c.sendOidb("OidbSvc.0x6d8_0", body)
 		const rsp = pb.decode(payload)[4][1]
-		if (rsp[1])
-			drop(rsp[1], rsp[2])
+		checkRsp(rsp)
 		return genGfsFileStat(rsp[4])
 	}
 

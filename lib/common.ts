@@ -120,6 +120,19 @@ export function log(any: any) {
 	console.log(util.inspect(any, { depth: 20, showHidden: false, maxArrayLength: 1000, maxStringLength: 20000 }))
 }
 
+export class DownloadTransform extends stream.Transform {
+	_size = 0
+	_transform(data: Buffer, encoding: BufferEncoding, callback: stream.TransformCallback) {
+		this._size += data.length
+		let error = null
+		if (this._size <= MAX_UPLOAD_SIZE)
+			this.push(data)
+		else
+			error = new Error("downloading over 30MB is refused")
+		callback(error)
+	}
+}
+
 export const PB_CONTENT = pb.encode({ 1: 1, 2: 0, 3: 0 })
 export const IS_WIN = os.platform().includes("win")
 

@@ -18,11 +18,10 @@ export class Parser {
 	anon?: pb.Proto
 	/** 额外情报 */
 	extra?: pb.Proto
-	// general?: pb.Proto
+	/** 引用回复 */
+	quotation?: pb.Proto
 	atme = false
 	atall = false
-	/** 引用回复 */
-	quotation?: T.Quotable
 
 	private exclusive = false
 	private it?: IterableIterator<[number, pb.Proto]>
@@ -54,17 +53,12 @@ export class Parser {
 		switch (type) {
 		case 12: //xml
 		case 51: //json
+			const buf = proto[1].toBuffer() as Buffer
 			elem = {
 				type: type === 12 ? "xml" : "json",
-				data: ""
-			} as T.XmlElem | T.JsonElem
-			const buf = proto[1].toBuffer() as Buffer
-			if (buf[0] > 0)
-				elem.data = String(unzipSync(buf.slice(1)))
-			else
-				elem.data = String(buf.slice(1))
-			if (proto[2] > 0)
-				(elem as T.XmlElem).id = proto[2]
+				data: String(buf[0] > 0 ? unzipSync(buf.slice(1)) : buf.slice(1)),
+				id: proto[2]
+			}
 			brief = elem.type + "消息"
 			break
 		case 3: //flash
@@ -75,7 +69,7 @@ export class Parser {
 			elem = {
 				type: "record",
 				file: "protobuf://" + proto.toBase64(),
-				url: undefined,
+				url: "",
 				md5: proto[4].toHex(),
 				size: proto[6] || 0,
 				seconds: proto[19] || 0,
@@ -141,7 +135,7 @@ export class Parser {
 				elem = {
 					type: "at",
 					qq: 0,
-					text: ""
+					text: brief
 				}
 				if (buf[6] === 1) {
 					elem.qq = "all"
@@ -220,6 +214,15 @@ export class Parser {
 		default:
 			return
 		}
+
+		// 删除回复中多余的AT元素
+		if (this.content.length === 2 && elem.type === "at" && this.content[0]?.type === "at" && this.content[1]?.type === "text") {
+			if (this.content[0].qq === elem.qq && this.content[1].text === " ") {
+				this.content.splice(0, 2)
+				this.brief = ""
+			}
+		}
+
 		this.brief += brief
 		if (!Array.isArray(this.content))
 			this.content = []
@@ -241,9 +244,8 @@ export class Parser {
 				this.extra = proto
 			} else if (type === 21) { //anonGroupMsg
 				this.anon = proto
-			// } else if (type === 37) { //generalFlags
-			// 	this.general = proto
-				// if (proto[6] === 1 && proto[7])
+			} else if (type === 45) { //sourceMsg
+				this.quotation = proto
 			} else if (!this.exclusive) {
 				switch (type) {
 				case 1: //text
@@ -269,9 +271,6 @@ export class Parser {
 					} else if (proto[1] === 2) { //poke
 						this.parseExclusiveElem(126, proto)
 					}
-					break
-				case 45: //reply
-					this.parseQuotation(proto)
 					break
 				default:
 					break
@@ -304,18 +303,5 @@ export class Parser {
 				elem.asface = proto[34]?.[1] === 1
 		}
 		return elem
-	}
-
-	private parseQuotation(proto: pb.Proto) {
-		if (Array.isArray(proto[1]))
-			proto[1] = proto[1][0]
-		const source = parse(Array.isArray(proto[5]) ? proto[5] : [proto[5]])
-		this.quotation = {
-			user_id: proto[2],
-			time: proto[3],
-			seq: proto[1],
-			message: source.content,
-			raw_message: source.brief
-		}
 	}
 }

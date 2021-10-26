@@ -2,7 +2,7 @@ import { randomBytes } from "crypto"
 import { pb, jce } from "./core"
 import { ErrorCode, drop } from "./errors"
 import { Gender, PB_CONTENT, code2uin, timestamp, log } from "./common"
-import { Sendable, PrivateMessage, Image, buildMusic, MusicPlatform, Converter, rand2uuid, genDmMessageId, parseDmMessageId } from "./message"
+import { Sendable, PrivateMessage, Image, buildMusic, MusicPlatform, Quotable, rand2uuid, genDmMessageId, parseDmMessageId } from "./message"
 import { buildSyncCookie, Contactable } from "./internal"
 import { MessageRet } from "./events"
 import { FriendInfo } from "./entities"
@@ -96,8 +96,11 @@ export class Contact extends Contactable {
 		if (obj[1] > 0 || !obj[6])
 			return messages
 		!Array.isArray(obj[6]) && (obj[6] = [obj[6]])
-		for (const proto of obj[6])
-			messages.push(new PrivateMessage(proto, this.c.uin))
+		for (const proto of obj[6]) {
+			try {
+				messages.push(new PrivateMessage(proto, this.c.uin))
+			} catch { }
+		}
 		return messages
 	}
 
@@ -139,7 +142,7 @@ export class Contact extends Contactable {
 				4: 1,
 			}]
 		})
-		const payload = await this.c.sendOidb("PbMessageSvc.PbMsgWithDraw", body)
+		const payload = await this.c.sendUni("PbMessageSvc.PbMsgWithDraw", body)
 		return pb.decode(payload)[1][1] <= 2
 	}
 
@@ -159,8 +162,8 @@ export class Contact extends Contactable {
 	}
 
 	/** 发送一条消息 */
-	async sendMessage(content: Sendable): Promise<MessageRet> {
-		const { rich, brief } = await this._preprocess(content)
+	async sendMessage(content: Sendable, source?: Quotable): Promise<MessageRet> {
+		const { rich, brief } = await this._preprocess(content, source)
 		const seq = this.c.sig.seq + 1
 		const rand = randomBytes(4).readUInt32BE()
 		const body = pb.encode({
@@ -262,6 +265,30 @@ export class Contact extends Contactable {
 		const payload = await this.c.sendUni("ProfileService.Pb.ReqSystemMsgAction.Group", body)
 		return pb.decode(payload)[1][1] === 0
 	}
+
+	/** 获取离线文件下载地址 */
+	async fetchOfflineFileDownloadUrl(fid: string) {
+		const body = pb.encode({
+			1: 1200,
+			14: {
+				10: this.c.uin,
+				20: fid,
+				30: 2
+			},
+			101: 3,
+			102: 104,
+			99999: { 1: 90200 }
+		})
+		const payload = await this.c.sendUni("OfflineFilleHandleSvr.pb_ftn_CMD_REQ_APPLY_DOWNLOAD-1200", body)
+		const rsp = pb.decode(payload)[14]
+		if (rsp[10] !== 0)
+			drop(ErrorCode.OfflineFileNotExists, rsp[20])
+		const obj = rsp[30]
+		let url = String(obj[50])
+		if (!url.startsWith("http"))
+			url = `http://${obj[30]}:${obj[40]}` + url
+		return url
+	}
 }
 
 /** 好友(继承联系人) */
@@ -296,7 +323,7 @@ export class Friend extends Contact {
 		return this._info?.class_id
 	}
 	get class_name() {
-		return this.c.class.get(this._info?.class_id!)
+		return this.c.self.class.get(this._info?.class_id!)
 	}
 
 	protected constructor(c: Client, uid: number, protected _info?: FriendInfo) {

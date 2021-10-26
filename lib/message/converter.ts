@@ -1,15 +1,15 @@
 import { deflateSync } from "zlib"
 import { FACE_OLD_BUF, facemap } from "./face"
 import { Image } from "./image"
-import { AtElem, BfaceElem, Quotable, MessageElem,
-	FaceElem, FlashElem, ImageElem, JsonElem, LocationElem, MfaceElem,
+import { AtElem, BfaceElem, Quotable, MessageElem, TextElem,
+	FaceElem, FlashElem, ImageElem, JsonElem, LocationElem, MfaceElem, ReplyElem,
 	MiraiElem, PokeElem, PttElem, Sendable, ShareElem, VideoElem, XmlElem, FileElem } from "./elements"
 import { pb } from "../core"
-import { escapeXml, NOOP } from "../common"
-import { Anonymous } from "./message"
+import { escapeXml } from "../common"
+import { Anonymous, rand2uuid, parseDmMessageId, parseGroupMessageId } from "./message"
 
-// const EMOJI_NOT_ENDING = ["\uD835", "\uD83C", "\uD83D", "\uD83E", "\u200D"]
-// const EMOJI_NOT_STARTING = ["\uFE0F", "\u200D", "\u20E3"]
+const EMOJI_NOT_ENDING = ["\uD835", "\uD83C", "\uD83D", "\uD83E", "\u200D"]
+const EMOJI_NOT_STARTING = ["\uFE0F", "\u200D", "\u20E3"]
 
 const PB_RESERVER = pb.encode({
 	37: {
@@ -26,7 +26,7 @@ const AT_BUF = Buffer.from([0, 1, 0, 0, 0])
 const BUF1 = Buffer.from([1])
 const BUF2 = Buffer.alloc(2)
 
-const rand = (a: number, b: number) => Math.floor(Math.random() * (b - a) + a)
+const random = (a: number, b: number) => Math.floor(Math.random() * (b - a) + a)
 
 export interface ConverterExt {
 	/** 是否是私聊(default:false) */
@@ -48,22 +48,16 @@ export class Converter {
 	rich: pb.Encodable = { 2: this.elems, 4: null }
 	/** 长度(字符) */
 	length = 0
-	/** 异步任务，完成后才能发送 */
-	tasks: Promise<void>[] = []
 	/** 包含的图片(可能需要上传) */
 	imgs: Image[] = []
 	/** 预览文字 */
 	brief = ""
-
-	static async from(content: Sendable, ext?: ConverterExt) {
-		const converter = new Converter(content, ext)
-		await Promise.allSettled(converter.tasks).catch(NOOP)
-		return converter
-	}
+	/** 分片后 */
+	private fragments: Uint8Array[] = []
 
 	public constructor(content: Sendable, private ext?: ConverterExt) {
 		if (typeof content === "string") {
-			this.text(content)
+			this._text(content)
 		} else if (Array.isArray(content)) {
 			for (let elem of content)
 				this._convert(elem)
@@ -77,15 +71,15 @@ export class Converter {
 
 	private _convert(elem: MessageElem | string) {
 		if (typeof elem === "string")
-			this.text(elem)
+			this._text(elem)
 		else if (Reflect.has(this, elem.type))
 			this[elem.type](elem as any)
-		else
-			throw new Error("不支持的元素类型：" + elem.type)
 	}
 
-	private text(text: string, attr6?: Buffer) {
+	private _text(text: string, attr6?: Buffer) {
 		text = String(text)
+		if (!text.length)
+			return
 		this.elems.push({
 			1: {
 				1: text,
@@ -96,33 +90,37 @@ export class Converter {
 		this.brief += text
 	}
 
+	private text(elem: TextElem) {
+		this._text(elem.text)
+	}
+
 	private at(elem: AtElem) {
 		let { qq, text, dummy } = elem
 		if (qq === "all") {
-			var q = 0, flag = 1, display = "@全体成员"
+			var q = 0, flag = 1, display = "全体成员"
 		} else {
-			var q = Number(qq), flag = 0, display = text || ("@" + q)
+			var q = Number(qq), flag = 0, display = text || String(qq)
 			if (!text) {
 				const member = this.ext?.mlist?.get(q)
-				text = member?.card || member?.nickname || String(q)
-				display = "@" + display
+				display = member?.card || member?.nickname || display
 			}
 		}
+		display = "@" + display
 		if (dummy)
-			return this.text(display)
+			return this._text(display)
 		const buf = Buffer.allocUnsafe(6)
 		buf.writeUInt8(display.length)
 		buf.writeUInt8(flag, 1)
 		buf.writeUInt32BE(q, 2)
 		const attr6 = Buffer.concat([AT_BUF, buf, BUF2])
-		this.text(display, attr6)
+		this._text(display, attr6)
 	}
 
 	private face(elem: FaceElem) {
 		let { id, text } = elem
 		id = Number(id)
 		if (id < 0 || id > 0xffff || isNaN(id))
-			throw new Error("不正确的表情ID: " + id)
+			throw new Error("wrong face id: " + id)
 		if (id <= 0xff) {
 			const old = Buffer.allocUnsafe(2)
 			old.writeUInt16BE(0x1441 + id)
@@ -164,7 +162,7 @@ export class Converter {
 				2: 1,
 			}
 		})
-		this.text(text)
+		this._text(text)
 	}
 
 	private bface(elem: BfaceElem, magic?: Buffer) {
@@ -185,18 +183,18 @@ export class Converter {
 			12: magic || null
 		}
 		this.elems.push({ 6: o })
-		this.text(text)
+		this._text(text)
 	}
 
 	private dice(elem: MfaceElem) {
-		const id = (elem.id! >= 1 && elem.id! <= 6) ? (elem.id! - 1) : rand(0, 6)
+		const id = (elem.id! >= 1 && elem.id! <= 6) ? (elem.id! - 1) : random(0, 6)
 		return this.bface({
 			type: "bface", file: "4823d3adb15df08014ce5d6796b76ee13430396532613639623136393138663911464", text: "骰子"
 		}, Buffer.from([0x72, 0x73, 0x63, 0x54, 0x79, 0x70, 0x65, 0x3f, 0x31, 0x3b, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x3d, 0x30 + id]))
 	}
 
 	private rps(elem: MfaceElem) {
-		const id = (elem.id! >= 1 && elem.id! <= 3) ? (elem.id! - 1) : rand(0, 3)
+		const id = (elem.id! >= 1 && elem.id! <= 3) ? (elem.id! - 1) : random(0, 3)
 		return this.bface({
 			type: "bface", file: "83c8a293ae65ca140f348120a77448ee3764653339666562636634356536646211415", text: "猜拳"
 		}, Buffer.from([0x72, 0x73, 0x63, 0x54, 0x79, 0x70, 0x65, 0x3f, 0x31, 0x3b, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x3d, 0x30 + id]))
@@ -204,7 +202,7 @@ export class Converter {
 
 	private image(elem: ImageElem) {
 		const img = new Image(elem, this.ext?.dm, this.ext?.cachedir)
-		this.tasks.push(img.task.then(()=>{this.imgs.push(img)}))
+		this.imgs.push(img)
 		this.elems.push(
 			this.ext?.dm ? { 4: img.proto } : { 8: img.proto }
 		)
@@ -213,7 +211,7 @@ export class Converter {
 
 	private flash(elem: FlashElem) {
 		const img = new Image(elem, this.ext?.dm, this.ext?.cachedir)
-		this.tasks.push(img.task.then(()=>{this.imgs.push(img)}))
+		this.imgs.push(img)
 		this.elems.push({
 			53: {
 				1: 3,
@@ -253,7 +251,7 @@ export class Converter {
 	private location(elem: LocationElem) {
 		let { address, lat, lng, name, id } = elem
 		if (!address || !lat || !lng)
-			throw new Error("位置分享需要address和lat和lng")
+			throw new Error("location share need 'address', 'lat' and 'lng'")
 		let data = {
 			config: { forward: true, type: "card", autosize: true },
 			prompt: "[应用]地图",
@@ -279,7 +277,7 @@ export class Converter {
 	private share(elem: ShareElem) {
 		let { url, title, content, image } = elem
 		if (!url || !title)
-			throw new Error("分享需要title和url")
+			throw new Error("link share need 'url' and 'title'")
 		if (title.length > 26)
 			title = title.substr(0, 25) + "…"
 		title = escapeXml(title)
@@ -312,8 +310,8 @@ export class Converter {
 	private poke(elem: PokeElem) {
 		let { id } = elem
 		if (!(id >= 0 && id <= 6))
-			throw new Error("不正确的poke id (只支持0-6)")
-		this.elems.push([{
+			throw new Error("wrong poke id: " + id)
+		this.elems.push({
 			53: {
 				1: 2,
 				2: {
@@ -323,7 +321,7 @@ export class Converter {
 				},
 				3: id,
 			}
-		}])
+		})
 		this.brief += "[戳一戳]"
 	}
 
@@ -342,10 +340,72 @@ export class Converter {
 		throw new Error("暂不支持发送或转发file元素，请调用文件相关API完成该操作")
 	}
 
+	private reply(elem: ReplyElem) {
+		const { id } = elem
+		if (id.length > 24)
+			this.quote({ ...parseGroupMessageId(id), message: "[消息]" })
+		else
+			this.quote({ ...parseDmMessageId(id), message: "[消息]" })
+	}
+
 	/** 转换为分片消息 */
-	toFragments(): Uint8Array[] {
-		// todo
-		return 1 as any
+	toFragments() {
+		this.elems.pop()
+		let frag: pb.Encodable[] = []
+		for (let proto of this.elems) {
+			if (proto[1] && !proto[1][3]) {
+				this._pushFragment(frag)
+				frag = []
+				this._divideText(proto[1][1])
+			} else {
+				frag.push(proto)
+			}
+		}
+		if (!frag.length && this.fragments.length === 1) {
+			frag.push({
+				1: {
+					1: "",
+				}
+			})
+		}
+		this._pushFragment(frag)
+		return this.fragments
+	}
+	private _divideText(text: string) {
+		let n = 0
+		while (n < text.length) {
+			let m = n + 80
+			let chunk = text.slice(n, m)
+			n = m
+			if (text.length > n) {
+				// emoji不能从中间分割，否则客户端会乱码
+				while (EMOJI_NOT_ENDING.includes(chunk[chunk.length - 1]) && text[n]) {
+					chunk += text[n]
+					++n
+				}
+				while (EMOJI_NOT_STARTING.includes(text[n])) {
+					chunk += text[n]
+					++n
+					while (EMOJI_NOT_ENDING.includes(chunk[chunk.length - 1]) && text[n]) {
+						chunk += text[n]
+						++n
+					}
+				}
+			}
+			this._pushFragment([{
+				1: {
+					1: chunk
+				}
+			}])
+		}
+	}
+	private _pushFragment(proto: pb.Encodable[]) {
+		if (proto.length > 0) {
+			proto.push(PB_RESERVER)
+			this.fragments.push(pb.encode({
+				2: proto
+			}))
+		}
 	}
 
 	/** 匿名化 */
@@ -361,17 +421,20 @@ export class Converter {
 		})
 	}
 
-	/** 引用回复 todo */
+	/** 引用回复 */
 	quote(source: Quotable) {
-		const rich = new Converter(source.message || source.raw_message!, this.ext).rich
+		const elems = new Converter(source.message || "", this.ext).elems
 		this.elems.unshift({
 			45: {
 				1: [source.seq],
 				2: source.user_id,
 				3: source.time,
 				4: 1,
-				5: rich,
+				5: elems,
 				6: 0,
+				8: {
+					3: rand2uuid(source.rand || 0)
+				}
 			}
 		})
 	}

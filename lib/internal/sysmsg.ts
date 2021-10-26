@@ -118,33 +118,28 @@ const FRD_BUF = pb.encode({
 })
 
 export async function getFriendSystemMessage(this: Client) {
-	try {
-		const payload = await this.sendUni("ProfileService.Pb.ReqSystemMsgNew.Friend", FRD_BUF)
-		let rsp = pb.decode(payload)[9]
-		if (!Array.isArray(rsp)) rsp = [rsp]
-		for (const proto of rsp) {
-			try {
-				const e = parseFrdSysMsg(proto)
-				if (this._msgExists(e.user_id, 0, proto[3], e.time))
-					continue
-				if (e.sub_type === "single") {
-					this.sl.set(e.user_id, {
-						user_id: e.user_id,
-						nickname: e.nickname,
-					})
-					this.logger.info(`${e.user_id}(${e.nickname}) 将你添加为单向好友 (flag: ${e.flag})`)
-					this.em("request.friend.single", e)
-				} else {
-					this.logger.info(`收到 ${e.user_id}(${e.nickname}) 的加好友请求 (flag: ${e.flag})`)
-					this.em("request.friend.add", e)
-				}
-			} catch (e: any) {
-				this.logger.trace(e.message)
+	const payload = await this.sendUni("ProfileService.Pb.ReqSystemMsgNew.Friend", FRD_BUF)
+	let rsp = pb.decode(payload)[9]
+	if (!Array.isArray(rsp)) rsp = [rsp]
+	for (const proto of rsp) {
+		try {
+			const e = parseFrdSysMsg(proto)
+			if (this._msgExists(e.user_id, 0, proto[3], e.time))
+				continue
+			if (e.sub_type === "single") {
+				this.sl.set(e.user_id, {
+					user_id: e.user_id,
+					nickname: e.nickname,
+				})
+				this.logger.info(`${e.user_id}(${e.nickname}) 将你添加为单向好友 (flag: ${e.flag})`)
+				this.em("request.friend.single", e)
+			} else {
+				this.logger.info(`收到 ${e.user_id}(${e.nickname}) 的加好友请求 (flag: ${e.flag})`)
+				this.em("request.friend.add", e)
 			}
+		} catch (e: any) {
+			this.logger.trace(e.message)
 		}
-	} catch (e) {
-		this.logger.error("获取好友系统消息失败")
-		this.logger.error(e)
 	}
 }
 
@@ -207,37 +202,32 @@ const GRP_BUF_RISK = pb.encode({
 })
 
 export async function getGroupSystemMessage(this: Client) {
-	try {
-		let arr: pb.Proto[] = []
-		{
-			const payload = await this.sendUni("ProfileService.Pb.ReqSystemMsgNew.Group", GRP_BUF)
-			let rsp = pb.decode(payload)[10]
-			if (rsp) arr = arr.concat(rsp)
-		}
-		{
-			const payload = await this.sendUni("ProfileService.Pb.ReqSystemMsgNew.Group", GRP_BUF_RISK)
-			let rsp = pb.decode(payload)[10]
-			if (rsp) arr = arr.concat(rsp)
-		}
-		for (let proto of arr) {
-			try {
-				const e = parseGrpSysMsg(proto)
-				if (this._msgExists(e.group_id, proto[50][12], proto[3], e.time))
-					continue
-				if (e.sub_type === "add") {
-					this.logger.info(`用户 ${e.user_id}(${e.nickname}) 请求加入群 ${e.group_id}(${e.group_name}) (flag: ${e.flag})`)
-					this.em("request.group.add", e)
-				} else {
-					this.logger.info(`用户 ${e.user_id}(${e.nickname}) 邀请你加入群 ${e.group_id}(${e.group_name}) (flag: ${e.flag})`)
-					this.em("request.group.invite", e)
-				}
-			} catch (e: any) {
-				this.logger.trace(e.message)
+	let arr: pb.Proto[] = []
+	{
+		const payload = await this.sendUni("ProfileService.Pb.ReqSystemMsgNew.Group", GRP_BUF)
+		let rsp = pb.decode(payload)[10]
+		if (rsp) arr = arr.concat(rsp)
+	}
+	{
+		const payload = await this.sendUni("ProfileService.Pb.ReqSystemMsgNew.Group", GRP_BUF_RISK)
+		let rsp = pb.decode(payload)[10]
+		if (rsp) arr = arr.concat(rsp)
+	}
+	for (let proto of arr) {
+		try {
+			const e = parseGrpSysMsg(proto)
+			if (this._msgExists(e.group_id, proto[50][12], proto[3], e.time))
+				continue
+			if (e.sub_type === "add") {
+				this.logger.info(`用户 ${e.user_id}(${e.nickname}) 请求加入群 ${e.group_id}(${e.group_name}) (flag: ${e.flag})`)
+				this.em("request.group.add", e)
+			} else {
+				this.logger.info(`用户 ${e.user_id}(${e.nickname}) 邀请你加入群 ${e.group_id}(${e.group_name}) (flag: ${e.flag})`)
+				this.em("request.group.invite", e)
 			}
+		} catch (e: any) {
+			this.logger.trace(e.message)
 		}
-	} catch (e) {
-		this.logger.error("获取群系统消息失败")
-		this.logger.error(e)
 	}
 }
 

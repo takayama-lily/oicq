@@ -1,6 +1,6 @@
 import * as qs from "querystring"
 import { pb } from "../core"
-import { hide, parseFunString, GroupRole, Gender, log } from "../common"
+import { lock, parseFunString, GroupRole, Gender, log } from "../common"
 import { Parser, parse} from "./parser"
 import { Quotable, Forwardable, MessageElem } from "./elements"
 
@@ -95,6 +95,9 @@ export abstract class Message implements Quotable, Forwardable {
 	rand: number
 	sender?: {[k: string]: any}
 
+	/** 引用回复 */
+	source?: Quotable
+
 	pktnum: number
 	index: number
 	div: number
@@ -112,12 +115,32 @@ export abstract class Message implements Quotable, Forwardable {
 		}
 	}
 
+	/** 组合分片消息 */
+	static combine(msgs: Message[]) {
+		msgs.sort((a, b) => a.index - b.index)
+		const host = msgs[0] as GroupMessage
+		let chain = host.message
+		for (const guest of msgs.slice(1)) {
+			if ((guest as GroupMessage).atme) host.atme = true
+			if ((guest as GroupMessage).atall) host.atall = true
+			host.raw_message += guest.raw_message
+			for (const elem of guest.message) {
+				const prev = chain[chain.length-1]
+				if (elem.type === "text" && prev?.type === "text")
+					prev.text += elem.text
+				else
+					chain.push(elem)
+			}
+		}
+		return host
+	}
+
 	constructor(protected proto: pb.Proto) {
 		this.proto = proto
 		const head = proto[1], frag = proto[2], body = proto[3]
 		this.pktnum = frag[1]
 		this.index = frag[2]
-		this.div = frag[2]
+		this.div = frag[3]
 		this.user_id = head[1]
 		this.time = head[6]
 		this.seq = head[5]
@@ -126,12 +149,22 @@ export abstract class Message implements Quotable, Forwardable {
 		this.parsed = parse(body[1], head[2])
 		this.message = this.parsed.content
 		this.raw_message = this.parsed.brief
+		if (this.parsed.quotation) {
+			const q = this.parsed.quotation
+			this.source = {
+				user_id: q[2],
+				time: q[3],
+				seq: q[1]?.[0] || q[1],
+				rand: uuid2rand(q[8]?.[3] || 0),
+				message: parse(Array.isArray(q[5]) ? q[5] : [q[5]]).brief,
+			}
+		}
 		
-		hide(this, "proto")
-		hide(this, "parsed")
-		hide(this, "pkgnum")
-		hide(this, "index")
-		hide(this, "div")
+		lock(this, "proto")
+		lock(this, "parsed")
+		lock(this, "pktnum")
+		lock(this, "index")
+		lock(this, "div")
 	}
 
 	/** 将消息序列化保存 */
@@ -241,25 +274,6 @@ export class GroupMessage extends Message {
 		return new GroupMessage(pb.decode(serialized))
 	}
 
-	/** 组合分片消息 */
-	static combine(msgs: GroupMessage[]) {
-		const host = msgs[0]
-		let chain = host.message
-		for (const msg of msgs.slice(1)) {
-			if (msg.atme) host.atme = true
-			if (msg.atall) host.atall = true
-			for (const elem of msg.message) {
-				const prev = chain[chain.length-1]
-				if (elem.type === "text" && prev?.type === "text")
-					prev.text += elem.text
-				else
-					chain.push(elem)
-			}
-			host.raw_message += msg.raw_message
-		}
-		return host
-	}
-
 	constructor(proto: pb.Proto) {
 		super(proto)
 		const group = proto[1][9]
@@ -355,7 +369,7 @@ export class ForwardMessage implements Forwardable {
 		const p = parse(proto[3][1])
 		this.message = p.content
 		this.raw_message = p.brief
-		hide(this, "proto")
+		lock(this, "proto")
 	}
 
 	/** 将转发消息序列化保存 */

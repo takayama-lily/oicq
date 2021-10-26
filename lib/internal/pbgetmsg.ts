@@ -36,33 +36,28 @@ export async function pbGetMsg(this: Client) {
 		7: 1,
 		9: 1,
 	})
-	try {
-		const payload = await this.sendUni("MessageSvc.PbGetMsg", body)
-		const proto = pb.decode(payload)
-		const rubbish = []
-		if (proto[3])
-			this._sync_cookie = proto[3].toBuffer()
-		if (proto[1] > 0 || !proto[5])
-			return
-		if (!Array.isArray(proto[5]))
-			proto[5] = [proto[5]]
-		for (let v of proto[5]) {
-			if (!v[4]) continue
-			if (!Array.isArray(v[4]))
-				v[4] = [v[4]]
-			for (let msg of v[4]) {
-				const item = { ...msg[1] }
-				item[3] = 187
-				rubbish.push(item)
-				handleSyncMsg.call(this, msg)
-			}
+	const payload = await this.sendUni("MessageSvc.PbGetMsg", body)
+	const proto = pb.decode(payload)
+	const rubbish = []
+	if (proto[3])
+		this._sync_cookie = proto[3].toBuffer()
+	if (proto[1] > 0 || !proto[5])
+		return
+	if (!Array.isArray(proto[5]))
+		proto[5] = [proto[5]]
+	for (let v of proto[5]) {
+		if (!v[4]) continue
+		if (!Array.isArray(v[4]))
+			v[4] = [v[4]]
+		for (let msg of v[4]) {
+			const item = { ...msg[1] }
+			item[3] = 187
+			rubbish.push(item)
+			handleSyncMsg.call(this, msg)
 		}
-		if (rubbish.length)
-			this.writeUni("MessageSvc.PbDeleteMsg", pb.encode({ 1: rubbish }))
-	} catch (e) {
-		this.logger.debug(e)
-		this.logger.warn("PbGetMsg发生错误")
 	}
+	if (rubbish.length)
+		this.writeUni("MessageSvc.PbDeleteMsg", pb.encode({ 1: rubbish }))
 }
 
 const typelist = [33, 38, 85, 141, 166, 167, 208, 529]
@@ -113,20 +108,16 @@ async function handleSyncMsg(this: Client, proto: pb.Proto) {
 	//私聊消息
 	else {
 		this.stat.recv_msg_cnt++
-		try {
-			const msg = new PrivateMessage(proto, this.uin) as PrivateMessageEvent
-			if (msg.raw_message) {
-				const _ = this.asFriend(msg.from_id)
-				if (msg.sub_type === "friend")
-					msg.sender.nickname = _.info?.nickname || this.sl.get(msg.from_id)?.nickname || ""
-				else if (msg.sub_type === "self")
-					msg.sender.nickname = this.internal.nickname
-				msg.reply = _.sendMessage.bind(_)
-				this.logger.info(`recv from: [Private: ${msg.from_id}(${msg.sub_type})] ` + msg.raw_message)
-				this.em("message.private." + msg.sub_type, msg)
-			}
-		} catch (e) {
-			this.logger.debug(e)
+		const msg = new PrivateMessage(proto, this.uin) as PrivateMessageEvent
+		if (msg.raw_message) {
+			const _ = this.asFriend(msg.from_id)
+			if (msg.sub_type === "friend")
+				msg.sender.nickname = _.info?.nickname || this.sl.get(msg.from_id)?.nickname || ""
+			else if (msg.sub_type === "self")
+				msg.sender.nickname = this.self.nickname
+			msg.reply = _.sendMessage.bind(_)
+			this.logger.info(`recv from: [Private: ${msg.from_id}(${msg.sub_type})] ` + msg.raw_message)
+			this.em("message.private." + msg.sub_type, msg)
 		}
 	}
 }

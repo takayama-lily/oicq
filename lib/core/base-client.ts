@@ -8,7 +8,7 @@ import * as tlv from "./tlv"
 import * as tea from "./tea"
 import * as pb from "./protobuf"
 import * as jce from "./jce"
-import { BUF0, BUF16, NOOP, md5, timestamp, hide, unzip, int32ip2str } from "./constants"
+import { BUF0, BUF16, NOOP, md5, timestamp, lock, unzip, int32ip2str } from "./constants"
 import { ShortDevice, Device, generateFullDevice, Platform, Apk, getApkInfo } from "./device"
 
 const FN_NEXT_SEQ = Symbol("FN_NEXT_SEQ")
@@ -139,12 +139,12 @@ export class BaseClient extends EventEmitter {
 		this[NET].on("lost", lostListener.bind(this))
 		this.on("internal.online", onlineListener)
 		this.on("internal.sso", ssoListener)
-		hide(this, "uin")
-		hide(this, "apk")
-		hide(this, "device")
-		hide(this, "sig")
-		hide(this, "pskey")
-		hide(this, "statistics")
+		lock(this, "uin")
+		lock(this, "apk")
+		lock(this, "device")
+		lock(this, "sig")
+		lock(this, "pskey")
+		lock(this, "statistics")
 	}
 
 	/** 设置连接服务器，不设置则自动搜索 */
@@ -326,17 +326,17 @@ export class BaseClient extends EventEmitter {
 			}
 		}).catch(() => this.emit("internal.error.network", -2, "server is busy"))
 	}
-	/** 扫码后调用此方法登录 */
+	/** 扫码后调用此方法登录 (若返回false说明还在等待扫码，可以继续调用) */
 	async qrcodeLogin() {
 		const { retcode, uin, t106, t16a, t318, tgtgt } = await this.queryQrcodeResult()
 		if (retcode < 0) {
 			this.emit("internal.error.network", -2, "server is busy")
-			return
+			return true
 		} else if (retcode === 0 && t106 && t16a && t318 && tgtgt) {
 			this.sig.qrsig = BUF0
 			if (uin !== this.uin) {
 				this.emit("internal.error.qrocde", retcode, `扫码账号(${uin})与登录账号(${this.uin})不符`)
-				return
+				return true
 			}
 			this.sig.tgtgt = tgtgt
 			const t = tlv.getPacker(this)
@@ -372,6 +372,7 @@ export class BaseClient extends EventEmitter {
 				.writeTlv(t318)
 				.read()
 			this[FN_SEND_LOGIN]("wtlogin.login", body)
+			return true
 		} else {
 			let message
 			switch (retcode) {
@@ -391,11 +392,13 @@ export class BaseClient extends EventEmitter {
 				message = "扫码遇到未知错误，请重新获取"
 				break
 			}
-			this.emit("internal.verbose", `二维码扫码结果: ${retcode} (${message})` + retcode, VerboseLevel.Mark)
+			this.emit("internal.verbose", `二维码扫码结果: ${retcode} (${message})`, VerboseLevel.Mark)
 			if (retcode !== QrcodeResult.WaitingForScan && retcode !== QrcodeResult.WaitingForConfirm) {
 				this.sig.qrsig = BUF0
 				this.emit("internal.error.qrocde", retcode, message)
+				return true
 			}
+			return false
 		}
 	}
 	/** 获取扫码结果(可定时查询，retcode为0则调用qrcodeLogin登录) */
@@ -917,16 +920,16 @@ function decodeLoginResponse(this: BaseClient, payload: Buffer): any {
 		return this.emit("internal.error.login", type, "[登陆失败]未知格式的验证码")
 	}
 
-	if (type === 160 || type === 162) {
+	if (type === 160) {
 		if (!t[0x204])
-			return this.emit("internal.error.login", type, "[登陆失败]无法完成登录保护验证")
+			return this.emit("internal.verbose", "已向密保手机发送短信验证码", VerboseLevel.Mark)
 		let phone
 		if (t[0x174] && t[0x178]) {
 			this.sig.t104 = t[0x104]
 			this.sig.t174 = t[0x174]
 			phone = String(t[0x178]).substr(t[0x178].indexOf("\x0b") + 1, 11)
 		}
-		return this.emit("internal.verity", String(t[0x204]), phone)
+		return this.emit("internal.verify", String(t[0x204]), phone)
 	}
 
 	if (t[0x149]) {

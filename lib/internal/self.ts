@@ -1,42 +1,50 @@
-import { unzipSync } from "zlib"
-import axios from "axios"
-import { pb, jce, tea, Platform } from "../core"
-import { ErrorCode, drop } from "../errors"
-import { int32ip2str, timestamp, Gender, OnlineStatus, log } from "../common"
-import { ForwardMessage, Image, ImageElem } from "../message"
+import { pb, jce, Platform } from "../core"
+import { drop } from "../errors"
+import { timestamp, Gender, OnlineStatus, lock, log } from "../common"
+import { Image, ImageElem } from "../message"
 import { StrangerInfo, FriendInfo, GroupInfo, MemberInfo } from "../entities"
 import { CmdID, highwayUpload } from "./highway"
 
 type Client = import("../client").Client
 
-export class Internal {
+export class Self {
 
 	get uin() {
 		return this.c.uin
 	}
 
-	sendUni = this.c.sendUni.bind(this.c)
-	sendOidb = this.c.sendOidb.bind(this.c)
-
+	/** 好友列表(务必以`ReadonlyMap`方式访问) */
 	readonly fl = new Map<number, FriendInfo>()
+	/** 陌生人列表(务必以`ReadonlyMap`方式访问) */
 	readonly sl = new Map<number, StrangerInfo>()
+	/** 群列表(务必以`ReadonlyMap`方式访问) */
 	readonly gl = new Map<number, GroupInfo>()
+	/** 群员列表缓存(务必以`ReadonlyMap`方式访问) */
 	readonly gml = new Map<number, Map<number, MemberInfo>>()
+	/** 黑名单列表(务必以`ReadonlySet`方式访问) */
 	readonly blacklist = new Set<number>()
 
-	/** 在线状态 */
+	/** 勿手动修改这些属性 */
 	status: OnlineStatus = 0
 	nickname = ""
 	sex: Gender = "unknown"
 	age = 0
 
 	bid = ""
+	/** 漫游表情 */
 	stamp = new Set<string>()
 
 	/** 好友分组 */
 	class = new Map<number, string>()
 
-	constructor(private c: Client) { }
+	constructor(private c: Client) {
+		lock(this, "c")
+		lock(this, "fl")
+		lock(this, "sl")
+		lock(this, "gl")
+		lock(this, "gml")
+		lock(this, "blacklist")
+	}
 
 	/** 设置在线状态 */
 	async setStatus(status = this.status || OnlineStatus.Online) {
@@ -53,7 +61,7 @@ export class Internal {
 			"", "", null, 1, null, 0, null, 0, 0
 		])
 		const body = jce.encodeWrapper({ SvcReqRegister }, "PushService", "SvcReqRegister")
-		const payload = await this.sendUni("StatSvc.SetStatusFromClient", body)
+		const payload = await this.c.sendUni("StatSvc.SetStatusFromClient", body)
 		const ret = jce.decode(payload)[9] === 0
 		if (ret)
 			this.status = status
@@ -89,7 +97,7 @@ export class Internal {
 		buf.writeInt32BE(k, 5)
 		buf.writeUInt16BE(v.length, 9)
 		buf.fill(v, 11)
-		const payload = await this.sendOidb("OidbSvc.0x4ff_9", buf)
+		const payload = await this.c.sendOidb("OidbSvc.0x4ff_9", buf)
 		const obj = pb.decode(payload)
 		return obj[3] === 0 || obj[3] === 34
 	}
@@ -117,7 +125,7 @@ export class Internal {
 			},
 			6: 1
 		})
-		const payload = await this.sendUni("Signature.auth", body)
+		const payload = await this.c.sendUni("Signature.auth", body)
 		return pb.decode(payload)[1] === 0
 	}
 
@@ -135,7 +143,7 @@ export class Internal {
 				7: 5,
 			}
 		})
-		const payload = await this.sendUni("HttpConn.0x6ff_501", body)
+		const payload = await this.c.sendUni("HttpConn.0x6ff_501", body)
 		const rsp = pb.decode(payload)[1281]
 		await highwayUpload.call(this.c, img.readable!, {
 			cmdid: CmdID.SelfPortrait,
@@ -159,7 +167,7 @@ export class Internal {
 			2: this.uin,
 			3: 1,
 		})
-		const payload = await this.sendUni("Faceroam.OpReq", body)
+		const payload = await this.c.sendUni("Faceroam.OpReq", body)
 		const rsp = pb.decode(payload)
 		if (rsp[1] !== 0)
 			drop(rsp[1], rsp[2])
@@ -186,105 +194,9 @@ export class Internal {
 				1: id
 			},
 		})
-		await this.sendUni("Faceroam.OpReq", body)
+		await this.c.sendUni("Faceroam.OpReq", body)
 		for (let s of id)
 			this.stamp.delete(s)
-	}
-
-	/** 获取离线文件下载地址 */
-	async fetchOfflineFileDownloadUrl(fid: string) {
-		const body = pb.encode({
-			1: 1200,
-			14: {
-				10: this.uin,
-				20: fid,
-				30: 2
-			},
-			101: 3,
-			102: 104,
-			99999: { 1: 90200 }
-		})
-		const payload = await this.sendUni("OfflineFilleHandleSvr.pb_ftn_CMD_REQ_APPLY_DOWNLOAD-1200", body)
-		const rsp = pb.decode(payload)[14]
-		if (rsp[10] !== 0)
-			drop(ErrorCode.OfflineFileNotExists, rsp[20])
-		const obj = rsp[30]
-		let url = String(obj[50])
-		if (!url.startsWith("http"))
-			url = `http://${obj[30]}:${obj[40]}` + url
-		return url
-	}
-
-	/** 获取视频下载地址 */
-	async fetchVideoDownloadUrl(fid: string, md5: string | Buffer) {
-		const body = pb.encode({
-			1: 400,
-			4: {
-				1: this.uin,
-				2: this.uin,
-				3: 1,
-				4: 7,
-				5: fid,
-				6: 1,
-				8: md5 instanceof Buffer ? md5 : Buffer.from(md5, "hex"),
-				9: 1,
-				10: 2,
-				11: 2,
-				12: 2,
-			}
-		})
-		const payload = await this.sendUni("PttCenterSvr.ShortVideoDownReq", body)
-		const rsp = pb.decode(payload)[4]
-		if (rsp[1] !== 0)
-			drop(rsp[1], "获取视频下载地址失败")
-		const obj = rsp[9]
-		return String(Array.isArray(obj[10]) ? obj[10][0] : obj[10]) + String(obj[11])
-	}
-
-	/** 获取转发消息的详细内容 */
-	async getForwardMessage(resid: string) {
-		const ret = []
-		const buf = await this._downloadMultiMsg(String(resid), 2)
-		let a = pb.decode(buf)[2]
-		if (Array.isArray(a)) a = a[0]
-		a = a[2][1]
-		if (!Array.isArray(a)) a = [a]
-		for (let proto of a) {
-			ret.push(new ForwardMessage(proto))
-		}
-		return ret
-	}
-
-	private async _downloadMultiMsg(resid: string, bu: 1 | 2) {
-		const body = pb.encode({
-			1: 2,
-			2: 5,
-			3: 9,
-			4: 3,
-			5: this.c.apk.version,
-			7: [{
-				1: resid,
-				2: 3,
-			}],
-			8: bu,
-			9: 2,
-		})
-		const payload = await this.sendUni("MultiMsg.ApplyDown", body)
-		const rsp = pb.decode(payload)[3]
-		const ip = int32ip2str(rsp[4]?.[0] || rsp[4])
-		const port = rsp[5]?.[0] || rsp[5]
-		let url = port == 443 ? "https://ssl.htdata.qq.com" : `http://${ip}:${port}`
-		url += rsp[2]
-		let { data, headers } = await axios.get(url, { headers: {
-			"User-Agent": `QQ/${this.c.apk.version} CFNetwork/1126`,
-			"Net-Type": "Wifi"
-		}, responseType: "arraybuffer"})
-		data = Buffer.from(data as ArrayBuffer)
-		let buf = headers["accept-encoding"]?.includes("gzip") ? unzipSync(data as Buffer) : data as Buffer
-		const head_len = buf.readUInt32BE(1)
-		const body_len = buf.readUInt32BE(5)
-		buf = tea.decrypt(buf.slice(head_len + 9, head_len + 9 + body_len), rsp[3].toBuffer())
-		return unzipSync(pb.decode(buf)[3][3].toBuffer())
 	}
 
 	/** 添加好友分组 */
@@ -298,16 +210,18 @@ export class Internal {
 			0, this.uin, buf
 		])
 		const body = jce.encodeWrapper({ SetGroupReq }, "mqq.IMService.FriendListServiceServantObj", "SetGroupReq")
-		await this.sendUni("friendlist.SetGroupReq", body)
+		await this.c.sendUni("friendlist.SetGroupReq", body)
 	}
+
 	/** 删除好友分组 */
 	async deleteClass(id: number) {
 		const SetGroupReq = jce.encodeStruct([
 			2, this.uin, Buffer.from([id])
 		])
 		const body = jce.encodeWrapper({ SetGroupReq }, "mqq.IMService.FriendListServiceServantObj", "SetGroupReq")
-		await this.sendUni("friendlist.SetGroupReq", body)
+		await this.c.sendUni("friendlist.SetGroupReq", body)
 	}
+
 	/** 重命名好友分组 */
 	async renameClass(id: number, name: string) {
 		const len = Buffer.byteLength(name)
@@ -319,7 +233,7 @@ export class Internal {
 			1, this.uin, buf
 		])
 		const body = jce.encodeWrapper({ SetGroupReq }, "mqq.IMService.FriendListServiceServantObj", "SetGroupReq")
-		await this.sendUni("friendlist.SetGroupReq", body)
+		await this.c.sendUni("friendlist.SetGroupReq", body)
 	}
 
 	/** 强制加载好友列表 */
@@ -335,7 +249,7 @@ export class Internal {
 				d50, null, [13580, 13581, 13582]
 			])
 			const body = jce.encodeWrapper({ FL }, "mqq.IMService.FriendListServiceServantObj", "GetFriendListReq")
-			const payload = await this.sendUni("friendlist.getFriendGroupList", body, 10)
+			const payload = await this.c.sendUni("friendlist.getFriendGroupList", body, 10)
 			const nested = jce.decodeWrapper(payload)
 			this.class.clear()
 			for (let v of nested[14])
@@ -369,7 +283,7 @@ export class Internal {
 				1: this.c.sig.seq + 1
 			}
 		})
-		const payload = await this.sendOidb("OidbSvc.0x5d2_0", body, 10)
+		const payload = await this.c.sendOidb("OidbSvc.0x5d2_0", body, 10)
 		let protos = pb.decode(payload)[4][2][2]
 		if (!protos) return
 		if (!Array.isArray(protos))
@@ -394,7 +308,7 @@ export class Internal {
 			this.uin, 0, null, [], 1, 8, 0, 1, 1
 		])
 		const body = jce.encodeWrapper({ GetTroopListReqV2Simplify }, "mqq.IMService.FriendListServiceServantObj", "GetTroopListReqV2Simplify")
-		const payload = await this.sendUni("friendlist.GetTroopListReqV2", body, 10)
+		const payload = await this.c.sendUni("friendlist.GetTroopListReqV2", body, 10)
 		const nested = jce.decodeWrapper(payload)
 		const set = new Set<number>()
 		for (let v of nested[5]) {
@@ -433,7 +347,7 @@ export class Internal {
 		let len = Buffer.allocUnsafe(4)
 		len.writeUInt32BE(body.length)
 		body = Buffer.concat([Buffer.alloc(4), len, body])
-		const payload = await this.sendUni("SsoSnsSession.Cmd0x3_SubCmd0x1_FuncGetBlockList", body)
+		const payload = await this.c.sendUni("SsoSnsSession.Cmd0x3_SubCmd0x1_FuncGetBlockList", body)
 		let protos = pb.decode(payload.slice(8))[1][6]
 		this.blacklist.clear()
 		if (!protos) return

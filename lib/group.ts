@@ -2,10 +2,10 @@ import { randomBytes } from "crypto"
 import axios from "axios"
 import { pb, jce } from "./core"
 import { ErrorCode, drop } from "./errors"
-import { timestamp, code2uin, PB_CONTENT, NOOP } from "./common"
+import { timestamp, code2uin, PB_CONTENT, NOOP, log } from "./common"
 import { Contactable } from "./internal"
 import { Member } from "./member"
-import { Sendable, GroupMessage, ImageElem, Image, buildMusic, MusicPlatform, Anonymous, parseGroupMessageId } from "./message"
+import { Sendable, GroupMessage, ImageElem, Image, buildMusic, MusicPlatform, Anonymous, parseGroupMessageId, Quotable } from "./message"
 import { Gfs } from "./gfs"
 import { MessageRet } from "./events"
 import { GroupInfo, MemberInfo } from "./entities"
@@ -245,12 +245,12 @@ export class Group extends Discuss {
 	}
 
 	/** 发送一条消息 */
-	async sendMessage(content: Sendable, anonymous: AnonymousInfo | boolean = false): Promise<MessageRet> {
-		const converter = await this._preprocess(content)
-		if (anonymous) {
-			if (anonymous === true)
-				anonymous = await this.getAnonymousInfo()
-			converter.anonymize(anonymous)
+	async sendMessage(content: Sendable, source?: Quotable, anon: AnonymousInfo | boolean = false): Promise<MessageRet> {
+		const converter = await this._preprocess(content, source)
+		if (anon) {
+			if (anon === true)
+				anon = await this.getAnonymousInfo()
+			converter.anonymize(anon)
 		}
 		const rand = randomBytes(4).readUInt32BE()
 		const body = pb.encode({
@@ -261,7 +261,6 @@ export class Group extends Discuss {
 			5: rand,
 			8: 0,
 		})
-
 		const e = `internal.${this.gid}.${rand}`
 		let message_id = ""
 		this.c.once(e, (id) => message_id = id)
@@ -279,7 +278,8 @@ export class Group extends Discuss {
 		// 分片专属屎山
 		try {
 			if (!message_id) {
-				const time = this.c.config.resend ? 5000 : (converter.length <= 80 ? 2000 : 500)
+				const time = this.c.config.resend ? (converter.length <= 80 ? 2000 : 500) : 5000
+				console.log(time, timestamp())
 				message_id = await new Promise((resolve, reject) => {
 					const timeout = setTimeout(() => {
 						this.c.removeAllListeners(e)
@@ -349,7 +349,7 @@ export class Group extends Discuss {
 		else
 			var seq = param
 		if (pktnum > 1) {
-			var msg: any = [], pb_msg = [], n = pktnum!, i = 0
+			var msg: any = [], pb_msg = [], n = pktnum, i = 0
 			while (n-- > 0) {
 				msg.push(pb.encode({
 					1: seq,
@@ -382,7 +382,7 @@ export class Group extends Discuss {
 				5: reserver,
 			}
 		})
-		const payload = await this.c.sendOidb("PbMessageSvc.PbMsgWithDraw", body)
+		const payload = await this.c.sendUni("PbMessageSvc.PbMsgWithDraw", body)
 		return pb.decode(payload)[2][1] === 0
 	}
 
@@ -523,8 +523,11 @@ export class Group extends Discuss {
 		if (obj[1] > 0 || !obj[6])
 			return []
 		!Array.isArray(obj[6]) && (obj[6] = [obj[6]])
-		for (const proto of obj[6])
-			messages.push(new GroupMessage(proto))
+		for (const proto of obj[6]) {
+			try {
+				messages.push(new GroupMessage(proto))
+			} catch { }
+		}
 		return messages
 	}
 

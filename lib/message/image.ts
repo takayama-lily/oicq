@@ -1,14 +1,12 @@
-import { Readable } from "stream"
+import { Readable, Transform } from "stream"
 import fs from "fs"
 import path from "path"
 import { randomBytes } from "crypto"
 import probe from "probe-image-size"
 import axios from "axios"
 import { md5, md5Stream, pipeline, uuid, NOOP,
-	TMP_DIR, IS_WIN, MAX_UPLOAD_SIZE } from "../common"
+	TMP_DIR, IS_WIN, MAX_UPLOAD_SIZE, DownloadTransform } from "../common"
 import { ImageElem, FlashElem } from "./elements"
-
-const ERROR_BAD_IMAGE = new Error("bad image file")
 
 const TYPE: {[ext: string]: number} = {
 	jpg: 1000,
@@ -64,6 +62,7 @@ export class Image {
 
 	/** 从服务端拿到fid后必须设置此值，否则图裂 */
 	set fid(val: any) {
+		this._fid = val
 		if (this.dm) {
 			this.proto[3] = val
 			this.proto[10] = val
@@ -71,6 +70,8 @@ export class Image {
 			this.proto[7] = val
 		}
 	}
+
+	private _fid?: any
 
 	/** 图片属性 */
 	md5 = randomBytes(16)
@@ -91,6 +92,7 @@ export class Image {
 		let { file, cache, timeout, headers, asface, origin } = elem
 		this.origin = origin
 		this.asface = asface
+		this.setProto()
 		if (file instanceof Buffer) {
 			this.task = this.fromProbeSync(file)
 		} else if (file instanceof Readable) {
@@ -108,7 +110,7 @@ export class Image {
 
 	private setProperties(dimensions: probe.ProbeResult | null) {
 		if (!dimensions)
-			throw ERROR_BAD_IMAGE
+			throw new Error("bad image file")
 		this.width = dimensions.width
 		this.height = dimensions.height
 		this.type = TYPE[dimensions.type] || 1000
@@ -116,9 +118,10 @@ export class Image {
 
 	private parseFileParam(file: string) {
 		const { md5, size, width, height, ext } = parseImageFileParam(file)
-		this.md5 = Buffer.from(md5, "hex")
-		if (this.md5.length !== 16)
+		const hash = Buffer.from(md5, "hex")
+		if (hash.length !== 16)
 			throw new Error("bad file param: " + file)
+		this.md5 = hash
 		size > 0 && (this.size = size)
 		this.width = width
 		this.height = height
@@ -137,10 +140,10 @@ export class Image {
 
 	private async fromReadable(readable: Readable, timeout?: number) {
 		try {
+			readable = readable.pipe(new DownloadTransform)
 			timeout = timeout! > 0 ? timeout! : 60;
-			this.tmpfile = path.join(TMP_DIR, uuid() + ".img")
+			this.tmpfile = path.join(TMP_DIR, uuid())
 			var id = setTimeout(()=>{
-				// console.log(`download timeout after ${this.timeout}s`)
 				readable.destroy()
 			}, timeout * 1000)
 			const [dimensions, md5] = await Promise.all([
@@ -165,19 +168,19 @@ export class Image {
 	private async fromWeb(url: string, cache?: boolean, headers?: any, timeout?: number) {
 		if (this.cachedir) {
 			this.cachefile = path.join(this.cachedir, md5(url).toString("hex"))
-			if (cache !== false) {
+			if (cache) {
 				try {
 					this.parseFileParam(await fs.promises.readFile(this.cachefile, "utf8"))
 					return
 				} catch { }
 			}
 		}
-		const readable: Readable = await axios.get(url, {
+		const readable = (await axios.get(url, {
 				headers,
 				maxRedirects: 3,
 				responseType: "stream",
 			}
-		)
+		)).data as Readable
 		await this.fromReadable(readable, timeout)
 		this.cachefile && fs.writeFile(
 			this.cachefile,
@@ -218,12 +221,12 @@ export class Image {
 			proto = {
 				1: this.md5.toString("hex"),
 				2: this.size,
-				3: this.fid,
+				3: this._fid,
 				5: this.type,
 				7: this.md5,
 				8: this.height,
 				9: this.width,
-				10: this.fid,
+				10: this._fid,
 				13: this.origin ? 1 : 0,
 				16: this.type === 4 ? 5 : 0,
 				24: 0,
@@ -235,7 +238,7 @@ export class Image {
 		} else {
 			proto = {
 				2: this.md5.toString("hex") + ".gif",
-				7: this.fid,
+				7: this._fid,
 				8: 0,
 				9: 0,
 				10: 66,

@@ -1,14 +1,15 @@
 
 import fs from "fs"
 import path from "path"
-import { gzipSync } from "zlib"
+import querystring from "querystring"
+import axios from "axios"
 import { Readable } from "stream"
 import { randomBytes } from "crypto"
 import { exec } from "child_process"
-import { pb, ApiRejection } from "../core"
+import { tea, pb, ApiRejection } from "../core"
 import { ErrorCode, drop } from "../errors"
-import { escapeXml, md5, NOOP, timestamp, uuid, md5Stream, IS_WIN, log } from "../common"
-import { Sendable, PrivateMessage, MessageElem, Forwardable, Image, VideoElem, PttElem, Converter, XmlElem, rand2uuid } from "../message"
+import { escapeXml, md5, NOOP, timestamp, uuid, md5Stream, IS_WIN, TMP_DIR, gzip, unzip, int32ip2str, lock, pipeline, DownloadTransform, log } from "../common"
+import { Sendable, PrivateMessage, MessageElem, ForwardMessage, Forwardable, Quotable, Image, ImageElem, VideoElem, PttElem, Converter, XmlElem, rand2uuid } from "../message"
 import { CmdID, highwayUpload } from "./highway"
 
 type Client = import("../client").Client
@@ -31,7 +32,14 @@ export class Contactable {
 		return !!this.uid
 	}
 
-	protected constructor(protected readonly c: Client) { }
+	/** 返回所属的客户端对象 */
+	get client() {
+		return this.c
+	}
+
+	protected constructor(protected readonly c: Client) {
+		lock(this, "c")
+	}
 
 	// 取私聊图片fid
 	private async _offPicUp(imgs: Image[]) {
@@ -100,31 +108,42 @@ export class Contactable {
 		return pb.decode(payload)[3]
 	}
 
-	/** 上传一批图片以备发送 */
-	async uploadImages(imgs: Image[]) {
-		const tasks = []
-		for (const img of imgs)
-			tasks.push(img.task)
-		await Promise.allSettled(tasks)
+	/** 上传一批图片以备发送(无数量限制) */
+	async uploadImages(imgs: Image[] | ImageElem[]) {
+		this.c.logger.debug(`开始图片任务，共有${imgs.length}张图片`)
+		const tasks: Promise<void>[] = []
+		for (let i = 0; i < imgs.length; i++) {
+			if (imgs[i] instanceof Image === false)
+				imgs[i] = new Image(imgs[i] as ImageElem, this.dm, path.join(this.c.dir, "../image"))
+			tasks.push((imgs[i] as Image).task)
+		}
+		const res1 = await Promise.allSettled(tasks) as PromiseRejectedResult[]
+		for (let i = 0; i < res1.length; i++) {
+			if (res1[i].status === "rejected")
+				this.c.logger.debug(`图片${i+1}失败, reason: ` + res1[i].reason?.message)
+		}
 		let n = 0
-		let results: PromiseSettledResult<void>[] = []
 		while (imgs.length > n) {
-			this.c.logger.debug("开始请求上传图片到tx服务器")
-			let rsp = await (this.dm ? this._offPicUp : this._groupPicUp)(imgs.slice(n, n + 20))
+			let rsp = await (this.dm ? this._offPicUp : this._groupPicUp).call(this, imgs.slice(n, n + 20) as Image[])
 			!Array.isArray(rsp) && (rsp = [rsp])
-			const tasks = []
+			const tasks: Promise<void>[] = []
 			for (let i = n; i < imgs.length; ++i) {
 				if (i >= n + 20) break
-				tasks.push(this._uploadImage(imgs[i], rsp[i%20]))
+				tasks.push(this._uploadImage(imgs[i] as Image, rsp[i%20]))
 			}
-			results = [ ...results, ...await Promise.allSettled(tasks)]
-			this.c.logger.debug("请求图片上传结束")
+			const res2 = await Promise.allSettled(tasks) as PromiseRejectedResult[]
+			for (let i = 0; i < res2.length; i++) {
+				if (res2[i].status === "rejected") {
+					res1[n+i] = res2[i]
+					this.c.logger.debug(`图片${n+i+1}上传失败, reason: ` + res2[i].reason?.message)
+				}
+			}
 			n += 20
 		}
-		return results
+		this.c.logger.debug(`图片任务结束`)
+		return res1
 	}
 
-	// 上传单张
 	private async _uploadImage(img: Image, rsp: pb.Proto) {
 		const j = this.dm ? 1 : 0
 		if (rsp[2+j] !== 0)
@@ -153,7 +172,8 @@ export class Contactable {
 		).finally(img.deleteTmpFile.bind(img))
 	}
 
-	protected async _preprocess(content: Sendable) {
+	/** 发消息预处理 */
+	protected async _preprocess(content: Sendable, source?: Quotable) {
 		try {
 			if (!Array.isArray(content))
 				content = [content]
@@ -161,12 +181,15 @@ export class Contactable {
 				content[0] = await this.uploadVideo(content[0] as VideoElem)
 			else if ((content[0] as MessageElem).type === "record")
 				content[0] = await this.uploadPtt(content[0] as PttElem)
-			const converter = await Converter.from(content, {
+			const converter = new Converter(content, {
 				dm: this.dm,
 				cachedir: path.join(this.c.dir, "../image"),
 				mlist: this.c.gml.get(this.gid!)
 			})
-			await this.uploadImages(converter.imgs)
+			if (source)
+				converter.quote(source)
+			if (converter.imgs.length)
+				await this.uploadImages(converter.imgs)
 			return converter
 		} catch (e: any) {
 			drop(ErrorCode.MessageBuildingFailure, e.message)
@@ -179,7 +202,7 @@ export class Contactable {
 		if (file.startsWith("protobuf://")) return elem
 		file = file.replace(/^file:\/{2}/, "")
 		IS_WIN && file.startsWith("/") && (file = file.slice(1))
-		const thumb = path.join(this.c.dir, "../image", uuid())
+		const thumb = path.join(TMP_DIR, uuid())
 		await new Promise((resolve, reject) => {
 			exec(`${this.c.config.ffmpeg_path || "ffmpeg"} -y -i "${file}" -f image2 -frames:v 1 "${thumb}"`, (error, stdout, stderr) => {
 				this.c.logger.debug("ffmpeg output: " + stdout + stderr)
@@ -191,7 +214,6 @@ export class Contactable {
 		})
 		const [width, height, seconds] = await new Promise((resolve) => {
 			exec(`${this.c.config.ffprobe_path || "ffprobe"} -i "${file}" -show_streams`, (error, stdout, stderr) => {
-				this.c.logger.debug("ffprobe output: " + stdout + stderr)
 				const lines = (stdout || stderr || "").split("\n")
 				let width = 1280, height = 720, seconds = 120
 				for (const line of lines) {
@@ -284,11 +306,72 @@ export class Contactable {
 
 	/** 上传一个语音以备发送 */
 	async uploadPtt(elem: PttElem): Promise<PttElem> {
-		// todo
-		return elem
+		this.c.logger.debug("开始语音任务")
+		if (typeof elem.file === "string" && elem.file.startsWith("protobuf://"))
+			return elem
+		const buf = await getPttBuffer(elem.file, this.c.config.ffmpeg_path)
+		const hash = md5(buf)
+		const codec = String(buf.slice(0, 7)).includes("SILK") ? 1 : 0
+		const body = pb.encode({
+			1: 3,
+			2: 3,
+			5: [{
+				1: this.target,
+				2: this.c.uin,
+				3: 0,
+				4: hash,
+				5: buf.length,
+				6: hash,
+				7: 5,
+				8: 9,
+				9: 4,
+				11: 0,
+				10: this.c.apk.version,
+				12: 1,
+				13: 1,
+				14: codec,
+				15: 1,
+			}],
+		})
+		const payload = await this.c.sendUni("PttStore.GroupPttUp", body)
+		const rsp = pb.decode(payload)[5]
+
+		const ip = Array.isArray(rsp[5]) ? rsp[5][0] : rsp[5],
+			port = Array.isArray(rsp[6]) ? rsp[6][0] : rsp[6]
+		const ukey = rsp[7].toHex(), filekey = rsp[11].toHex()
+		const params = {
+			ver: 4679,
+			ukey, filekey,
+			filesize: buf.length,
+			bmd5: hash.toString("hex"),
+			mType: "pttDu",
+			voice_encodec: codec
+		}
+		const url = `http://${int32ip2str(ip)}:${port}/?` + querystring.stringify(params)
+		const headers = {
+			"User-Agent": `QQ/${this.c.apk.version} CFNetwork/1126`,
+			"Net-Type": "Wifi"
+		}
+		await axios.post(url, buf, { headers })
+		this.c.logger.debug("语音任务结束")
+
+		const fid = rsp[11].toBuffer()
+		const b = pb.encode({
+			1: 4,
+			2: this.c.uin,
+			3: fid,
+			4: hash,
+			5: hash.toString("hex") + ".amr",
+			6: buf.length,
+			11: 1,
+			18: fid,
+			30: Buffer.from([8, 0, 40, 0, 56, 0]),
+		})
+		return {
+			type: "record", file: "protobuf://" + Buffer.from(b).toString("base64")
+		}
 	}
 
-	// 上传合并转发消息
 	private async _uploadMultiMsg(compressed: Buffer) {
 		const body = pb.encode({
 			1: 1,
@@ -337,13 +420,11 @@ export class Contactable {
 		const nodes = []
 		const makers: Converter[] = []
 		let imgs: Image[] = []
-		let tasks: Promise<void>[] = []
 		let preview = ""
 		let cnt = 0
 		for (const fake of iterable) {
 			const maker = new Converter(fake.message, { dm: this.dm, cachedir: this.c.config.data_dir })
 			makers.push(maker)
-			tasks = [ ...tasks, ...maker.tasks ]
 			const seq = randomBytes(2).readInt16BE()
 			const rand = randomBytes(4).readInt32BE()
 			let nickname = String(fake.nickname || fake.user_id)
@@ -376,12 +457,11 @@ export class Contactable {
 				}
 			})
 		}
-		await Promise.allSettled(tasks).catch(NOOP)
-		for (const maker of makers) {
+		for (const maker of makers)
 			imgs = [ ...imgs, ...maker.imgs ]
-		}
-		await this.uploadImages(imgs)
-		const compressed = gzipSync(pb.encode({
+		if (imgs.length)
+			await this.uploadImages(imgs)
+		const compressed = await gzip(pb.encode({
 			1: nodes,
 			2: {
 				1: "MultiMsg",
@@ -398,6 +478,80 @@ export class Contactable {
 			data: xml,
 			id: 35,
 		}
+	}
+
+	/** 下载并解析合并转发 */
+	async getForwardMessage(resid: string) {
+		const ret = []
+		const buf = await this._downloadMultiMsg(String(resid), 2)
+		let a = pb.decode(buf)[2]
+		if (Array.isArray(a)) a = a[0]
+		a = a[2][1]
+		if (!Array.isArray(a)) a = [a]
+		for (let proto of a) {
+			try {
+				ret.push(new ForwardMessage(proto))
+			} catch { }
+		}
+		return ret
+	}
+
+	private async _downloadMultiMsg(resid: string, bu: 1 | 2) {
+		const body = pb.encode({
+			1: 2,
+			2: 5,
+			3: 9,
+			4: 3,
+			5: this.c.apk.version,
+			7: [{
+				1: resid,
+				2: 3,
+			}],
+			8: bu,
+			9: 2,
+		})
+		const payload = await this.c.sendUni("MultiMsg.ApplyDown", body)
+		const rsp = pb.decode(payload)[3]
+		const ip = int32ip2str(rsp[4]?.[0] || rsp[4])
+		const port = rsp[5]?.[0] || rsp[5]
+		let url = port == 443 ? "https://ssl.htdata.qq.com" : `http://${ip}:${port}`
+		url += rsp[2]
+		let { data, headers } = await axios.get(url, { headers: {
+			"User-Agent": `QQ/${this.c.apk.version} CFNetwork/1126`,
+			"Net-Type": "Wifi"
+		}, responseType: "arraybuffer"})
+		data = Buffer.from(data as ArrayBuffer)
+		let buf = headers["accept-encoding"]?.includes("gzip") ?  await unzip(data as Buffer) : data as Buffer
+		const head_len = buf.readUInt32BE(1)
+		const body_len = buf.readUInt32BE(5)
+		buf = tea.decrypt(buf.slice(head_len + 9, head_len + 9 + body_len), rsp[3].toBuffer())
+		return unzip(pb.decode(buf)[3][3].toBuffer())
+	}
+
+	/** 获取视频下载地址 */
+	async fetchVideoDownloadUrl(fid: string, md5: string | Buffer) {
+		const body = pb.encode({
+			1: 400,
+			4: {
+				1: this.c.uin,
+				2: this.c.uin,
+				3: 1,
+				4: 7,
+				5: fid,
+				6: 1,
+				8: md5 instanceof Buffer ? md5 : Buffer.from(md5, "hex"),
+				9: 1,
+				10: 2,
+				11: 2,
+				12: 2,
+			}
+		})
+		const payload = await this.c.sendUni("PttCenterSvr.ShortVideoDownReq", body)
+		const rsp = pb.decode(payload)[4]
+		if (rsp[1] !== 0)
+			drop(rsp[1], "获取视频下载地址失败")
+		const obj = rsp[9]
+		return String(Array.isArray(obj[10]) ? obj[10][0] : obj[10]) + String(obj[11])
 	}
 }
 
@@ -417,4 +571,65 @@ async function* concatStreams(readable1: Readable, readable2: Readable) {
 		yield chunk
 	for await (const chunk of readable2)
 		yield chunk
+}
+
+async function getPttBuffer(file: string | Buffer, ffmpeg = "ffmpeg"): Promise<Buffer> {
+	if (file instanceof Buffer || file.startsWith("base64://")) {
+		// Buffer或base64
+		const buf = file instanceof Buffer ? file : Buffer.from(file.slice(9), "base64")
+		const head = buf.slice(0, 7).toString()
+		if (head.includes("SILK") || head.includes("AMR")) {
+			return buf
+		} else {
+			const tmpfile = path.join(TMP_DIR, uuid())
+			await fs.promises.writeFile(tmpfile, buf)
+			return audioTrans(tmpfile, ffmpeg)
+		}
+	} else if (file.startsWith("http://") || file.startsWith("https://")) {
+		// 网络文件
+		const readable = (await axios.get(file, { responseType: "stream" })).data as Readable
+		const tmpfile = path.join(TMP_DIR, uuid())
+		await pipeline(readable.pipe(new DownloadTransform), fs.createWriteStream(tmpfile))
+		const head = await read7Bytes(tmpfile)
+		if (head.includes("SILK") || head.includes("AMR")) {
+			const buf = await fs.promises.readFile(tmpfile)
+			fs.unlink(tmpfile, NOOP)
+			return buf
+		} else {
+			return audioTrans(tmpfile, ffmpeg)
+		}
+	} else {
+		// 本地文件
+		file = String(file).replace(/^file:\/{2}/, "")
+		IS_WIN && file.startsWith("/") && (file = file.slice(1))
+		const head = await read7Bytes(file)
+		if (head.includes("SILK") || head.includes("AMR")) {
+			return fs.promises.readFile(file)
+		} else {
+			return audioTrans(file, ffmpeg)
+		}
+	}
+}
+
+function audioTrans(file: string, ffmpeg = "ffmpeg"): Promise<Buffer> {
+	return new Promise((resolve, reject) => {
+		const tmpfile = path.join(TMP_DIR, uuid())
+		exec(`${ffmpeg} -y -i "${file}" -ac 1 -ar 8000 -f amr "${tmpfile}"`, async (error, stdout, stderr) => {
+			try {
+				const amr = await fs.promises.readFile(tmpfile)
+				resolve(amr)
+			} catch {
+				reject(new Error("音频转码到amr失败，请确认你的ffmpeg可以处理此转换"))
+			} finally {
+				fs.unlink(tmpfile, NOOP)
+			}
+		})
+	})
+}
+
+async function read7Bytes(file: string) {
+	const fd = await fs.promises.open(file, "r")
+	const buf = (await fd.read(Buffer.alloc(7), 0, 7, 0)).buffer
+	fd.close()
+	return buf
 }

@@ -15,6 +15,9 @@ export const NOOP = () => { }
 /** promisified unzip */
 export const unzip = promisify(zlib.unzip)
 
+/** promisified gzip */
+export const gzip = promisify(zlib.gzip)
+
 /** promisified pipeline */
 export const pipeline = promisify(stream.pipeline)
 
@@ -41,7 +44,7 @@ export function int32ip2str(ip: number | string) {
 }
 
 /** 隐藏并锁定一个属性 */
-export function hide(obj: any, prop: string) {
+export function lock(obj: any, prop: string) {
 	Reflect.defineProperty(obj, prop, {
 		configurable: false,
 		enumerable: false,
