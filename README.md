@@ -285,7 +285,7 @@ client.on("system.login.qrcode", function (event) {
 |-|-|
 |uploadImages()|上传一批图片以备发送|
 |uploadVideo()|上传一个视频以备发送|
-|uploadPtt()|上传一个语言以备发送|
+|uploadPtt()|上传一个语音以备发送|
 |makeForwardMessage()|制作合并转发消息以备发送|
 |parseForwardMessage()|解析合并转发消息|
 |fetchVideoDownloadUrl()|获取视频下载地址|
