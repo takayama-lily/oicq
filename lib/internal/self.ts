@@ -14,13 +14,13 @@ export class Self {
 	}
 
 	/** 好友列表(务必以`ReadonlyMap`方式访问) */
-	readonly fl = new Map<number, FriendInfo>()
+	readonly friends = new Map<number, FriendInfo>()
 	/** 陌生人列表(务必以`ReadonlyMap`方式访问) */
-	readonly sl = new Map<number, StrangerInfo>()
+	readonly strangers = new Map<number, StrangerInfo>()
 	/** 群列表(务必以`ReadonlyMap`方式访问) */
-	readonly gl = new Map<number, GroupInfo>()
+	readonly groups = new Map<number, GroupInfo>()
 	/** 群员列表缓存(务必以`ReadonlyMap`方式访问) */
-	readonly gml = new Map<number, Map<number, MemberInfo>>()
+	readonly members = new Map<number, Map<number, MemberInfo>>()
 	/** 黑名单列表(务必以`ReadonlySet`方式访问) */
 	readonly blacklist = new Set<number>()
 
@@ -263,15 +263,15 @@ export class Self {
 					remark: v[3] || "",
 					class_id: v[1],
 				}
-				this.fl.set(uid, Object.assign(this.fl.get(uid) || { }, info))
+				this.friends.set(uid, Object.assign(this.friends.get(uid) || { }, info))
 				set.add(uid)
 			}
 			start += limit
 			if (start > nested[5]) break
 		}
-		for (const [uid, _] of this.fl) {
+		for (const [uid, _] of this.friends) {
 			if (!set.has(uid))
-				this.fl.delete(uid)
+				this.friends.delete(uid)
 		}
 	}
 
@@ -290,15 +290,15 @@ export class Self {
 			protos = [protos]
 		const set = new Set<number>()
 		for (const proto of protos) {
-			this.sl.set(proto[1], {
+			this.strangers.set(proto[1], {
 				user_id: proto[1],
 				nickname: String(proto[2]),
 			})
 			set.add(proto[1])
 		}
-		for (const [uid, _] of this.sl) {
+		for (const [uid, _] of this.strangers) {
 			if (!set.has(uid))
-				this.sl.delete(uid)
+				this.strangers.delete(uid)
 		}
 	}
 
@@ -324,13 +324,13 @@ export class Self {
 				shutup_time_me: v[10] > timestamp() ? v[10] : 0,
 				update_time: 0,
 			}
-			this.gl.set(gid, Object.assign(this.gl.get(gid) || { }, info))
+			this.groups.set(gid, Object.assign(this.groups.get(gid) || { }, info))
 			set.add(gid)
 		}
-		for (const [gid, _] of this.gl) {
+		for (const [gid, _] of this.groups) {
 			if (!set.has(gid)) {
-				this.gl.delete(gid)
-				this.gml.delete(gid)
+				this.groups.delete(gid)
+				this.members.delete(gid)
 			}
 		}
 	}

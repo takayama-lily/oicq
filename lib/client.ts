@@ -93,19 +93,19 @@ export class Client extends BaseClient {
 	}
 	/** 好友列表(务必以`ReadonlyMap`方式访问) */
 	get fl() {
-		return this.self.fl
+		return this.self.friends
 	}
 	/** 群列表(务必以`ReadonlyMap`方式访问) */
 	get gl() {
-		return this.self.gl
+		return this.self.groups
 	}
 	/** 陌生人列表(务必以`ReadonlyMap`方式访问) */
 	get sl() {
-		return this.self.sl
+		return this.self.strangers
 	}
 	/** 群员列表缓存(务必以`ReadonlyMap`方式访问) */
 	get gml() {
-		return this.self.gml
+		return this.self.members
 	}
 	/** 黑名单列表(务必以`ReadonlySet`方式访问) */
 	get blacklist() {
