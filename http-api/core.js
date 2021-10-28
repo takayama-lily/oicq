@@ -474,7 +474,7 @@ function loop() {
             console.log(help);
             break;
         }
-    });
+    }).on("error", () => { });
 }
 
 module.exports = startup;
