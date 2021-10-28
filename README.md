@@ -7,7 +7,7 @@
 
 * QQ(安卓)协议基于Node.js的实现，支持最低node版本为 v14
 * 若你不熟悉Node.js或不会组织代码，可通过 [template](https://github.com/takayama-lily/oicq-template) 创建一个简单的应用程序
-* [API参考文档](https://github.com/takayama-lily/oicq/wiki/91.API%E6%96%87%E6%A1%A3) / [事件参考文档](https://github.com/takayama-lily/oicq/wiki/92.%E4%BA%8B%E4%BB%B6%E6%96%87%E6%A1%A3) / [wiki列表](https://github.com/takayama-lily/oicq/wiki)
+* [API参考](#api-documentation) / [详细文档](https://takayama-lily.github.io/oicq/)
 
 ----
 
@@ -24,53 +24,331 @@ const { createClient } = require("oicq")
 const account = 147258369;
 const client = createClient(account)
 
-//监听上线事件
 client.on("system.online", () => console.log("Logged in!"))
-
-//监听消息并回复
-client.on("message", (event) => {
-  event.reply("hello world")
-  console.log(event)
+client.on("message", msg => {
+  console.log(msg)
+  msg.reply("hello world")
 })
 
-/****************************************
- * 手机QQ扫描二维码登录(与下面的密码登录二选一)
- * 优点是不需要过滑块和设备锁
- * 缺点是万一token失效，无法自动登录，需要重新扫码
- */
 client.on("system.login.qrcode", function (event) {
+  //扫码后按回车登录
   process.stdin.once("data", () => {
-    this.login() //扫码后按回车登录
+    this.login()
   })
-}).login() //这里不填写密码
-
-//-------------------------------------------------------------------------
-
-/****************************************
- * 密码登录
- * 缺点是需要过滑块，可能会报环境异常
- * 优点是一劳永逸
- */
-client.on("system.login.slider", function (event) { //监听滑动验证码事件
-  process.stdin.once("data", (input) => {
-    this.submitSlider(input) //输入ticket
-  });
-}).on("system.login.device", function (event) { //监听登录保护验证事件
-  process.stdin.once("data", () => {
-    this.login() //验证完成后按回车登录
-  });
-}).login("password") //需要填写密码或md5后的密码
+}).login()
 ```
+
+## Api Documentation
 
 ----
 
-**全局安装并启动：**
+* [Class: Client](#class-client) 客户端
+* [Class: Self](#class-self) 自己
+* [Class: Group](#class-group) 群
+* [Class: User](#class-user) 用户
+* [Class: Friend](#class-friend) 好友
+* [Class: Member](#class-member) 群员
+* [Class: Discuss](#class-discuss) 讨论组
+* [Class: Contactable](#class-contactable) 群和用户的基类
+* [Class: Gfs](#class-gfs) 群文件系统
+* [Class: Message](#class-message) 消息
+* [使用密码登录](#使用密码登录)
 
-可作为 [http-api](./http-api) 或调试程序使用
+### Class: Client
 
-```bash
-> npm i -g oicq
-> oicq <account>
+|Method|Description|
+|-|-|
+|login|登录|
+|submitSlider|提交滑动验证码|
+|sendSmsCode|发短信|
+|submitSmsCode|提交短信验证码|
+|getGroup|得到一个群对象|
+|getFriend|得到一个好友对象|
+|getMember|得到一个群员对象|
+|getUser|创建一个用户对象|
+|getDiscuss|对象一个讨论组对象|
+
+|Property|Description|
+|-|-|
+|uin|我的账号|
+|logger|日志记录器|
+|config|配置|
+|dir|本地存储路径|
+|stat|数据统计|
+|self|[Self](#class-self)|
+|bkn|csrf-token|
+|cookies|cookies|
+
+|Event|Description|
+|-|-|
+|system.login.qrcode|收到二维码|
+|system.login.slider|滑动验证码|
+|system.login.device|设备锁|
+|system.login.error|登录错误|
+|system.online|上线|
+|system.offline.kickoff|服务器踢下线|
+|system.offline.network|网络错误导致下线|
+|request.friend|好友申请|
+|request.group.add|加群申请|
+|request.group.invite|群邀请|
+|request|全部请求|
+|message.group|群消息|
+|message.private|私聊消息|
+|message.discuss|讨论组消息|
+|message|全部消息|
+|notice.friend.increase|好友增加|
+|notice.friend.decrease|好友减少|
+|notice.friend.recall|好友撤回|
+|notice.friend.poke|好友戳一戳|
+|notice.friend|好友通知|
+|notice.group.increase|群员增加|
+|notice.group.decrease|群员减少|
+|notice.group.recall|群撤回|
+|notice.group.poke|群戳一戳|
+|notice.group.ban|群禁言|
+|notice.group.admin|群管理变更|
+|notice.group.transfer|群转让|
+|notice.group|群通知|
+|notice|全部通知|
+|sync.message|私聊消息同步|
+|sync.readed|已读同步|
+
+### Class: Self
+
+|Method|Description|
+|-|-|
+|setStatus|设置在线状态|
+|setNickname|设置昵称|
+|setGender|设置性别|
+|setBirthday|设置生日|
+|setDescription|设置个人说明|
+|setSignature|设置个性签名|
+|setAvatar|设置头像|
+|getRoamingStamp|获取漫游表情|
+|deleteStamp|删除漫游表情|
+|addClass|添加好友分组|
+|deleteClass|删除好友分组|
+|renameClass|重命名好友分组|
+|loadFriendList|重载好友列表|
+|loadStrangerList|重载陌生人列表|
+|loadGroupList|重载群列表|
+|loadBlackList|重载黑名单列表|
+
+|Property|Description|
+|-|-|
+|status|在线状态|
+|nickname|昵称|
+|sex|性别|
+|age|年龄|
+|class|好友分组|
+|stamp|漫游表情|
+
+### Class: Group
+
+|Method|Description|
+|-|-|
+|sendMessage|发送消息|
+|recallMessage|撤回消息|
+|setName|设置群名|
+|setAvatar|设置群头像|
+|muteAll|禁言全员|
+|muteMember|禁言群员|
+|muteAnonymous|禁言匿名者|
+|kickMember|踢人|
+|pokeMember|戳一戳|
+|setCard|设置名片|
+|setAdmin|设置管理员|
+|setSpecialTitle|设置头衔|
+|invite|邀请好友|
+|quit|退群/解散|
+|getAnonymousInfo|获取匿名身份|
+|allowAnonymous|允许/禁止匿名|
+|getChatHistory|获取聊天记录|
+|markRead|标记已读|
+|getAtAllRemainingTimes|获取@全体成员剩余次数|
+|fetchFileDownloadUrl|获取群文件下载地址|
+|shareMusic|分享音乐|
+|getMemberMap|获取群员列表|
+|getAvatarUrl|获取群头像地址|
+|getMember|[获取群成员对象](#class-member)|
+|fetchInfo|刷新群资料|
+
+|Property|Description|
+|-|-|
+|gid|群号|
+|name|群名|
+|info|群资料|
+|all_muted|是否全员禁言|
+|mute_left|我的禁言剩余时间|
+|fs|[群文件系统](#class-gfs)|
+
+### Class: User
+
+|Method|Description|
+|-|-|
+|sendMessage|发送消息|
+|recallMessage|撤回消息|
+|getSimpleInfo|查询资料|
+|getChatHistory|获取聊天记录|
+|markRead|标记已读|
+|fetchOfflineFileDownloadUrl|获取离线文件下载地址|
+|shareMusic|分享音乐|
+|getAvatarUrl|获取头像地址|
+|asFriend|[获取作为好友的对象](#class-friend)|
+|asMember|[获取作为某群群员的对象](#class-member)|
+|addFriendBack|回添双向好友|
+|approveFriendRequest|同意好友申请|
+|approveGroupRequest|同意加群申请|
+|approveGroupInvitation|同意群邀请|
+
+|Property|Description|
+|-|-|
+|uid|QQ号|
+
+### Class: Friend
+
+> 继承 [User](#class-user) 的所有方法和属性
+
+|Method|Description|
+|-|-|
+|setRemark|设置备注|
+|setClass|设置分组|
+|thumbUp|点赞|
+|poke|戳一戳|
+|delete|删除|
+
+|Property|Description|
+|-|-|
+|nickname|昵称|
+|sex|性别|
+|remark|备注|
+|class_id|分组id|
+|class_name|分组名|
+|info|好友资料|
+
+### Class: Member
+
+> 继承 [User](#class-user) 的所有方法和属性
+
+|Method|Description|
+|-|-|
+|setAdmin|设置管理|
+|setTitle|设置头衔|
+|setCard|设置名片|
+|kick|踢群|
+|mute|禁言|
+|poke|戳一戳|
+|addFriend|加为好友|
+
+|Property|Description|
+|-|-|
+|gid|群号|
+|card|名片或昵称|
+|title|头衔|
+|is_friend|是否好友|
+|is_owner|是否群主|
+|is_admin|是否管理员|
+|mute_left|禁言剩余时间|
+|group|[所在群对象](#class-group)|
+|info|群员资料|
+
+### Class: Discuss
+
+|Method|Description|
+|-|-|
+|sendMessage|发送消息|
+
+|Property|Description|
+|-|-|
+|gid|讨论组群号|
+
+### Class: Contactable
+
+> 所有用户和群的基类，里面的方法和属性都会被继承
+
+|Method|Description|
+|-|-|
+|uploadImages|上传一批图片以备发送|
+|uploadVideo|上传一个视频以备发送|
+|uploadPtt|上传一个语言以备发送|
+|makeForwardMessage|制作一条合并转发消息以备发送|
+|parseForwardMessage|解析合并转发消息|
+|fetchVideoDownloadUrl|获取视频下载地址|
+
+|Property|Description|
+|-|-|
+|client|所在客户端对象|
+
+### Class: Gfs
+
+|Method|Description|
+|-|-|
+|df|发送消息|
+|stat|获取文件或目录属性|
+|dir|列出文件和目录|
+|ls|dir的别名|
+|mkdir|创建目录|
+|rm|删除文件或目录|
+|rename|重命名文件或目录|
+|mv|移动文件|
+|upload|上传文件|
+|download|获取下载链接|
+
+|Property|Description|
+|-|-|
+|gid|群号|
+|client|所在客户端对象|
+
+### Class: Message
+
+> 拥有子类: PrivateMessage, GroupMessage, DiscussMessage
+
+|Method|Description|
+|-|-|
+|serialize|序列化一条消息|
+|toString|一种适合阅读的形式|
+|toCqcode|消息CQ码|
+
+|Static Method|Description|
+|-|-|
+|unserialize|反序列化一条消息|
+
+|Property|Description|
+|-|-|
+|message_type|消息类别：群或私聊|
+|sub_type|子类别|
+|group_id|群号|
+|from_id|发送者|
+|to_id|接收者|
+|anonymous|匿名者信息|
+|auto_reply|是否自动回复|
+|block|是否屏蔽|
+|atme|是否atme|
+|atall|是否atall|
+|message|消息链|
+|raw_message|消息摘要|
+|sender|发送者|
+|time|消息时间|
+|seq|消息序号|
+|rand|消息随机数|
+|font|字体|
+|source|引用回复的消息|
+
+### Class: ForwardMessage
+
+> 基本同 `Message`
+
+### 使用密码登录
+
+初次使用建议扫码，因为密码可能需要处理滑动验证码，目前非手机环境的滑动无法通过。  
+几天后不会再弹出滑动验证码，此时可以改用密码登录。
+
+```js
+const { createClient } = require("oicq")
+const client = createClient(147258369)
+
+//若弹出登录保护地址，去验证通过即可
+client.login("password")
 ```
 
 ----

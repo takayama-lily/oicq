@@ -1,19 +1,24 @@
 import { pb, jce } from "./core"
 import { ErrorCode, drop } from "./errors"
-import { timestamp, parseFunString, NOOP } from "./common"
+import { timestamp, parseFunString, NOOP, lock } from "./common"
 import { MemberInfo } from "./entities"
-import { Contact } from "./friend"
+import { User } from "./friend"
 
 type Client = import("./client").Client
 
 const weakmap = new WeakMap<MemberInfo, Member>()
 
-/** @ts-ignore ts(2417) 群员(继承联系人) */
-export class Member extends Contact {
+/** @ts-ignore ts(2417) 群员(继承用户) */
+export class Member extends User {
 
-	/** 创建一个群员对象，若gid,uid相同，且默认开启群员列表缓存，则每次返回同一对象，不会重复创建 */
-	static as(this: Client, gid: number, uid: number) {
+	/**
+	 * 创建一个群员对象，若`gid`,`uid`相同，且默认开启群员列表缓存，则每次返回同一对象，不会重复创建
+	 * @param strict 严格模式，如果群员不存在则抛错(不建议开启)
+	 */
+	static as(this: Client, gid: number, uid: number, strict = false) {
 		const info = this.gml.get(gid)?.get(uid)
+		if (strict && !info)
+			throw new Error(`群${gid}中找不到群员` + uid)
 		let member = weakmap.get(info!)
 		if (member) return member
 		member = new Member(this, Number(gid), Number(uid), info)
@@ -30,7 +35,7 @@ export class Member extends Contact {
 		return this._info
 	}
 
-	/** this.gid的别名 */
+	/** `this.gid`的别名 */
 	get group_id() {
 		return this.gid
 	}
@@ -47,26 +52,28 @@ export class Member extends Contact {
 		return this._info?.role === "owner"
 	}
 	get is_admin() {
-		return this._info?.role === "owner" || this._info?.role === "admin"
+		return this._info?.role === "admin" || this.is_owner
 	}
+	/** 禁言剩余时间 */
 	get mute_left() {
 		const t = this._info?.shutup_time! - timestamp()
 		return t > 0 ? t : 0
 	}
 
-	/** 获取所在群的对象实例 */
+	/** 返回所在群的实例 */
 	get group() {
-		return this.c.asGroup(this.gid)
+		return this.c.getGroup(this.gid)
 	}
 
-	protected constructor(c: Client, public readonly gid: number, uid: number, protected _info?: MemberInfo) {
+	protected constructor(c: Client, public readonly gid: number, uid: number, private _info?: MemberInfo) {
 		super(c, uid)
+		lock(this, "gid")
 	}
 
 	/** 强制刷新资料 */
 	async fetchInfo(): Promise<MemberInfo> {
 		if (!this.c.gml.has(this.gid) && this.c.config.cache_group_member)
-			this.group.getMemberList()
+			this.group.getMemberMap()
 		const body = pb.encode({
 			1: this.gid,
 			2: this.uid,
@@ -132,7 +139,7 @@ export class Member extends Contact {
 	}
 
 	/** 设置头衔 */
-	async setSpecialTitle(title: string, duration = -1) {
+	async setTitle(title: string, duration = -1) {
 		const body = pb.encode({
 			1: this.gid,
 			3: {

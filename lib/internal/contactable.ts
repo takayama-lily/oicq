@@ -14,8 +14,8 @@ import { CmdID, highwayUpload } from "./highway"
 
 type Client = import("../client").Client
 
-/** 所有联系人和群的基类 */
-export class Contactable {
+/** 所有用户和群的基类 */
+export abstract class Contactable {
 
 	/** 对方QQ号 */
 	protected uid?: number
@@ -192,7 +192,7 @@ export class Contactable {
 				await this.uploadImages(converter.imgs)
 			return converter
 		} catch (e: any) {
-			drop(ErrorCode.MessageBuildingFailure, e.message)
+			drop(ErrorCode.MessageBuilderError, e.message)
 		}
 	}
 
@@ -315,7 +315,7 @@ export class Contactable {
 		const body = pb.encode({
 			1: 3,
 			2: 3,
-			5: [{
+			5: {
 				1: this.target,
 				2: this.c.uin,
 				3: 0,
@@ -331,13 +331,11 @@ export class Contactable {
 				13: 1,
 				14: codec,
 				15: 1,
-			}],
+			},
 		})
 		const payload = await this.c.sendUni("PttStore.GroupPttUp", body)
 		const rsp = pb.decode(payload)[5]
-
-		const ip = Array.isArray(rsp[5]) ? rsp[5][0] : rsp[5],
-			port = Array.isArray(rsp[6]) ? rsp[6][0] : rsp[6]
+		const ip = rsp[5]?.[0] || rsp[5], port = rsp[6]?.[0] || rsp[6]
 		const ukey = rsp[7].toHex(), filekey = rsp[11].toHex()
 		const params = {
 			ver: 4679,
@@ -404,8 +402,7 @@ export class Contactable {
 				6: rsp[3].toBuffer(),
 			}],
 		})
-		const ip = Array.isArray(rsp[4]) ? rsp[4][0] : rsp[4],
-			port = Array.isArray(rsp[5]) ? rsp[5][0] : rsp[5]
+		const ip = rsp[4]?.[0] || rsp[4], port = rsp[5]?.[0] || rsp[5]
 		await highwayUpload.call(this.c, Readable.from(Buffer.from(buf), { objectMode: false }), {
 			cmdid: CmdID.MultiMsg,
 			md5: md5(buf),
@@ -481,7 +478,7 @@ export class Contactable {
 	}
 
 	/** 下载并解析合并转发 */
-	async getForwardMessage(resid: string) {
+	async parseForwardMessage(resid: string) {
 		const ret = []
 		const buf = await this._downloadMultiMsg(String(resid), 2)
 		let a = pb.decode(buf)[2]
@@ -619,7 +616,7 @@ function audioTrans(file: string, ffmpeg = "ffmpeg"): Promise<Buffer> {
 				const amr = await fs.promises.readFile(tmpfile)
 				resolve(amr)
 			} catch {
-				reject(new Error("音频转码到amr失败，请确认你的ffmpeg可以处理此转换"))
+				reject(new ApiRejection(ErrorCode.FFmpegPttTransError, "音频转码到amr失败，请确认你的ffmpeg可以处理此转换"))
 			} finally {
 				fs.unlink(tmpfile, NOOP)
 			}

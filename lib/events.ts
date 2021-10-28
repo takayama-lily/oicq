@@ -234,9 +234,9 @@ export interface EventMap<T = any> {
 	/** 所有群消息 */
 	"message.group": (this: T, event: GroupMessageEvent) => void
 	/** 普通群消息 */
-	"message.group.normal": (this: T, event: GroupMessageEvent) => void //普通消息
+	"message.group.normal": (this: T, event: GroupMessageEvent) => void
 	/** 匿名群消息 */
-	"message.group.anonymous": (this: T, event: GroupMessageEvent) => void //匿名消息
+	"message.group.anonymous": (this: T, event: GroupMessageEvent) => void
 
 	/** 讨论组消息 */
 	"message.discuss": (this: T, event: DiscussMessageEvent) => void

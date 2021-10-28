@@ -103,11 +103,11 @@ export class BaseClient extends EventEmitter {
 	}
 	readonly pskey: {[domain: string]: Buffer} = { }
 	/** 随心跳一起触发的函数，可以随意设定(心跳间隔为30秒) */
-	heartbeat = NOOP
+	protected heartbeat = NOOP
 	// 心跳定时器
 	private [HEARTBEAT]: NodeJS.Timeout
 	/** 数据统计 */
-	readonly statistics = {
+	protected readonly statistics = {
 		start_time: timestamp(),
 		lost_times: 0,
 		recv_pkt_cnt: 0,

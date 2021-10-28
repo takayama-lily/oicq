@@ -77,7 +77,7 @@ async function handleSyncMsg(this: Client, proto: pb.Proto) {
 		const group_id = uin2code(from)
 		const user_id = head[15]
 		const nickname = String(head[16])
-		const ginfo = await this.asGroup(group_id).fetchInfo().catch(NOOP)
+		const ginfo = await this.getGroup(group_id).fetchInfo().catch(NOOP)
 		if (!ginfo) return
 		if (user_id === this.uin) {
 			this.logger.info(`更新了群列表，新增了群：${group_id}`)
@@ -96,7 +96,7 @@ async function handleSyncMsg(this: Client, proto: pb.Proto) {
 		const group_id = uin2code(from)
 		const user_id = this.uin
 		const nickname = this.nickname
-		const ginfo = await this.asGroup(group_id).fetchInfo().catch(NOOP)
+		const ginfo = await this.getGroup(group_id).fetchInfo().catch(NOOP)
 		if (!ginfo) return
 		this.logger.info(`更新了群列表，新增了群：${group_id}`)
 		this.config.cache_group_member && this.getGroupMemberList(group_id)
@@ -110,13 +110,13 @@ async function handleSyncMsg(this: Client, proto: pb.Proto) {
 		this.stat.recv_msg_cnt++
 		const msg = new PrivateMessage(proto, this.uin) as PrivateMessageEvent
 		if (msg.raw_message) {
-			const _ = this.asFriend(msg.from_id)
+			const _ = this.getFriend(msg.from_id)
 			if (msg.sub_type === "friend")
 				msg.sender.nickname = _.info?.nickname || this.sl.get(msg.from_id)?.nickname || ""
 			else if (msg.sub_type === "self")
 				msg.sender.nickname = this.self.nickname
 			msg.reply = _.sendMessage.bind(_)
-			this.logger.info(`recv from: [Private: ${msg.from_id}(${msg.sub_type})] ` + msg.raw_message)
+			this.logger.info(`recv from: [Private: ${msg.from_id}(${msg.sub_type})] ` + msg)
 			this.em("message.private." + msg.sub_type, msg)
 		}
 	}

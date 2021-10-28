@@ -12,8 +12,9 @@ export function parse(rich: pb.Proto | pb.Proto[], uin?: number) {
 /** 消息解析器 */
 export class Parser {
 
-	content: T.MessageElem[] = []
+	message: T.MessageElem[] = []
 	brief = ""
+	content = ""
 	/** 匿名情报 */
 	anon?: pb.Proto
 	/** 额外情报 */
@@ -58,12 +59,14 @@ export class Parser {
 				type: type === 12 ? "xml" : "json",
 				data: String(buf[0] > 0 ? unzipSync(buf.slice(1)) : buf.slice(1)),
 				id: proto[2]
-			}
+			} as T.XmlElem
 			brief = elem.type + "消息"
+			this.content = elem.data
 			break
 		case 3: //flash
 			elem = this.parseImgElem(proto, "flash") as T.FlashElem
 			brief = "闪照"
+			this.content = `{flash:${(elem.file as string).slice(0, 32).toUpperCase()}}`
 			break
 		case 0: //ptt
 			elem = {
@@ -79,6 +82,7 @@ export class Parser {
 				elem.url = url.startsWith("http") ? url : "https://grouptalk.c2c.qq.com" + url
 			}
 			brief = "语音"
+			this.content = `{ptt:${elem.url}}`
 			break
 		case 19: //video
 			elem = {
@@ -91,6 +95,7 @@ export class Parser {
 				seconds: proto[5] || 0,
 			}
 			brief = "视频"
+			this.content = `{video:${elem.fid}}`
 			break
 		case 5: //transElem
 			const trans = pb.decode(proto[2].toBuffer().slice(3))[7][2]
@@ -103,6 +108,7 @@ export class Parser {
 				duration: trans[5],
 			}
 			brief = "群文件"
+			this.content = `{file:${elem.fid}}`
 			break
 		case 126: //poke
 			if (!proto[3])
@@ -114,11 +120,12 @@ export class Parser {
 				text: pokemap[pokeid]
 			}
 			brief = pokemap[pokeid]
+			this.content = `{poke:${elem.id}}`
 			break
 		default:
 			return
 		}
-		this.content.push(elem)
+		this.message.push(elem)
 		this.brief = "[" + brief + "]"
 		this.exclusive = true
 	}
@@ -127,6 +134,7 @@ export class Parser {
 	private parsePartialElem(type: number, proto: pb.Proto) {
 		let elem: T.MessageElem
 		let brief = ""
+		let content = ""
 		switch (type) {
 		case 1: //text&at
 			brief = String(proto[1])
@@ -145,9 +153,11 @@ export class Parser {
 					this.atme = elem.qq === this.uin
 				}
 				brief = brief || ("@" + elem.qq)
+				content = `{at:${elem.qq}}`
 			} else {
 				if (!brief)
 					return
+				content = brief
 				elem = {
 					type: "text",
 					text: brief
@@ -161,6 +171,7 @@ export class Parser {
 				text: facemap[proto[1]] || "表情",
 			}
 			brief = `[${elem.text}]`
+			content = `{face:${elem.id}}`
 			break
 		case 33: //face(id>255)
 			elem = {
@@ -171,6 +182,7 @@ export class Parser {
 			if (!elem.text)
 				elem.text = proto[2] ? String(proto[2]) : ("/" + elem.id)
 			brief = `[${elem.text}]`
+			content = `{face:${elem.id}}`
 			break
 		case 6: //bface
 			brief = this.getNextText()
@@ -179,18 +191,21 @@ export class Parser {
 					type: brief.includes("骰子") ? "dice" : "rps",
 					id: proto[12].toBuffer()[16] - 0x30 + 1
 				}
+				content = `{${elem.type}:${elem.id}}`
 			} else {
 				elem = {
 					type: "bface",
 					file: proto[4].toHex() + proto[7].toHex() + proto[5],
 					text: brief.replace(/[[\]]/g, "")
 				}
+				content = `{bface:${elem.text}}`
 			}
 			break
 		case 4:
 		case 8:
 			elem = this.parseImgElem(proto, "image") as T.ImageElem
 			brief = elem.asface ? "[动画表情]" : "[图片]"
+			content = `{image:${(elem.file as string).slice(0, 32).toUpperCase()}}`
 			break
 		case 34: //sface
 			brief = this.getNextText()
@@ -199,10 +214,11 @@ export class Parser {
 				id: proto[1],
 				text: brief.replace(/[[\]]/g, ""),
 			}
+			content = `{sface:${elem.id}}`
 			break
 		case 31: //mirai
 			if (proto[3] === 103904510) {
-				brief = String(proto[2])
+				brief = content = String(proto[2])
 				elem = {
 					type: "mirai",
 					data: brief,
@@ -216,21 +232,22 @@ export class Parser {
 		}
 
 		// 删除回复中多余的AT元素
-		if (this.content.length === 2 && elem.type === "at" && this.content[0]?.type === "at" && this.content[1]?.type === "text") {
-			if (this.content[0].qq === elem.qq && this.content[1].text === " ") {
-				this.content.splice(0, 2)
+		if (this.message.length === 2 && elem.type === "at" && this.message[0]?.type === "at" && this.message[1]?.type === "text") {
+			if (this.message[0].qq === elem.qq && this.message[1].text === " ") {
+				this.message.splice(0, 2)
 				this.brief = ""
 			}
 		}
 
 		this.brief += brief
-		if (!Array.isArray(this.content))
-			this.content = []
-		const prev = this.content[this.content.length - 1]
+		this.content += content
+		if (!Array.isArray(this.message))
+			this.message = []
+		const prev = this.message[this.message.length - 1]
 		if (elem.type === "text" && prev?.type === "text")
 			prev.text += elem.text
 		else
-			this.content.push(elem)
+			this.message.push(elem)
 	}
 
 	private parseElems(arr: pb.Proto[]) {

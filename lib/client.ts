@@ -6,7 +6,7 @@ const pkg = require("../package.json")
 import { md5, timestamp, NOOP, lock, Gender, OnlineStatus } from "./common"
 import { bindInternalListeners, parseFriendRequestFlag, parseGroupRequestFlag, getSystemMessage, Self } from "./internal"
 import { EventMap } from "./events"
-import { Contact, Friend } from "./friend"
+import { User, Friend } from "./friend"
 import { Discuss, Group } from "./group"
 import { Member } from "./member"
 import { Forwardable, Sendable, parseDmMessageId, parseGroupMessageId } from "./message"
@@ -67,15 +67,15 @@ export interface Client extends BaseClient {
 export class Client extends BaseClient {
 
 	/** 得到一个群对象 */
-	readonly asGroup = Group.as.bind(this)
+	readonly getGroup = Group.as.bind(this)
 	/** 得到一个好友对象 */
-	readonly asFriend = Friend.as.bind(this)
+	readonly getFriend = Friend.as.bind(this)
 	/** 得到一个群员对象 */
-	readonly asMember = Member.as.bind(this)
-	/** 得到一个联系人对象 */
-	readonly asUser = Contact.as.bind(this)
+	readonly getMember = Member.as.bind(this)
+	/** 得到一个用户对象 */
+	readonly getUser = User.as.bind(this)
 	/** 得到一个讨论组对象 */
-	readonly asDiscuss = Discuss.as.bind(this)
+	readonly getDiscuss = Discuss.as.bind(this)
 	readonly self = new Self(this)
 
 	/** 日志记录器 */
@@ -197,11 +197,11 @@ export class Client extends BaseClient {
 		lock(this, "config")
 		lock(this, "_cache")
 		lock(this, "internal")
-		lock(this, "asUser")
-		lock(this, "asFriend")
-		lock(this, "asGroup")
-		lock(this, "asDiscuss")
-		lock(this, "asMember")
+		lock(this, "getUser")
+		lock(this, "getFriend")
+		lock(this, "getGroup")
+		lock(this, "getDiscuss")
+		lock(this, "getMember")
 		lock(this, "cookies")
 
 		let n = 0
@@ -213,60 +213,6 @@ export class Client extends BaseClient {
 				this.self.setStatus()
 			}
 		}
-	}
-
-	sendOidb(cmd: string, body: Uint8Array, timeout = 5) {
-		const sp = cmd //OidbSvc.0x568_22
-			.replace("OidbSvc.", "")
-			.replace("oidb_", "")
-			.split("_")
-		const type1 = parseInt(sp[0], 16), type2 = parseInt(sp[1])
-		body = pb.encode({
-			1: type1,
-			2: isNaN(type2) ? 1 : type2,
-			3: 0,
-			4: body,
-			6: "android " + this.apk.ver,
-		})
-		return this.sendUni(cmd, body, timeout)
-	}
-
-	em(name = "", data?: any) {
-		while (true) {
-			this.emit(name, data)
-			let i = name.lastIndexOf(".")
-			if (i === -1)
-				break
-			name = name.slice(0, i)
-		}
-	}
-
-	protected _msgExists(from: number, type: number, seq: number, time: number) {
-		if (timestamp() - time >= 60 || time < this.stat.start_time)
-			return true
-		const id = [from, type, seq].join("-")
-		const set = this._cache.get(time)
-		if (!set) {
-			this._cache.set(time, new Set([id]))
-			return false
-		} else {
-			if (set.has(id))
-				return true
-			else
-				set.add(id)
-			return false
-		}
-	}
-
-	protected _calcMsgCntPerMin() {
-		let cnt = 0
-		for (let [time, set] of this._cache) {
-			 if (timestamp() - time >= 60)
-				this._cache.delete(time)
-			 else
-				cnt += set.size
-		}
-		return cnt
 	}
 
 	/**
@@ -308,9 +254,7 @@ export class Client extends BaseClient {
 		return this.submitSlider(ticket)
 	}
 
-	// cqhttp遗留方法
-
-	/** @cqhttp 设置在线状态 */
+	/** @cqhttp (cqhttp遗留方法) 设置在线状态 */
 	async setOnlineStatus(status: OnlineStatus) {
 		return this.self.setStatus(status)
 	}
@@ -320,11 +264,11 @@ export class Client extends BaseClient {
 	}
 	/** @cqhttp 获取转发消息 */
 	async getForwardMsg(resid: string) {
-		return this.asFriend(this.uin).getForwardMessage(resid)
+		return this.getFriend(this.uin).parseForwardMessage(resid)
 	}
 	/** @cqhttp 制作转发消息 (use friend.makeForwardMessage or group.makeForwardMessage) */
 	async makeForwardMsg(fake: Forwardable[], dm = false) {
-		return (dm ? this.asFriend : this.asGroup)(this.uin).makeForwardMessage(fake)
+		return (dm ? this.getFriend : this.getGroup)(this.uin).makeForwardMessage(fake)
 	}
 	/** @cqhttp 设置昵称 */
 	async setNickname(nickname: string) {
@@ -395,58 +339,58 @@ export class Client extends BaseClient {
 	}
 	/** @cqhttp use user.getSimpleInfo() */
 	async getStrangerInfo(user_id: number) {
-		return this.asUser(user_id).getSimpleInfo()
+		return this.getUser(user_id).getSimpleInfo()
 	}
 	/** @cqhttp use group.info or group.fetchInfo() */
 	async getGroupInfo(group_id: number, no_cache = false) {
-		const group = this.asGroup(group_id)
+		const group = this.getGroup(group_id)
 		if (no_cache) return group.fetchInfo()
 		return group.info || group.fetchInfo()
 	}
 	/** @cqhttp use group.getMemberList() */
 	async getGroupMemberList(group_id: number, no_cache = false) {
-		return this.asGroup(group_id).getMemberList(no_cache)
+		return this.getGroup(group_id).getMemberMap(no_cache)
 	}
 	/** @cqhttp use member.info or member.fetchInfo() */
 	async getGroupMemberInfo(group_id: number, user_id: number, no_cache = false) {
 		if (no_cache || !this.gml.get(group_id)?.has(user_id))
-			return this.asMember(group_id, user_id).fetchInfo()
+			return this.getMember(group_id, user_id).fetchInfo()
 		return this.gml.get(group_id)?.get(user_id)!
 	}
 	/** @cqhttp use friend.sendMessage() */
 	async sendPrivateMsg(user_id: number, message: Sendable) {
-		return this.asFriend(user_id).sendMessage(message)
+		return this.getFriend(user_id).sendMessage(message)
 	}
 	/** @cqhttp use group.sendMessage() */
 	async sendGroupMsg(group_id: number, message: Sendable) {
-		return this.asGroup(group_id).sendMessage(message)
+		return this.getGroup(group_id).sendMessage(message)
 	}
 	/** @cqhttp use discuss.sendMessage() */
 	async sendDiscussMsg(discuss_id: number, message: Sendable) {
-		return this.asDiscuss(discuss_id).sendMessage(message)
+		return this.getDiscuss(discuss_id).sendMessage(message)
 	}
 	/** @cqhttp use member.sendMessage() */
 	async sendTempMsg(group_id: number, user_id: number, message: Sendable) {
-		return this.asMember(group_id, user_id).sendMessage(message)
+		return this.getMember(group_id, user_id).sendMessage(message)
 	}
 	/** @cqhttp use user.recallMessage() or group.recallMessage() */
 	async deleteMsg(message_id: string) {
 		if (message_id.length > 24) {
 			const { group_id, seq, rand, pktnum } = parseGroupMessageId(message_id)
-			return this.asGroup(group_id).recallMessage(seq, rand, pktnum)
+			return this.getGroup(group_id).recallMessage(seq, rand, pktnum)
 		} else {
 			const { user_id, seq, rand, time } = parseDmMessageId(message_id)
-			return this.asUser(user_id).recallMessage(seq, rand, time)
+			return this.getUser(user_id).recallMessage(seq, rand, time)
 		}
 	}
 	/** @cqhttp use user.markRead() or group.markRead() */
 	async reportReaded(message_id: string) {
 		if (message_id.length > 24) {
 			const { group_id, seq } = parseGroupMessageId(message_id)
-			return this.asGroup(group_id).markRead(seq)
+			return this.getGroup(group_id).markRead(seq)
 		} else {
 			const { user_id, time } = parseDmMessageId(message_id)
-			return this.asUser(user_id).markRead(time)
+			return this.getUser(user_id).markRead(time)
 		}
 	}
 	/** @cqhttp use user.getChatHistory() or group.getChatHistory() */
@@ -457,95 +401,149 @@ export class Client extends BaseClient {
 	async getChatHistory(message_id: string, count = 20) {
 		if (message_id.length > 24) {
 			const { group_id, seq } = parseGroupMessageId(message_id)
-			return this.asGroup(group_id).getChatHistory(seq, count)
+			return this.getGroup(group_id).getChatHistory(seq, count)
 		} else {
 			const { user_id, time } = parseDmMessageId(message_id)
-			return this.asUser(user_id).getChatHistory(time, count)
+			return this.getUser(user_id).getChatHistory(time, count)
 		}
 	}
 	/** @cqhttp use group.muteAnonymous() */
 	async setGroupAnonymousBan(group_id: number, flag: string, duration = 1800) {
-		return this.asGroup(group_id).muteAnonymous(flag, duration)
+		return this.getGroup(group_id).muteAnonymous(flag, duration)
 	}
 	/** @cqhttp use group.allowAnonymous() */
 	async setGroupAnonymous(group_id: number, enable = true) {
-		return this.asGroup(group_id).allowAnonymous(enable)
+		return this.getGroup(group_id).allowAnonymous(enable)
 	}
 	/** @cqhttp use group.muteAll() */
 	async setGroupWholeBan(group_id: number, enable = true) {
-		return this.asGroup(group_id).muteAll(enable)
+		return this.getGroup(group_id).muteAll(enable)
 	}
 	/** @cqhttp use group.setName() */
 	async setGroupName(group_id: number, name: string) {
-		return this.asGroup(group_id).setName(name)
+		return this.getGroup(group_id).setName(name)
 	}
 	/** @cqhttp use group.announce() */
 	async sendGroupNotice(group_id: number, content: string) {
-		return this.asGroup(group_id).announce(content)
+		return this.getGroup(group_id).announce(content)
 	}
 	/** @cqhttp use group.setAdmin() or member.setAdmin() */
 	async setGroupAdmin(group_id: number, user_id: number, enable = true) {
-		return this.asMember(group_id, user_id).setAdmin(enable)
+		return this.getMember(group_id, user_id).setAdmin(enable)
 	}
 	/** @cqhttp use group.setSpecialTitle() or member.setSpecialTitle() */
 	async setGroupSpecialTitle(group_id: number, user_id: number, special_title: string, duration = -1) {
-		return this.asMember(group_id, user_id).setSpecialTitle(special_title, duration)
+		return this.getMember(group_id, user_id).setTitle(special_title, duration)
 	}
 	/** @cqhttp use group.setCard() or member.setCard() */
 	async setGroupCard(group_id: number, user_id: number, card: string) {
-		return this.asMember(group_id, user_id).setCard(card)
+		return this.getMember(group_id, user_id).setCard(card)
 	}
 	/** @cqhttp use group.kickMember() or member.kick() */
 	async setGroupKick(group_id: number, user_id: number, reject_add_request = false) {
-		return this.asMember(group_id, user_id).kick(reject_add_request)
+		return this.getMember(group_id, user_id).kick(reject_add_request)
 	}
 	/** @cqhttp use group.muteMember() or member.mute() */
 	async setGroupBan(group_id: number, user_id: number, duration = 1800) {
-		return this.asMember(group_id, user_id).mute(duration)
+		return this.getMember(group_id, user_id).mute(duration)
 	}
 	/** @cqhttp use group.quit() */
 	async setGroupLeave(group_id: number) {
-		return this.asGroup(group_id).quit()
+		return this.getGroup(group_id).quit()
 	}
 	/** @cqhttp use group.pokeMember() or member.poke() */
 	async sendGroupPoke(group_id: number, user_id: number) {
-		return this.asMember(group_id, user_id).poke()
+		return this.getMember(group_id, user_id).poke()
 	}
 	/** @cqhttp use member.addFriend() */
 	async addFriend(group_id: number, user_id: number, comment = "") {
-		return this.asMember(group_id, user_id).addFriend(comment)
+		return this.getMember(group_id, user_id).addFriend(comment)
 	}
 	/** @cqhttp use friend.delete() */
 	async deleteFriend(user_id: number, block = true) {
-		return this.asFriend(user_id).delete(block)
+		return this.getFriend(user_id).delete(block)
 	}
 	/** @cqhttp use group.invite() */
 	async inviteFriend(group_id: number, user_id: number) {
-		return this.asGroup(group_id).invite(user_id)
+		return this.getGroup(group_id).invite(user_id)
 	}
 	/** @cqhttp use friend.thumbUp() */
 	async sendLike(user_id: number, times = 1) {
-		return this.asFriend(user_id).thumbUp(times)
+		return this.getFriend(user_id).thumbUp(times)
 	}
 	/** @cqhttp use group.setPortrait() */
 	async setGroupPortrait(group_id: number, file: Parameters<Group["setAvatar"]>[0]) {
-		return this.asGroup(group_id).setAvatar(file)
+		return this.getGroup(group_id).setAvatar(file)
 	}
 	/** @cqhttp use group.fs */
 	acquireGfs(group_id: number) {
-		return this.asGroup(group_id).fs
+		return this.getGroup(group_id).fs
 	}
 	/** @cqhttp use user.approveFriendRequest() or user.addFriendBack() */
 	async setFriendAddRequest(flag: string, approve = true, remark = "", block = false) {
 		const { user_id, seq, single } = parseFriendRequestFlag(flag)
-		const user = this.asUser(user_id)
+		const user = this.getUser(user_id)
 		return single ? user.addFriendBack(seq, remark) : user.approveFriendRequest(seq, approve, remark, block)
 	}
 	/** @cqhttp use user.approveGroupRequest() or user.approveGroupInvitation() */
 	async setGroupAddRequest(flag: string, approve = true, reason = "", block = false) {
 		const { group_id, user_id, seq, invite } = parseGroupRequestFlag(flag)
-		const user = this.asUser(user_id)
+		const user = this.getUser(user_id)
 		return invite ? user.approveGroupInvitation(group_id, seq, approve, block) : user.approveGroupRequest(group_id, seq, approve, reason, block)
+	}
+
+	sendOidb(cmd: string, body: Uint8Array, timeout = 5) {
+		const sp = cmd //OidbSvc.0x568_22
+			.replace("OidbSvc.", "")
+			.replace("oidb_", "")
+			.split("_")
+		const type1 = parseInt(sp[0], 16), type2 = parseInt(sp[1])
+		body = pb.encode({
+			1: type1,
+			2: isNaN(type2) ? 1 : type2,
+			3: 0,
+			4: body,
+			6: "android " + this.apk.ver,
+		})
+		return this.sendUni(cmd, body, timeout)
+	}
+
+	em(name = "", data?: any) {
+		while (true) {
+			this.emit(name, data)
+			let i = name.lastIndexOf(".")
+			if (i === -1)
+				break
+			name = name.slice(0, i)
+		}
+	}
+
+	protected _msgExists(from: number, type: number, seq: number, time: number) {
+		if (timestamp() - time >= 60 || time < this.stat.start_time)
+			return true
+		const id = [from, type, seq].join("-")
+		const set = this._cache.get(time)
+		if (!set) {
+			this._cache.set(time, new Set([id]))
+			return false
+		} else {
+			if (set.has(id))
+				return true
+			else
+				set.add(id)
+			return false
+		}
+	}
+
+	protected _calcMsgCntPerMin() {
+		let cnt = 0
+		for (let [time, set] of this._cache) {
+			 if (timestamp() - time >= 60)
+				this._cache.delete(time)
+			 else
+				cnt += set.size
+		}
+		return cnt
 	}
 }
 

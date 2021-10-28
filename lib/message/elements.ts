@@ -160,12 +160,12 @@ export interface Forwardable {
 	time?: number,
 }
 
-/** 可以组合发送的元素 */
+/** 可组合发送的元素 */
 export type ChainElem = TextElem | FaceElem | BfaceElem | MfaceElem | ImageElem | AtElem | MiraiElem | ReplyElem
 
 /** 注意：只有`ChainElem`中的元素可以组合发送，其他元素只能单独发送 */
 export type MessageElem = TextElem | FaceElem | BfaceElem | MfaceElem | ImageElem | AtElem | MiraiElem | ReplyElem |
 	FlashElem | PttElem | VideoElem | JsonElem | XmlElem | PokeElem | LocationElem | ShareElem | FileElem
 
-/** 可以传递给sendMessage方法 */
+/** 可通过sendMessage发送的类型集合 */
 export type Sendable = string | MessageElem | (string | MessageElem)[]

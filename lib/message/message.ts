@@ -74,7 +74,7 @@ export abstract class Message implements Quotable, Forwardable {
 
 	/**
 	 * 该值永远指向消息发送者。
-	 * 对于私聊消息，请使用 from_id 和 to_id 来确定发送者和接收者。
+	 * 对于私聊消息，请使用`from_id`和`to_id`来确定发送者和接收者。
 	 * @deprecated 未来会改为访问器，仅供内部转发消息时使用。
 	 */
 	user_id: number
@@ -132,7 +132,7 @@ export abstract class Message implements Quotable, Forwardable {
 					chain.push(elem)
 			}
 		}
-		return host
+		return host as Message
 	}
 
 	constructor(protected proto: pb.Proto) {
@@ -147,7 +147,7 @@ export abstract class Message implements Quotable, Forwardable {
 		this.rand = proto[3]?.[1]?.[1]?.[3] || uuid2rand(head[7])
 		this.font = body[1]?.[1]?.[9]?.toString() || "unknown"
 		this.parsed = parse(body[1], head[2])
-		this.message = this.parsed.content
+		this.message = this.parsed.message
 		this.raw_message = this.parsed.brief
 		if (this.parsed.quotation) {
 			const q = this.parsed.quotation
@@ -172,9 +172,9 @@ export abstract class Message implements Quotable, Forwardable {
 		return this.proto.toBuffer()
 	}
 
-	/** 以人类可读的形式输出 */
+	/** 以适合人类阅读的形式输出 */
 	toString() {
-		return this.raw_message
+		return this.parsed.content
 	}
 
 	/** @deprecated 转换为CQ码 */
@@ -198,7 +198,7 @@ export class PrivateMessage extends Message {
 		discuss_id: undefined as number | undefined,
 	}
 
-	/** 反序列化一条私聊消息，你需要传入你的uin，否则无法知道你是发送者还是接收者 */
+	/** 反序列化一条私聊消息，你需要传入你的`uin`，否则无法知道你是发送者还是接收者 */
 	static unserialize(serialized: Buffer, uin?: number) {
 		return new PrivateMessage(pb.decode(serialized), uin)
 	}
@@ -251,7 +251,7 @@ export class GroupMessage extends Message {
 	group_id: number
 	group_name: string
 	anonymous: Anonymous | null
-	blocking: boolean
+	block: boolean
 	atme: boolean
 	atall: boolean
 	sender = {
@@ -279,7 +279,7 @@ export class GroupMessage extends Message {
 		const group = proto[1][9]
 		this.group_id = group[1] || 0
 		this.group_name = group[8]?.toString() || ""
-		this.blocking = group[2] === 127
+		this.block = group[2] === 127
 		this.sender.user_id = proto[1][1]
 		if (this.parsed.anon) {
 			this.sub_type = "anonymous"
@@ -349,6 +349,7 @@ export class DiscussMessage extends Message {
 /** 一条转发消息 */
 export class ForwardMessage implements Forwardable {
 
+	private parsed: Parser
 	user_id: number
 	nickname: string
 	time: number
@@ -366,10 +367,11 @@ export class ForwardMessage implements Forwardable {
 		this.time = head[6] | 0
 		this.user_id = head[1] | 0
 		this.nickname = head[14]?.toString() || ""
-		const p = parse(proto[3][1])
-		this.message = p.content
-		this.raw_message = p.brief
+		this.parsed = parse(proto[3][1])
+		this.message = this.parsed.message
+		this.raw_message = this.parsed.brief
 		lock(this, "proto")
+		lock(this, "parsed")
 	}
 
 	/** 将转发消息序列化保存 */
@@ -377,9 +379,9 @@ export class ForwardMessage implements Forwardable {
 		return this.proto.toBuffer()
 	}
 
-	/** 以人类可读的形式输出 */
+	/** 以适合人类阅读的形式输出 */
 	toString() {
-		return this.raw_message
+		return this.parsed.content
 	}
 
 	/** @deprecated 转换为CQ码 */

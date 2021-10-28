@@ -2,7 +2,7 @@ import { randomBytes } from "crypto"
 import axios from "axios"
 import { pb, jce } from "./core"
 import { ErrorCode, drop } from "./errors"
-import { timestamp, code2uin, PB_CONTENT, NOOP, log } from "./common"
+import { timestamp, code2uin, PB_CONTENT, NOOP, lock, log } from "./common"
 import { Contactable } from "./internal"
 import { Member } from "./member"
 import { Sendable, GroupMessage, ImageElem, Image, buildMusic, MusicPlatform, Anonymous, parseGroupMessageId, Quotable } from "./message"
@@ -43,12 +43,13 @@ export class Discuss extends Contactable {
 	static as(this: Client, gid: number) {
 		return new Discuss(this, Number(gid))
 	}
-	/** this.gid的别名 */
+	/** `this.gid`的别名 */
 	get group_id() {
 		return this.gid
 	}
 	protected constructor(c: Client, public readonly gid: number) {
 		super(c)
+		lock(this, "gid")
 	}
 	/** 发送一条消息 */
 	async sendMessage(content: Sendable): Promise<MessageRet> {
@@ -87,9 +88,14 @@ export interface Group {
 /** 群 */
 export class Group extends Discuss {
 
-	/** 创建一个群对象，若gid相同则每次返回同一对象，不会重复创建 */
-	static as(this: Client, gid: number) {
+	/**
+	 * 创建一个群对象，若`gid`相同则每次返回同一对象，不会重复创建
+	 * @param strict 严格模式，如果群不存在则抛错(默认false)
+	 */
+	static as(this: Client, gid: number, strict = false) {
 		const info = this.gl.get(gid)
+		if (strict && !info)
+			throw new Error(`你尚未加入群` + gid)
 		let group = weakmap.get(info!)
 		if (group) return group
 		group = new Group(this, Number(gid), info)
@@ -108,28 +114,31 @@ export class Group extends Discuss {
 	get name() {
 		return this._info?.group_name
 	}
+	/** 是否全员禁言 */
 	get all_muted() {
 		return this._info?.shutup_time_whole! > timestamp()
 	}
+	/** 我的禁言剩余时间 */
 	get mute_left() {
 		const t = this._info?.shutup_time_me! - timestamp()
 		return t > 0 ? t : 0
 	}
 
-	/** 文件系统 */
+	/** 群文件系统 */
 	readonly fs: Gfs
 
-	protected constructor(c: Client, gid: number, protected _info?: GroupInfo) {
+	protected constructor(c: Client, gid: number, private _info?: GroupInfo) {
 		super(c, gid)
 		this.fs = new Gfs(c, gid)
+		lock(this, "fs")
 	}
 
 	/** 获取一枚群员实例 */
-	acquireMember(uid: number) {
-		return Member.as.call(this.c, this.gid, uid)
+	getMember(uid: number, strict = false) {
+		return Member.as.call(this.c, this.gid, uid, strict)
 	}
 
-	/** 获取头像url (history=1,2,3...) */
+	/** 获取群头像url (history=1,2,3...) */
 	getAvatarUrl(size: 0 | 40 | 100 | 140 = 0, history = 0) {
 		return `https://p.qlogo.cn/gh/${this.gid}/${this.gid}${history?"_"+history:""}/` + size
 	}
@@ -175,7 +184,7 @@ export class Group extends Discuss {
 		return info
 	}
 
-	protected async _fetchMemberList() {
+	private async _fetchMembers() {
 		let next = 0
 		try {
 			while (true) {
@@ -224,13 +233,13 @@ export class Group extends Discuss {
 	}
 
 	/** 获取群员列表 */
-	async getMemberList(no_cache = false) {
+	async getMemberMap(no_cache = false) {
 		const k = this.c.uin + "-" + this.gid
 		const fetching = fetchmap.get(k)
 		if (fetching) return fetching
 		const mlist = this.c.gml.get(this.gid)
 		if (!mlist || no_cache) {
-			const fetching = this._fetchMemberList()
+			const fetching = this._fetchMembers()
 			fetchmap.set(k, fetching)
 			return fetching
 		} else {
@@ -244,7 +253,11 @@ export class Group extends Discuss {
 		await this.c.sendOidb("OidbSvc.0xb77_9", pb.encode(body))
 	}
 
-	/** 发送一条消息 */
+	/**
+	 * 发送一条消息
+	 * @param source 引用回复的消息
+	 * @param anon 是否匿名
+	 */
 	async sendMessage(content: Sendable, source?: Quotable, anon: AnonymousInfo | boolean = false): Promise<MessageRet> {
 		const converter = await this._preprocess(content, source)
 		if (anon) {
@@ -279,7 +292,6 @@ export class Group extends Discuss {
 		try {
 			if (!message_id) {
 				const time = this.c.config.resend ? (converter.length <= 80 ? 2000 : 500) : 5000
-				console.log(time, timestamp())
 				message_id = await new Promise((resolve, reject) => {
 					const timeout = setTimeout(() => {
 						this.c.removeAllListeners(e)
@@ -295,7 +307,7 @@ export class Group extends Discuss {
 			if (this.c.config.resend)
 				message_id = await this._sendMessageByFragments(converter.toFragments())
 			else
-				drop(ErrorCode.RiskMessageFailure)
+				drop(ErrorCode.RiskMessageError)
 		}
 		this.c.logger.info(`succeed to send: [Group(${this.gid})] ` + converter.brief)
 		{
@@ -336,7 +348,7 @@ export class Group extends Discuss {
 				})
 			})
 		} catch {
-			drop(ErrorCode.SensitiveWordsFailure)
+			drop(ErrorCode.SensitiveWordsError)
 		}
 	}
 
@@ -398,7 +410,7 @@ export class Group extends Discuss {
 	announce(content: string) {
 		return this._setting({ 4: String(content) })
 	}
-	protected async _setting(obj: {[tag: number]: any}) {
+	private async _setting(obj: {[tag: number]: any}) {
 		const body = pb.encode({
 			1: this.gid,
 			2: obj
@@ -481,7 +493,7 @@ export class Group extends Discuss {
 		return pb.decode(payload)[4][2] as number
 	}
 
-	protected async _getLastSeq() {
+	private async _getLastSeq() {
 		const body = pb.encode({
 			1: this.c.apk.subid,
 			2: {
@@ -495,7 +507,7 @@ export class Group extends Discuss {
 		return pb.decode(payload)[4][1][3][22]
 	}
 
-	/** 标记seq之前为已读，默认为当前最新seq */
+	/** 标记`seq`之前为已读，`seq`默认为最后一条发言 */
 	async markRead(seq = 0) {
 		const body = pb.encode({
 			1: {
@@ -506,7 +518,7 @@ export class Group extends Discuss {
 		await this.c.sendUni("PbMessageSvc.PbMsgReadedReport", body)
 	}
 
-	/** 获取seq之前的cnt条聊天记录，cnt默认20不能超过20 */
+	/** 获取`seq`之前的`cnt`条聊天记录，`seq`默认为最后一条发言，`cnt`默认20不能超过20 */
 	async getChatHistory(seq = 0, cnt = 20) {
 		if (cnt > 20) cnt = 20
 		if (!seq)
@@ -571,21 +583,21 @@ export class Group extends Discuss {
 	}
 
 	setAdmin(uid: number, yes: boolean) {
-		return this.acquireMember(uid).setAdmin(yes)
+		return this.getMember(uid).setAdmin(yes)
 	}
-	setSpecialTitle(uid: number, title: string, duration = -1) {
-		return this.acquireMember(uid).setSpecialTitle(title, duration)
+	setTitle(uid: number, title: string, duration = -1) {
+		return this.getMember(uid).setTitle(title, duration)
 	}
 	setCard(uid: number, card: string) {
-		return this.acquireMember(uid).setCard(card)
+		return this.getMember(uid).setCard(card)
 	}
 	kickMember(uid: number, block = false) {
-		return this.acquireMember(uid).kick(block)
+		return this.getMember(uid).kick(block)
 	}
 	muteMember(uid: number, duration = 600) {
-		return this.acquireMember(uid).mute(duration)
+		return this.getMember(uid).mute(duration)
 	}
 	pokeMember(uid: number) {
-		return this.acquireMember(uid).poke()
+		return this.getMember(uid).poke()
 	}
 }

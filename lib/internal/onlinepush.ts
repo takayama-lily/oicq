@@ -133,7 +133,7 @@ const push528: {[k: number]: (this: Client, buf: Buffer) =>  OnlinePushEvent | v
 	},
 	0xD4: function (buf) {
 		const group_id = pb.decode(buf)[1]
-		this.asGroup(group_id).fetchInfo().catch(NOOP)
+		this.getGroup(group_id).fetchInfo().catch(NOOP)
 	},
 	0x27: function (buf) {
 		let data = pb.decode(buf)[1]
@@ -356,14 +356,14 @@ export function groupMsgListener(this: Client, payload: Buffer) {
 		setTimeout(()=>fragmap.delete(k), 5000)
 		if (arr.length !== msg.pktnum)
 			return
-		msg = GroupMessage.combine(arr)
+		msg = GroupMessage.combine(arr) as GroupMessage
 	}
 
-	this.asGroup(msg.group_id).info
-	this.config.cache_group_member && this.asMember(msg.group_id, msg.sender.user_id).info
+	this.getGroup(msg.group_id).info
+	this.config.cache_group_member && this.getMember(msg.group_id, msg.sender.user_id).info
 
 	if (msg.raw_message) {
-		const _ = this.asGroup(msg.group_id)
+		const _ = this.getGroup(msg.group_id)
 		;(msg as GroupMessageEvent).reply = _.sendMessage.bind(_)
 		const sender = msg.sender
 		const member = this.gml.get(msg.group_id)?.get(sender.user_id)
@@ -377,7 +377,7 @@ export function groupMsgListener(this: Client, payload: Buffer) {
 			member.level = sender.level
 			member.last_sent_time = timestamp()
 		}
-		this.logger.info(`recv from: [Group: ${msg.group_name}(${msg.group_id}), Member: ${sender.card || sender.nickname}(${sender.user_id})] ` + msg.raw_message)
+		this.logger.info(`recv from: [Group: ${msg.group_name}(${msg.group_id}), Member: ${sender.card || sender.nickname}(${sender.user_id})] ` + msg)
 		this.em("message.group." + msg.sub_type, msg)
 	}
 }
@@ -391,9 +391,9 @@ export function discussMsgListener(this: Client, payload: Buffer, seq: number) {
 	if (msg.user_id === this.uin && this.config.ignore_self)
 		return
 	if (msg.raw_message) {
-		const _ = this.asDiscuss(msg.discuss_id)
+		const _ = this.getDiscuss(msg.discuss_id)
 		msg.reply = _.sendMessage.bind(_)
-		this.logger.info(`recv from: [Discuss: ${msg.discuss_name}(${msg.discuss_id}), Member: ${msg.sender.card}(${msg.sender.user_id})] ` + msg.raw_message)
+		this.logger.info(`recv from: [Discuss: ${msg.discuss_name}(${msg.discuss_id}), Member: ${msg.sender.card}(${msg.sender.user_id})] ` + msg)
 		this.em("message.discuss", msg)
 	}
 }

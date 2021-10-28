@@ -37,8 +37,6 @@ export interface GfsDirStat extends GfsBaseStat {
 	file_count: number
 }
 
-export type GfsStat = GfsFileStat | GfsDirStat
-
 function checkRsp(rsp: pb.Proto) {
 	if (rsp[1] === 0) return
 	drop(rsp[1], rsp[2])
@@ -47,13 +45,13 @@ function checkRsp(rsp: pb.Proto) {
 /** 群文件系统 */
 export class Gfs {
 
-	/** this.gid的别名 */
+	/** `this.gid`的别名 */
 	get group_id() {
 		return this.gid
 	}
-	/** 获取所在群的对象实例 */
+	/** 返回所在群的实例 */
 	get group() {
-		return this.c.asGroup(this.gid)
+		return this.c.getGroup(this.gid)
 	}
 	/** 返回所属的客户端对象 */
 	get client() {
@@ -139,7 +137,7 @@ export class Gfs {
 		const payload = await this.c.sendOidb("OidbSvc.0x6d8_1", body)
 		const rsp = pb.decode(payload)[4][2]
 		checkRsp(rsp)
-		const arr: GfsStat[] = []
+		const arr: (GfsDirStat|GfsFileStat)[] = []
 		if (!rsp[5]) return arr
 		const files = Array.isArray(rsp[5]) ? rsp[5] : [rsp[5]]
 		for (let file of files) {
@@ -150,7 +148,7 @@ export class Gfs {
 		}
 		return arr
 	}
-	/** dir的别名 */
+	/** `this.dir`的别名 */
 	ls(pid = "/", start = 0, limit = 100) {
 		return this.dir(pid, start, limit)
 	}

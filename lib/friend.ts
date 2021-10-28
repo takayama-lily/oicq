@@ -1,8 +1,8 @@
 import { randomBytes } from "crypto"
 import { pb, jce } from "./core"
 import { ErrorCode, drop } from "./errors"
-import { Gender, PB_CONTENT, code2uin, timestamp, log } from "./common"
-import { Sendable, PrivateMessage, Image, buildMusic, MusicPlatform, Quotable, rand2uuid, genDmMessageId, parseDmMessageId } from "./message"
+import { Gender, PB_CONTENT, code2uin, timestamp, lock, log } from "./common"
+import { Sendable, PrivateMessage, buildMusic, MusicPlatform, Quotable, rand2uuid, genDmMessageId, parseDmMessageId } from "./message"
 import { buildSyncCookie, Contactable } from "./internal"
 import { MessageRet } from "./events"
 import { FriendInfo } from "./entities"
@@ -11,38 +11,39 @@ type Client = import("./client").Client
 
 const weakmap = new WeakMap<FriendInfo, Friend>()
 
-/** 联系人 */
-export interface Contact {
+/** 用户 */
+export interface User {
 	recallMessage(msg: PrivateMessage): Promise<boolean>
 	recallMessage(msgid: string): Promise<boolean>
 	recallMessage(seq: number, rand: number, time: number): Promise<boolean>
 }
 
-/** 联系人 */
-export class Contact extends Contactable {
+/** 用户 */
+export class User extends Contactable {
 
-	/** this.uid的别名 */
+	/** `this.uid`的别名 */
 	get user_id() {
 		return this.uid
 	}
 
-	/** 创建一个联系人对象 */
+	/** 创建一个用户对象 */
 	static as(this: Client, uid: number) {
-		return new Contact(this, Number(uid))
+		return new User(this, Number(uid))
 	}
 
 	protected constructor(c: Client, public readonly uid: number) {
 		super(c)
+		lock(this, "uid")
 	}
 
-	/** 获取作为好友的对象实例 */
-	asFriend() {
-		return this.c.asFriend(this.uid)
+	/** 获取作为好友的实例 */
+	asFriend(strict = false) {
+		return this.c.getFriend(this.uid, strict)
 	}
 
-	/** 获取作为某群群员的对象实例 */
-	asMember(gid: number) {
-		return this.c.asMember(gid, this.uid)
+	/** 获取作为某群群员的实例 */
+	asMember(gid: number, strict = false) {
+		return this.c.getMember(gid, this.uid, strict)
 	}
 
 	/** 获取头像url */
@@ -83,7 +84,7 @@ export class Contact extends Contactable {
 		drop(ErrorCode.UserNotExists)
 	}
 
-	/** 获取time往前的cnt条聊天记录，time默认当前时间，cnt默认20不能超过20 */
+	/** 获取`time`往前的`cnt`条聊天记录，`time`默认当前时间，`cnt`默认20不能超过20 */
 	async getChatHistory(time = timestamp(), cnt = 20) {
 		const body = pb.encode({
 			1: this.uid,
@@ -104,7 +105,7 @@ export class Contact extends Contactable {
 		return messages
 	}
 
-	/** 标记time之前为已读，time默认当前时间 */
+	/** 标记`time`之前为已读，`time`默认当前时间 */
 	async markRead(time = timestamp()) {
 		const body = pb.encode({
 			3: {
@@ -152,7 +153,7 @@ export class Contact extends Contactable {
 		await this.c.sendOidb("OidbSvc.0xb77_9", pb.encode(body))
 	}
 
-	protected _getRouting(): pb.Encodable {
+	private _getRouting(): pb.Encodable {
 		if (Reflect.has(this, "gid"))
 			return { 3: {
 				1: code2uin(Reflect.get(this, "gid")),
@@ -161,7 +162,10 @@ export class Contact extends Contactable {
 		return { 1: { 1: this.uid } }
 	}
 
-	/** 发送一条消息 */
+	/**
+	 * 发送一条消息
+	 * @param source 引用回复的消息
+	 */
 	async sendMessage(content: Sendable, source?: Quotable): Promise<MessageRet> {
 		const { rich, brief } = await this._preprocess(content, source)
 		const seq = this.c.sig.seq + 1
@@ -291,12 +295,17 @@ export class Contact extends Contactable {
 	}
 }
 
-/** 好友(继承联系人) */
-export class Friend extends Contact {
+/** 好友(继承用户) */
+export class Friend extends User {
 
-	/** 创建一个好友对象，若uid相同则每次返回同一对象，不会重复创建 */
-	static as(this: Client, uid: number) {
+	/**
+	 * 创建一个好友对象，若`uid`相同则每次返回同一对象，不会重复创建
+	 * @param strict 严格模式，如果好友不存在则抛错(默认false)
+	 */
+	static as(this: Client, uid: number, strict = false) {
 		const info = this.fl.get(uid)
+		if (strict && !info)
+			throw new Error(uid + `不是你的好友`)
 		let friend = weakmap.get(info!)
 		if (friend) return friend
 		friend = new Friend(this, Number(uid), info)
@@ -326,7 +335,7 @@ export class Friend extends Contact {
 		return this.c.self.class.get(this._info?.class_id!)
 	}
 
-	protected constructor(c: Client, uid: number, protected _info?: FriendInfo) {
+	protected constructor(c: Client, uid: number, private _info?: FriendInfo) {
 		super(c, uid)
 	}
 
@@ -375,7 +384,7 @@ export class Friend extends Contact {
 		return pb.decode(payload)[3] === 0
 	}
 
-	/** 删除好友，block默认为true */
+	/** 删除好友，`block`默认为`true` */
 	async delete(block = true) {
 		const DF = jce.encodeStruct([
 			this.c.uin,
