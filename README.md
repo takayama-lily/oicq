@@ -68,6 +68,8 @@ client.on("system.login.qrcode", function (event) {
 |getMember()|得到一个群员对象|
 |getUser()|创建一个用户对象|
 |getDiscuss()|对象一个讨论组对象|
+|getDiscuss()|对象一个讨论组对象|
+|cleanCache()|清空网络图片缓存|
 
 |Property|Description|
 |-|-|
@@ -143,6 +145,7 @@ client.on("system.login.qrcode", function (event) {
 |loadStrangerList()|重载陌生人列表|
 |loadGroupList()|重载群列表|
 |loadBlackList()|重载黑名单列表|
+|getSystemMessage()|获取系统消息|
 
 |Property|Description|
 |-|-|

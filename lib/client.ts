@@ -4,7 +4,7 @@ import * as log4js from "log4js"
 import { BaseClient, Platform, pb, generateShortDevice, ShortDevice, Domain } from "./core"
 const pkg = require("../package.json")
 import { md5, timestamp, NOOP, lock, Gender, OnlineStatus } from "./common"
-import { bindInternalListeners, parseFriendRequestFlag, parseGroupRequestFlag, getSystemMessage, Self } from "./internal"
+import { bindInternalListeners, parseFriendRequestFlag, parseGroupRequestFlag, Self } from "./internal"
 import { EventMap } from "./events"
 import { User, Friend } from "./friend"
 import { Discuss, Group } from "./group"
@@ -66,15 +66,15 @@ export interface Client extends BaseClient {
 /** 一个客户端 */
 export class Client extends BaseClient {
 
-	/** 得到一个群对象 */
+	/** 得到一个群对象, 通常不会重复创建 */
 	readonly getGroup = Group.as.bind(this)
-	/** 得到一个好友对象 */
+	/** 得到一个好友对象, 通常不会重复创建 */
 	readonly getFriend = Friend.as.bind(this)
-	/** 得到一个群员对象 */
+	/** 得到一个群员对象, 通常不会重复创建 */
 	readonly getMember = Member.as.bind(this)
-	/** 得到一个用户对象 */
+	/** 创建一个用户对象 */
 	readonly getUser = User.as.bind(this)
-	/** 得到一个讨论组对象 */
+	/** 创建一个讨论组对象 */
 	readonly getDiscuss = Discuss.as.bind(this)
 	readonly self = new Self(this)
 
@@ -254,15 +254,11 @@ export class Client extends BaseClient {
 		return this.submitSlider(ticket)
 	}
 
-	/** @cqhttp (cqhttp遗留方法) 设置在线状态 */
+	/** @cqhttp (cqhttp遗留方法) 设置在线状态 use client.self.setStatus() */
 	async setOnlineStatus(status: OnlineStatus) {
 		return this.self.setStatus(status)
 	}
-	/** @cqhttp 获取系统消息 */
-	async getSystemMsg() {
-		return getSystemMessage.call(this)
-	}
-	/** @cqhttp 获取转发消息 */
+	/** @cqhttp 获取转发消息 use client.self.parseForwardMessage() */
 	async getForwardMsg(resid: string) {
 		return this.getFriend(this.uin).parseForwardMessage(resid)
 	}
@@ -270,53 +266,35 @@ export class Client extends BaseClient {
 	async makeForwardMsg(fake: Forwardable[], dm = false) {
 		return (dm ? this.getFriend : this.getGroup)(this.uin).makeForwardMessage(fake)
 	}
-	/** @cqhttp 设置昵称 */
+	/** @cqhttp 设置昵称 use client.self.setNickname() */
 	async setNickname(nickname: string) {
 		return this.self.setNickname(nickname)
 	}
-	/** @cqhttp 设置性别 */
+	/** @cqhttp 设置性别 use client.self.setGender() */
 	async setGender(gender: Gender) {
 		return this.self.setGender(gender)
 	}
-	/** @cqhttp 设置生日(20201202) */
+	/** @cqhttp 设置生日(20201202) use client.self.setBirthday() */
 	async setBirthday(birthday: string | number) {
 		const birth = String(birthday).replace(/[^\d]/g, "")
 		return this.self.setBirthday(Number(birth.substr(0, 4)), Number(birth.substr(4, 2)), Number(birth.substr(6, 2)))
 	}
-	/** @cqhttp 设置个性签名 */
+	/** @cqhttp 设置个性签名 use client.self.setSignature() */
 	async setSignature(signature = "") {
 		return this.self.setSignature(signature)
 	}
-	/** @cqhttp 设置个人说明 */
+	/** @cqhttp 设置个人说明 use client.self.setDescription() */
 	async setDescription(description = "") {
 		return this.self.setDescription(description)
 	}
-	/** @cqhttp 设置头像 */
+	/** @cqhttp 设置头像 use client.self.setAvatar() */
 	async setPortrait(file: Parameters<Self["setAvatar"]>[0]) {
 		return this.self.setAvatar(file)
 	}
-	/** @cqhttp 获取漫游表情 */
+	/** @cqhttp use client.self.getRoamingStamp() */
 	async getRoamingStamp(no_cache = false) {
 		return this.self.getRoamingStamp(no_cache)
 	}
-
-	/** @cqhttp 清空缓存目录 fs.rm need v14.14 */
-	cleanCache(type?: "image" | "record") {
-		switch (type) {
-		case "image":
-		case "record":
-			const dir = path.join(this.dir, "..", type)
-			fs.rm?.(dir, { recursive: true }, () => {
-				fs.mkdir(dir, NOOP)
-			})
-			break
-		default:
-			this.cleanCache("image")
-			this.cleanCache("record")
-			break
-		}
-	}
-
 	/** @cqhttp use client.cookies[domain] */
 	getCookies(domain: Domain = "") {
 		return this.cookies[domain]
@@ -490,6 +468,18 @@ export class Client extends BaseClient {
 		const { group_id, user_id, seq, invite } = parseGroupRequestFlag(flag)
 		const user = this.getUser(user_id)
 		return invite ? user.approveGroupInvitation(group_id, seq, approve, block) : user.approveGroupRequest(group_id, seq, approve, reason, block)
+	}
+	/** @cqhttp 获取系统消息 */
+	async getSystemMsg() {
+		return this.self.getSystemMessage()
+	}
+
+	/** @cqhttp 清空缓存目录 fs.rm need v14.14 */
+	cleanCache() {
+		const dir = path.join(this.dir, "../image")
+		fs.rm?.(dir, { recursive: true }, () => {
+			fs.mkdir(dir, NOOP)
+		})
 	}
 
 	sendOidb(cmd: string, body: Uint8Array, timeout = 5) {

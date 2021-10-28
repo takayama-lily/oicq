@@ -4,6 +4,7 @@ import { timestamp, Gender, OnlineStatus, lock, log } from "../common"
 import { Image, ImageElem } from "../message"
 import { StrangerInfo, FriendInfo, GroupInfo, MemberInfo } from "../entities"
 import { CmdID, highwayUpload } from "./highway"
+import { getSystemMessage } from "./sysmsg"
 
 type Client = import("../client").Client
 
@@ -355,6 +356,11 @@ export class Self {
 			protos = [protos]
 		for (let proto of protos)
 			this.blacklist.add(proto[1])
+	}
+
+	/** 获取系统消息 */
+	getSystemMessage() {
+		return getSystemMessage.call(this.c)
 	}
 }
 
