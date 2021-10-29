@@ -14,6 +14,7 @@ const weakmap = new WeakMap<FriendInfo, Friend>()
 /** 用户 */
 export interface User {
 	recallMessage(msg: PrivateMessage): Promise<boolean>
+	/** @cqhttp cqhttp方法用 */
 	recallMessage(msgid: string): Promise<boolean>
 	recallMessage(seq: number, rand: number, time: number): Promise<boolean>
 }
@@ -271,7 +272,7 @@ export class User extends Contactable {
 	}
 
 	/** 获取离线文件下载地址 */
-	async fetchOfflineFileDownloadUrl(fid: string) {
+	async fetchFileDownloadUrl(fid: string) {
 		const body = pb.encode({
 			1: 1200,
 			14: {

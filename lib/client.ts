@@ -88,6 +88,9 @@ export class Client extends BaseClient {
 	protected readonly _cache = new Map<number, Set<string>>()
 	protected _sync_cookie?: Uint8Array
 
+	/** 密码的md5值，调用passwordLogin后会保存在这里 */
+	md5pass?: Buffer
+
 	get [Symbol.toStringTag]() {
 		return "OicqClient"
 	}
@@ -528,9 +531,9 @@ export class Client extends BaseClient {
 	protected _calcMsgCntPerMin() {
 		let cnt = 0
 		for (let [time, set] of this._cache) {
-			 if (timestamp() - time >= 60)
+			if (timestamp() - time >= 60)
 				this._cache.delete(time)
-			 else
+			else
 				cnt += set.size
 		}
 		return cnt
@@ -544,12 +547,9 @@ function createDataDir(dir: string, uin: number) {
 	if (!fs.existsSync(dir))
 		fs.mkdirSync(dir, { mode: 0o755, recursive: true })
 	const img_path = path.join(dir, "image")
-	const ptt_path = path.join(dir, "record")
 	const uin_path = path.join(dir, String(uin))
 	if (!fs.existsSync(img_path))
 		fs.mkdirSync(img_path)
-	if (!fs.existsSync(ptt_path))
-		fs.mkdirSync(ptt_path)
 	if (!fs.existsSync(uin_path))
 		fs.mkdirSync(uin_path, { mode: 0o755 })
 	return uin_path

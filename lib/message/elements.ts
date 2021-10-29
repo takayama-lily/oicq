@@ -137,7 +137,7 @@ export interface FileElem {
 	duration: number
 }
 
-/** @deprecated 旧版引用回复(已弃用)，仅做一定程度的兼容 */
+/** @deprecated @cqhttp 旧版引用回复(已弃用)，仅做一定程度的兼容 */
 export interface ReplyElem {
 	type: "reply"
 	id: string

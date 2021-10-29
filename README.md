@@ -209,7 +209,7 @@ client.on("system.login.qrcode", function (event) {
 |getSimpleInfo()|查询资料|
 |getChatHistory()|获取聊天记录|
 |markRead()|标记已读|
-|fetchOfflineFileDownloadUrl()|获取离线文件下载地址|
+|fetchFileDownloadUrl()|获取离线文件下载地址|
 |shareMusic()|分享音乐|
 |getAvatarUrl()|获取头像地址|
 |asFriend()|[获取作为好友的对象](#class-friend)|

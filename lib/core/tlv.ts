@@ -102,7 +102,7 @@ const map: {[tag: number]: (this: BaseClient, ...args: any[]) => Writer} = {
 	0x104: function () {
 		return new Writer().writeBytes(this.sig.t104)
 	},
-	0x106: function () {
+	0x106: function (md5pass: Buffer) {
 		const body = new Writer()
 			.writeU16(4) // tgtgt ver
 			.writeBytes(crypto.randomBytes(4))
@@ -113,7 +113,7 @@ const map: {[tag: number]: (this: BaseClient, ...args: any[]) => Writer} = {
 			.write32(Date.now() & 0xffffffff)
 			.writeBytes(Buffer.alloc(4)) // dummy ip
 			.writeU8(1) // save password
-			.writeBytes(this.md5pass as Buffer)
+			.writeBytes(md5pass)
 			.writeBytes(this.sig.tgtgt)
 			.writeU32(0)
 			.writeU8(1) // guid available
@@ -126,7 +126,7 @@ const map: {[tag: number]: (this: BaseClient, ...args: any[]) => Writer} = {
 		const buf = Buffer.alloc(4)
 		buf.writeUInt32BE(this.uin)
 		const key = md5(Buffer.concat([
-			this.md5pass as Buffer, Buffer.alloc(4), buf
+			md5pass, Buffer.alloc(4), buf
 		]))
 		return new Writer().writeBytes(tea.encrypt(body, key))
 	},

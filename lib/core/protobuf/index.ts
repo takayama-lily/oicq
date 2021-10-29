@@ -10,7 +10,7 @@ export class Proto implements Encodable {
 	get length() {
 		return this.encoded.length
 	}
-	constructor(protected encoded: Buffer, decoded?: Proto) {
+	constructor(private encoded: Buffer, decoded?: Proto) {
 		if (decoded)
 			Reflect.setPrototypeOf(this, decoded)
 	}

@@ -81,6 +81,7 @@ export class Discuss extends Contactable {
 /** 群 */
 export interface Group {
 	recallMessage(msg: GroupMessage): Promise<boolean>
+	/** @cqhttp cqhttp方法用 */
 	recallMessage(msgid: string): Promise<boolean>
 	recallMessage(seq: number, rand: number, pktnum?: number): Promise<boolean>
 }

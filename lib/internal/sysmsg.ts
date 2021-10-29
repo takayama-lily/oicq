@@ -4,12 +4,14 @@ import { FriendAddReqEvent, GroupAddReqEvent, GroupInviteReqEvent } from "../eve
 
 type Client = import("../client").Client
 
+/** @cqhttp */
 function genFriendRequestFlag(user_id: number, seq: number, single = false) {
 	let flag = user_id.toString(16).padStart(8, "0") + seq.toString(16)
 	if (single) flag = "~" + flag
 	return flag
 }
 
+/** @cqhttp */
 export function parseFriendRequestFlag(flag: string) {
 	let single = false
 	if (flag.startsWith("~")) {
@@ -21,12 +23,14 @@ export function parseFriendRequestFlag(flag: string) {
 	return { user_id, seq, single }
 }
 
+/** @cqhttp */
 function genGroupRequestFlag(user_id: number, group_id: number, seq: number | bigint, invite: 0 | 1) {
 	const buf = Buffer.allocUnsafe(8)
 	buf.writeUInt32BE(user_id), buf.writeUInt32BE(group_id, 4)
 	return buf.toString("hex") + invite + seq.toString(16)
 }
 
+/** @cqhttp */
 export function parseGroupRequestFlag(flag: string) {
 	const user_id = parseInt(flag.slice(0, 8), 16)
 	const group_id = parseInt(flag.slice(8, 16), 16)

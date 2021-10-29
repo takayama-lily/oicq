@@ -24,12 +24,15 @@ export interface DiscussMessageEvent extends DiscussMessage, MessageEvent { }
 /** 好友申请 */
 export interface FriendAddReqEvent {
 	request_type: "friend"
+	/** 为single时对方已将你加为单向好友 */
 	sub_type: "add" | "single"
 	user_id: number
 	nickname: string
+	/** @cqhttp cqhttp方法用 */
 	flag: string
 	comment: string
 	source: string
+	/** 同意申请需要此参数 */
 	seq: number
 	age: number
 	sex: Gender
@@ -42,10 +45,12 @@ export interface GroupAddReqEvent {
 	sub_type: "add"
 	user_id: number
 	nickname: string
+	/** @cqhttp cqhttp方法用 */
 	flag: string
 	group_id: number
 	group_name: string
 	comment: string
+	/** 同意申请需要此参数 */
 	seq: number
 	inviter_id?: number
 	tips: string
@@ -58,10 +63,13 @@ export interface GroupInviteReqEvent {
 	sub_type: "invite"
 	user_id: number
 	nickname: string
+	/** @cqhttp cqhttp方法用 */
 	flag: string
 	group_id: number
 	group_name: string
+	/** 同意申请需要此参数 */
 	seq: number
+	/** 邀请者在群里的权限 */
 	role: GroupRole
 	time: number
 }
@@ -88,6 +96,7 @@ export interface FriendRecallEvent {
 	sub_type: "recall"
 	user_id: number
 	operator_id: number
+	/** @cqhttp cqhttp方法用 */
 	message_id: string
 	seq: number
 	rand: number
@@ -131,6 +140,7 @@ export interface GroupRecallEvent {
 	group_id: number
 	user_id: number
 	operator_id: number
+	/** @cqhttp cqhttp方法用 */
 	message_id: string
 	seq: number
 	rand: number
@@ -142,7 +152,7 @@ export interface GroupPokeEvent {
 	notice_type: "group"
 	sub_type: "poke"
 	group_id: number
-	/** @deprecated */
+	/** @deprecated 群中该值永远等于target_id */
 	user_id: number
 	operator_id: number
 	target_id: number

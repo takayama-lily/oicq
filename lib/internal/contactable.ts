@@ -108,7 +108,7 @@ export abstract class Contactable {
 		return pb.decode(payload)[3]
 	}
 
-	/** 上传一批图片以备发送(无数量限制) */
+	/** 上传一批图片以备发送(无数量限制)(理论上传一次所有群和好友都能发) */
 	async uploadImages(imgs: Image[] | ImageElem[]) {
 		this.c.logger.debug(`开始图片任务，共有${imgs.length}张图片`)
 		const tasks: Promise<void>[] = []
@@ -196,7 +196,7 @@ export abstract class Contactable {
 		}
 	}
 
-	/** 上传一个视频以备发送 */
+	/** 上传一个视频以备发送(理论上传一次所有群和好友都能发) */
 	async uploadVideo(elem: VideoElem): Promise<VideoElem> {
 		let { file } = elem
 		if (file.startsWith("protobuf://")) return elem
@@ -304,7 +304,7 @@ export abstract class Contactable {
 		}
 	}
 
-	/** 上传一个语音以备发送 */
+	/** 上传一个语音以备发送(理论上传一次所有群和好友都能发) */
 	async uploadPtt(elem: PttElem): Promise<PttElem> {
 		this.c.logger.debug("开始语音任务")
 		if (typeof elem.file === "string" && elem.file.startsWith("protobuf://"))
@@ -412,7 +412,7 @@ export abstract class Contactable {
 		return rsp[2].toString() as string
 	}
 
-	/** 制作一条合并转发消息以备发送 */
+	/** 制作一条合并转发消息以备发送(理论上传一次所有群和好友都能发) */
 	async makeForwardMessage(iterable: Forwardable[]): Promise<XmlElem> {
 		const nodes = []
 		const makers: Converter[] = []

@@ -2,7 +2,7 @@ import * as qs from "querystring"
 import { pb } from "../core"
 import { lock, parseFunString, GroupRole, Gender, log } from "../common"
 import { Parser, parse} from "./parser"
-import { Quotable, Forwardable, MessageElem } from "./elements"
+import { Quotable, Forwardable, MessageElem, FileElem } from "./elements"
 
 /** 匿名者情报 */
 export interface Anonymous {
@@ -14,14 +14,14 @@ export interface Anonymous {
 	color: string
 }
 
-export function rand2uuid(random: number) {
-	return 16777216n << 32n | BigInt(random)
+export function rand2uuid(rand: number) {
+	return 16777216n << 32n | BigInt(rand)
 }
 export function uuid2rand(uuid: bigint) {
 	return Number(BigInt(uuid) & 0xffffffffn)
 }
 
-/** 生成私聊消息id */
+/** @cqhttp 生成私聊消息id */
 export function genDmMessageId(uid: number, seq: number, rand: number, time: number, flag = 0) {
 	const buf = Buffer.allocUnsafe(17)
 	buf.writeUInt32BE(uid)
@@ -32,7 +32,7 @@ export function genDmMessageId(uid: number, seq: number, rand: number, time: num
 	return buf.toString("base64")
 }
 
-/** 解析私聊消息id */
+/** @cqhttp 解析私聊消息id */
 export function parseDmMessageId(msgid: string) {
 	const buf = Buffer.from(msgid, "base64")
 	const user_id = buf.readUInt32BE(),
@@ -43,7 +43,7 @@ export function parseDmMessageId(msgid: string) {
 	return { user_id, seq, rand, time, flag }
 }
 
-/** 生成群消息id */
+/** @cqhttp 生成群消息id */
 export function genGroupMessageId(gid: number, uid: number, seq: number, rand: number, time: number, pktnum = 1) {
 	const buf = Buffer.allocUnsafe(21)
 	buf.writeUInt32BE(gid)
@@ -55,7 +55,7 @@ export function genGroupMessageId(gid: number, uid: number, seq: number, rand: n
 	return buf.toString("base64")
 }
 
-/** 解析群消息id */
+/** @cqhttp 解析群消息id */
 export function parseGroupMessageId(msgid: string) {
 	const buf = Buffer.from(msgid, "base64")
 	const group_id = buf.readUInt32BE(),
@@ -88,6 +88,7 @@ export abstract class Message implements Quotable, Forwardable {
 	message: MessageElem[]
 	raw_message: string
 	font: string
+	/** @cqhttp cqhttp方法用 */
 	message_id = ""
 	/** 消息编号 */
 	seq: number
@@ -213,18 +214,20 @@ export class PrivateMessage extends Message {
 		case 529:
 			if (head[4] === 4) {
 				const trans = body[2][1]
-				this.message = [{
+				const elem = {
 					type: "file",
 					name: String(trans[5]),
 					size: trans[6],
 					md5: trans[4].toHex(),
 					duration: trans[51] || 0,
 					fid: String(trans[3]),
-				}]
+				} as FileElem
+				this.message = [elem]
 				this.raw_message = "[离线文件]"
+				this.parsed.content = `{file:${elem.fid}}`
 			} else {
 				this.sub_type = this.from_id === this.to_id ? "self" : "other"
-				this.message = this.raw_message = body[2]?.[6]?.[5]?.[1]?.[2]?.toString() || ""
+				this.message = this.raw_message = this.parsed.content = body[2]?.[6]?.[5]?.[1]?.[2]?.toString() || ""
 			}
 			break
 		case 141:

@@ -75,8 +75,6 @@ export class BaseClient extends EventEmitter {
 	// 存放包的回调函数
 	private readonly [HANDLERS] = new Map<number, (buf: Buffer) => void>()
 
-	/** 密码的md5值，调用passwordLogin后会保存在这里 */
-	md5pass?: Buffer
 	readonly apk: Apk
 	readonly device: Device
 	readonly sig = {
@@ -179,7 +177,6 @@ export class BaseClient extends EventEmitter {
 	tokenLogin(token: Buffer) {
 		if (token.length !== 152)
 			throw new Error("bad token")
-		this.md5pass = undefined
 		this.sig.session = randomBytes(4)
 		this.sig.d2key = token.slice(0, 16)
 		this.sig.d2 = token.slice(16, 80)
@@ -210,7 +207,6 @@ export class BaseClient extends EventEmitter {
 	}
 	/** 使用密码登录 */
 	passwordLogin(md5pass: Buffer) {
-		this.md5pass = md5pass
 		this.sig.session = randomBytes(4)
 		const t = tlv.getPacker(this)
 		let body = new Writer()
@@ -218,7 +214,7 @@ export class BaseClient extends EventEmitter {
 			.writeU16(23)
 			.writeBytes(t(0x18))
 			.writeBytes(t(0x1))
-			.writeBytes(t(0x106))
+			.writeBytes(t(0x106, md5pass))
 			.writeBytes(t(0x116))
 			.writeBytes(t(0x100))
 			.writeBytes(t(0x107))
@@ -244,14 +240,11 @@ export class BaseClient extends EventEmitter {
 	}
 	/** 提交滑动验证码 */
 	submitSlider(ticket: string) {
-		ticket = String(ticket).trim()
-		if (Buffer.byteLength(ticket) !== 4)
-			ticket = "abcd"
 		const t = tlv.getPacker(this)
 		const body = new Writer()
 			.writeU16(2)
 			.writeU16(4)
-			.writeBytes(t(0x193, ticket))
+			.writeBytes(t(0x193, String(ticket)))
 			.writeBytes(t(0x8))
 			.writeBytes(t(0x104))
 			.writeBytes(t(0x116))
@@ -909,7 +902,7 @@ function decodeLoginResponse(this: BaseClient, payload: Buffer): any {
 		})
 	}
 
-	if (type === 15 || type === 16 || !this.md5pass) {
+	if (type === 15 || type === 16) {
 		return this.emit("internal.error.token")
 	}
 
