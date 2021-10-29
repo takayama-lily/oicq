@@ -31,7 +31,7 @@ export class Member extends User {
 	get info() {
 		if (!this.c.config.cache_group_member) return this._info
 		if (!this._info || timestamp() - this._info?.update_time! >= 900)
-			this.fetchInfo().catch(NOOP)
+			this.renew().catch(NOOP)
 		return this._info
 	}
 
@@ -62,7 +62,7 @@ export class Member extends User {
 
 	/** 返回所在群的实例 */
 	get group() {
-		return this.c.getGroup(this.gid)
+		return this.c.pickGroup(this.gid)
 	}
 
 	protected constructor(c: Client, public readonly gid: number, uid: number, private _info?: MemberInfo) {
@@ -71,7 +71,7 @@ export class Member extends User {
 	}
 
 	/** 强制刷新资料 */
-	async fetchInfo(): Promise<MemberInfo> {
+	async renew(): Promise<MemberInfo> {
 		if (!this.c.gml.has(this.gid) && this.c.config.cache_group_member)
 			this.group.getMemberMap()
 		const body = pb.encode({
@@ -114,7 +114,7 @@ export class Member extends User {
 	}
 
 	/** 设置/取消管理员 */
-	async setAdmin(yes: boolean) {
+	async setAdmin(yes = true) {
 		const buf = Buffer.allocUnsafe(9)
 		buf.writeUInt32BE(this.gid)
 		buf.writeUInt32BE(this.uid, 4)
@@ -139,7 +139,7 @@ export class Member extends User {
 	}
 
 	/** 设置头衔 */
-	async setTitle(title: string, duration = -1) {
+	async setTitle(title = "", duration = -1) {
 		const body = pb.encode({
 			1: this.gid,
 			3: {
@@ -154,7 +154,7 @@ export class Member extends User {
 	}
 
 	/** 修改名片 */
-	async setCard(card: string) {
+	async setCard(card = "") {
 		const MGCREQ = jce.encodeStruct([
 			0, this.gid, 0, [
 				jce.encodeNested([

@@ -13,10 +13,10 @@ const weakmap = new WeakMap<FriendInfo, Friend>()
 
 /** 用户 */
 export interface User {
-	recallMessage(msg: PrivateMessage): Promise<boolean>
+	recallMsg(msg: PrivateMessage): Promise<boolean>
 	/** @cqhttp cqhttp方法用 */
-	recallMessage(msgid: string): Promise<boolean>
-	recallMessage(seq: number, rand: number, time: number): Promise<boolean>
+	recallMsg(msgid: string): Promise<boolean>
+	recallMsg(seq: number, rand: number, time: number): Promise<boolean>
 }
 
 /** 用户 */
@@ -39,12 +39,12 @@ export class User extends Contactable {
 
 	/** 获取作为好友的实例 */
 	asFriend(strict = false) {
-		return this.c.getFriend(this.uid, strict)
+		return this.c.pickFriend(this.uid, strict)
 	}
 
 	/** 获取作为某群群员的实例 */
 	asMember(gid: number, strict = false) {
-		return this.c.getMember(gid, this.uid, strict)
+		return this.c.pickMember(gid, this.uid, strict)
 	}
 
 	/** 获取头像url */
@@ -120,7 +120,7 @@ export class User extends Contactable {
 	}
 
 	/** 撤回一条消息 */
-	async recallMessage(param: number | string | PrivateMessage, rand = 0, time = 0) {
+	async recallMsg(param: number | string | PrivateMessage, rand = 0, time = 0) {
 		if (param instanceof PrivateMessage)
 			var { seq, rand, time } = param
 		else if (typeof param === "string")
@@ -148,12 +148,6 @@ export class User extends Contactable {
 		return pb.decode(payload)[1][1] <= 2
 	}
 
-	/** 发送音乐分享 */
-	async shareMusic(platform: MusicPlatform, id: string) {
-		const body = await buildMusic(this.uid, platform, id, 0)
-		await this.c.sendOidb("OidbSvc.0xb77_9", pb.encode(body))
-	}
-
 	private _getRouting(): pb.Encodable {
 		if (Reflect.has(this, "gid"))
 			return { 3: {
@@ -167,7 +161,7 @@ export class User extends Contactable {
 	 * 发送一条消息
 	 * @param source 引用回复的消息
 	 */
-	async sendMessage(content: Sendable, source?: Quotable): Promise<MessageRet> {
+	async sendMsg(content: Sendable, source?: Quotable): Promise<MessageRet> {
 		const { rich, brief } = await this._preprocess(content, source)
 		const seq = this.c.sig.seq + 1
 		const rand = randomBytes(4).readUInt32BE()
@@ -212,7 +206,7 @@ export class User extends Contactable {
 	}
 
 	/** 同意好友申请 */
-	async approveFriendRequest(seq: number, yes = true, remark = "", block = false) {
+	async setFriendReq(seq: number, yes = true, remark = "", block = false) {
 		const body = pb.encode({
 			1: 1,
 			2: seq,
@@ -231,7 +225,7 @@ export class User extends Contactable {
 	}
 
 	/** 同意入群申请 */
-	async approveGroupRequest(gid: number, seq: number, yes = true, reason = "", block = false) {
+	async setGroupReq(gid: number, seq: number, yes = true, reason = "", block = false) {
 		const body = pb.encode({
 			1: 1,
 			2: seq,
@@ -252,7 +246,7 @@ export class User extends Contactable {
 	}
 
 	/** 同意群邀请 */
-	async approveGroupInvitation(gid: number, seq: number, yes = true, block = false) {
+	async setGroupInvite(gid: number, seq: number, yes = true, block = false) {
 		const body = pb.encode({
 			1: 1,
 			2: seq,
@@ -272,7 +266,7 @@ export class User extends Contactable {
 	}
 
 	/** 获取离线文件下载地址 */
-	async fetchFileDownloadUrl(fid: string) {
+	async getFileUrl(fid: string) {
 		const body = pb.encode({
 			1: 1200,
 			14: {
@@ -333,11 +327,17 @@ export class Friend extends User {
 		return this._info?.class_id
 	}
 	get class_name() {
-		return this.c.self.class.get(this._info?.class_id!)
+		return this.c.classes.get(this._info?.class_id!)
 	}
 
 	protected constructor(c: Client, uid: number, private _info?: FriendInfo) {
 		super(c, uid)
+	}
+
+	/** 发送音乐分享 */
+	async shareMusic(platform: MusicPlatform, id: string) {
+		const body = await buildMusic(this.uid, platform, id, 0)
+		await this.c.sendOidb("OidbSvc.0xb77_9", pb.encode(body))
 	}
 
 	/** 设置备注 */

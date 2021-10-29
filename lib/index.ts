@@ -1,6 +1,6 @@
 export { Client, createClient, Config, Logger, LogLevel, Statistics } from "./client"
 export { User, Friend } from "./friend"
-export { Discuss, Group, AnonymousInfo } from "./group"
+export { Discuss, Group } from "./group"
 export { Member } from "./member"
 export { StrangerInfo, FriendInfo, GroupInfo, MemberInfo } from "./entities"
 export { Gfs, GfsDirStat, GfsFileStat } from "./gfs"
@@ -18,7 +18,6 @@ export { PrivateMessageEvent, GroupMessageEvent, DiscussMessageEvent, MessageRet
 	GroupAdminEvent, GroupMuteEvent, GroupTransferEvent } from "./events"
 export { ApiRejection, Device, Apk, Platform, Domain } from "./core"
 export { segment } from "./util"
-export { Self } from "./internal"
 export * as core from "./core"
 
 export function getGroupImageUrl(md5: string) {

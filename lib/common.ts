@@ -113,13 +113,13 @@ export function escapeXml(str: string) {
 	})
 }
 
-/** 无死角打印变量 */
 export function log(any: any) {
 	if (any instanceof Buffer)
 		any = any.toString("hex").replace(/(.)(.)/g, '$1$2 ')
 	console.log(util.inspect(any, { depth: 20, showHidden: false, maxArrayLength: 1000, maxStringLength: 20000 }))
 }
 
+/** 用于下载限量 */
 export class DownloadTransform extends stream.Transform {
 	_size = 0
 	_transform(data: Buffer, encoding: BufferEncoding, callback: stream.TransformCallback) {

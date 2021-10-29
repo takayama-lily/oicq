@@ -4,12 +4,15 @@ import * as log4js from "log4js"
 import { BaseClient, Platform, pb, generateShortDevice, ShortDevice, Domain } from "./core"
 const pkg = require("../package.json")
 import { md5, timestamp, NOOP, lock, Gender, OnlineStatus } from "./common"
-import { bindInternalListeners, parseFriendRequestFlag, parseGroupRequestFlag, Self } from "./internal"
+import { bindInternalListeners, parseFriendRequestFlag, parseGroupRequestFlag,
+	getSysMsg, setAvatar, setSign, setStatus, addClass, delClass, renameClass,
+	loadBL, loadFL, loadGL, loadSL, getStamp, delStamp } from "./internal"
+import { StrangerInfo, FriendInfo, GroupInfo, MemberInfo } from "./entities"
 import { EventMap } from "./events"
 import { User, Friend } from "./friend"
 import { Discuss, Group } from "./group"
 import { Member } from "./member"
-import { Forwardable, Sendable, parseDmMessageId, parseGroupMessageId } from "./message"
+import { Forwardable, Sendable, parseDmMessageId, parseGroupMessageId, Image } from "./message"
 
 /** 日志记录器接口 */
 export interface Logger {
@@ -51,7 +54,7 @@ export interface Config {
 	ffprobe_path?: string
 }
 
-/** 一个客户端 */
+/** 事件接口 */
 export interface Client extends BaseClient {
 	on<T extends keyof EventMap>(event: T, listener: EventMap<this>[T]): this
 	on<S extends string | symbol>(event: S & Exclude<S, keyof EventMap>, listener: (this: this, ...args: any[]) => void): this
@@ -66,17 +69,16 @@ export interface Client extends BaseClient {
 /** 一个客户端 */
 export class Client extends BaseClient {
 
-	/** 得到一个群对象, 通常不会重复创建 */
-	readonly getGroup = Group.as.bind(this)
-	/** 得到一个好友对象, 通常不会重复创建 */
-	readonly getFriend = Friend.as.bind(this)
-	/** 得到一个群员对象, 通常不会重复创建 */
-	readonly getMember = Member.as.bind(this)
+	/** 得到一个群对象, 每个群都是单例 */
+	readonly pickGroup = Group.as.bind(this)
+	/** 得到一个好友对象, 每个好友都是单例 */
+	readonly pickFriend = Friend.as.bind(this)
+	/** 得到一个群员对象, 开启群员列表缓存时，每个群员都是单例 */
+	readonly pickMember = Member.as.bind(this)
 	/** 创建一个用户对象 */
-	readonly getUser = User.as.bind(this)
+	readonly pickUser = User.as.bind(this)
 	/** 创建一个讨论组对象 */
-	readonly getDiscuss = Discuss.as.bind(this)
-	readonly self = new Self(this)
+	readonly pickDiscuss = Discuss.as.bind(this)
 
 	/** 日志记录器 */
 	logger: Logger | log4js.Logger
@@ -88,45 +90,34 @@ export class Client extends BaseClient {
 	protected readonly _cache = new Map<number, Set<string>>()
 	protected _sync_cookie?: Uint8Array
 
-	/** 密码的md5值，调用passwordLogin后会保存在这里 */
-	md5pass?: Buffer
+	/** 密码的md5值，调用login后会保存在这里，用于token过期时恢复登录 */
+	password_md5?: Buffer
 
 	get [Symbol.toStringTag]() {
 		return "OicqClient"
 	}
+
 	/** 好友列表(务必以`ReadonlyMap`方式访问) */
-	get fl() {
-		return this.self.friends
-	}
-	/** 群列表(务必以`ReadonlyMap`方式访问) */
-	get gl() {
-		return this.self.groups
-	}
+	readonly fl = new Map<number, FriendInfo>()
 	/** 陌生人列表(务必以`ReadonlyMap`方式访问) */
-	get sl() {
-		return this.self.strangers
-	}
+	readonly sl = new Map<number, StrangerInfo>()
+	/** 群列表(务必以`ReadonlyMap`方式访问) */
+	readonly gl = new Map<number, GroupInfo>()
 	/** 群员列表缓存(务必以`ReadonlyMap`方式访问) */
-	get gml() {
-		return this.self.members
-	}
+	readonly gml = new Map<number, Map<number, MemberInfo>>()
 	/** 黑名单列表(务必以`ReadonlySet`方式访问) */
-	get blacklist() {
-		return this.self.blacklist
-	}
-	/** 在线状态 */
-	get status() {
-		return this.self.status
-	}
-	get nickname() {
-		return this.self.nickname
-	}
-	get sex() {
-		return this.self.sex
-	}
-	get age() {
-		return this.self.age
-	}
+	readonly blacklist = new Set<number>()
+	/** 好友分组 */
+	readonly classes = new Map<number, string>()
+
+	/** 勿手动修改这些属性 */
+	status: OnlineStatus = 0
+	nickname = ""
+	sex: Gender = "unknown"
+	age = 0
+	bid = ""
+	stamp = new Set<string>()
+
 	/** csrf token */
 	get bkn() {
 		let bkn = 5381
@@ -200,12 +191,17 @@ export class Client extends BaseClient {
 		lock(this, "config")
 		lock(this, "_cache")
 		lock(this, "internal")
-		lock(this, "getUser")
-		lock(this, "getFriend")
-		lock(this, "getGroup")
-		lock(this, "getDiscuss")
-		lock(this, "getMember")
+		lock(this, "pickUser")
+		lock(this, "pickFriend")
+		lock(this, "pickGroup")
+		lock(this, "pickDiscuss")
+		lock(this, "pickMember")
 		lock(this, "cookies")
+		lock(this, "fl")
+		lock(this, "gl")
+		lock(this, "sl")
+		lock(this, "gml")
+		lock(this, "blacklist")
 
 		let n = 0
 		this.heartbeat = () => {
@@ -213,7 +209,7 @@ export class Client extends BaseClient {
 			n++
 			if (n > 10) {
 				n = 0
-				this.self.setStatus()
+				this.setOnlineStatus()
 			}
 		}
 	}
@@ -239,66 +235,113 @@ export class Client extends BaseClient {
 				md5pass = password
 			if (md5pass.length !== 16)
 				md5pass = md5(String(password))
-			this.md5pass = md5pass
+			this.password_md5 = md5pass
 		}
 		try {
 			const token = await fs.promises.readFile(path.join(this.dir, "token"))
 			return this.tokenLogin(token)
 		} catch {
-			if (this.md5pass)
-				return this.passwordLogin(this.md5pass)
+			if (this.password_md5)
+				return this.passwordLogin(this.password_md5)
 			else
 				return this.sig.qrsig.length ? this.qrcodeLogin() : this.fetchQrcode()
 		}
 	}
 
-	/** @deprecated use client.submitSlider() */
-	sliderLogin(ticket: string) {
-		return this.submitSlider(ticket)
+	/** 设置在线状态 */
+	setOnlineStatus(status = this.status || OnlineStatus.Online) {
+		return setStatus.call(this, status)
 	}
-
-	/** @cqhttp (cqhttp遗留方法) 设置在线状态 use client.self.setStatus() */
-	async setOnlineStatus(status: OnlineStatus) {
-		return this.self.setStatus(status)
-	}
-	/** @cqhttp 获取转发消息 use client.self.parseForwardMessage() */
-	async getForwardMsg(resid: string) {
-		return this.getFriend(this.uin).parseForwardMessage(resid)
-	}
-	/** @cqhttp 制作转发消息 (use friend.makeForwardMessage or group.makeForwardMessage) */
-	async makeForwardMsg(fake: Forwardable[], dm = false) {
-		return (dm ? this.getFriend : this.getGroup)(this.uin).makeForwardMessage(fake)
-	}
-	/** @cqhttp 设置昵称 use client.self.setNickname() */
+	/** 设置昵称 */
 	async setNickname(nickname: string) {
-		return this.self.setNickname(nickname)
+		return this._setProfile(0x14E22, Buffer.from(String(nickname)))
 	}
-	/** @cqhttp 设置性别 use client.self.setGender() */
-	async setGender(gender: Gender) {
-		return this.self.setGender(gender)
+	/** 设置性别(1男2女) */
+	async setGender(gender: 0 | 1 | 2) {
+		return this._setProfile(0x14E29, Buffer.from([gender]))
 	}
-	/** @cqhttp 设置生日(20201202) use client.self.setBirthday() */
+	/** 设置生日(20201202) */
 	async setBirthday(birthday: string | number) {
 		const birth = String(birthday).replace(/[^\d]/g, "")
-		return this.self.setBirthday(Number(birth.substr(0, 4)), Number(birth.substr(4, 2)), Number(birth.substr(6, 2)))
+		const buf = Buffer.allocUnsafe(4)
+		buf.writeUInt16BE(Number(birth.substr(0, 4)))
+		buf[2] = Number(birth.substr(4, 2))
+		buf[3] = Number(birth.substr(6, 2))
+		return this._setProfile(0x16593, buf)
 	}
-	/** @cqhttp 设置个性签名 use client.self.setSignature() */
-	async setSignature(signature = "") {
-		return this.self.setSignature(signature)
-	}
-	/** @cqhttp 设置个人说明 use client.self.setDescription() */
+	/** 设置个人说明 */
 	async setDescription(description = "") {
-		return this.self.setDescription(description)
+		return this._setProfile(0x14E33, Buffer.from(String(description)))
 	}
-	/** @cqhttp 设置头像 use client.self.setAvatar() */
-	async setPortrait(file: Parameters<Self["setAvatar"]>[0]) {
-		return this.self.setAvatar(file)
+	/** 设置个性签名 */
+	async setSignature(signature = "") {
+		return setSign.call(this, signature)
 	}
-	/** @cqhttp use client.self.getRoamingStamp() */
-	async getRoamingStamp(no_cache = false) {
-		return this.self.getRoamingStamp(no_cache)
+	/** 设置头像 */
+	async setAvatar(file: string | Buffer | import("stream").Readable) {
+		return setAvatar.call(this, new Image({ type: "image", file }))
 	}
-	/** @cqhttp use client.cookies[domain] */
+	/** 获取漫游表情 */
+	getRoamingStamp(no_cache = false) {
+		return getStamp.call(this, no_cache)
+	}
+	/** 删除表情(支持批量) */
+	deleteStamp(id: string | string[]) {
+		return delStamp.call(this, id)
+	}
+	/** 获取系统消息 */
+	getSystemMsg() {
+		return getSysMsg.call(this)
+	}
+	/** 添加好友分组 */
+	addClass(name: string) {
+		return addClass.call(this, name)
+	}
+	/** 删除好友分组 */
+	deleteClass(id: number) {
+		return delClass.call(this, id)
+	}
+	/** 重命名好友分组 */
+	renameClass(id: number, name: string) {
+		return renameClass.call(this, id, name)
+	}
+	/** 重载好友列表 */
+	reloadFriendList() {
+		return loadFL.call(this)
+	}
+	/** 重载陌生人列表 */
+	reloadStrangerList() {
+		return loadSL.call(this)
+	}
+	/** 重载群列表 */
+	reloadGroupList() {
+		return loadGL.call(this)
+	}
+	/** 重载黑名单 */
+	reloadBlackList() {
+		return loadBL.call(this)
+	}
+	/** 清空缓存文件 fs.rm need v14.14 */
+	cleanCache() {
+		const dir = path.join(this.dir, "../image")
+		fs.rm?.(dir, { recursive: true }, () => {
+			fs.mkdir(dir, NOOP)
+		})
+	}
+	/** 获取视频下载地址 */
+	getVideoUrl(fid: string, md5: string | Buffer) {
+		return this.pickFriend(this.uin).getVideoUrl(fid, md5)
+	}
+	/** 获取转发消息 */
+	getForwardMsg(resid: string) {
+		return this.pickFriend(this.uin).getForwardMsg(resid)
+	}
+	/** 制作转发消息 */
+	makeForwardMsg(fake: Forwardable[], dm = false) {
+		return (dm ? this.pickFriend : this.pickGroup)(this.uin).makeForwardMsg(fake)
+	}
+
+	/** @cqhttp (cqhttp遗留方法) use client.cookies[domain] */
 	getCookies(domain: Domain = "") {
 		return this.cookies[domain]
 	}
@@ -320,58 +363,58 @@ export class Client extends BaseClient {
 	}
 	/** @cqhttp use user.getSimpleInfo() */
 	async getStrangerInfo(user_id: number) {
-		return this.getUser(user_id).getSimpleInfo()
+		return this.pickUser(user_id).getSimpleInfo()
 	}
-	/** @cqhttp use group.info or group.fetchInfo() */
+	/** @cqhttp use group.info or group.renew() */
 	async getGroupInfo(group_id: number, no_cache = false) {
-		const group = this.getGroup(group_id)
-		if (no_cache) return group.fetchInfo()
-		return group.info || group.fetchInfo()
+		const group = this.pickGroup(group_id)
+		if (no_cache) return group.renew()
+		return group.info || group.renew()
 	}
 	/** @cqhttp use group.getMemberList() */
 	async getGroupMemberList(group_id: number, no_cache = false) {
-		return this.getGroup(group_id).getMemberMap(no_cache)
+		return this.pickGroup(group_id).getMemberMap(no_cache)
 	}
-	/** @cqhttp use member.info or member.fetchInfo() */
+	/** @cqhttp use member.info or member.renew() */
 	async getGroupMemberInfo(group_id: number, user_id: number, no_cache = false) {
 		if (no_cache || !this.gml.get(group_id)?.has(user_id))
-			return this.getMember(group_id, user_id).fetchInfo()
+			return this.pickMember(group_id, user_id).renew()
 		return this.gml.get(group_id)?.get(user_id)!
 	}
-	/** @cqhttp use friend.sendMessage() */
+	/** @cqhttp use friend.sendMsg() */
 	async sendPrivateMsg(user_id: number, message: Sendable) {
-		return this.getFriend(user_id).sendMessage(message)
+		return this.pickFriend(user_id).sendMsg(message)
 	}
-	/** @cqhttp use group.sendMessage() */
+	/** @cqhttp use group.sendMsg() */
 	async sendGroupMsg(group_id: number, message: Sendable) {
-		return this.getGroup(group_id).sendMessage(message)
+		return this.pickGroup(group_id).sendMsg(message)
 	}
-	/** @cqhttp use discuss.sendMessage() */
+	/** @cqhttp use discuss.sendMsg() */
 	async sendDiscussMsg(discuss_id: number, message: Sendable) {
-		return this.getDiscuss(discuss_id).sendMessage(message)
+		return this.pickDiscuss(discuss_id).sendMsg(message)
 	}
-	/** @cqhttp use member.sendMessage() */
+	/** @cqhttp use member.sendMsg() */
 	async sendTempMsg(group_id: number, user_id: number, message: Sendable) {
-		return this.getMember(group_id, user_id).sendMessage(message)
+		return this.pickMember(group_id, user_id).sendMsg(message)
 	}
-	/** @cqhttp use user.recallMessage() or group.recallMessage() */
+	/** @cqhttp use user.recallMsg() or group.recallMsg() */
 	async deleteMsg(message_id: string) {
 		if (message_id.length > 24) {
 			const { group_id, seq, rand, pktnum } = parseGroupMessageId(message_id)
-			return this.getGroup(group_id).recallMessage(seq, rand, pktnum)
+			return this.pickGroup(group_id).recallMsg(seq, rand, pktnum)
 		} else {
 			const { user_id, seq, rand, time } = parseDmMessageId(message_id)
-			return this.getUser(user_id).recallMessage(seq, rand, time)
+			return this.pickUser(user_id).recallMsg(seq, rand, time)
 		}
 	}
 	/** @cqhttp use user.markRead() or group.markRead() */
 	async reportReaded(message_id: string) {
 		if (message_id.length > 24) {
 			const { group_id, seq } = parseGroupMessageId(message_id)
-			return this.getGroup(group_id).markRead(seq)
+			return this.pickGroup(group_id).markRead(seq)
 		} else {
 			const { user_id, time } = parseDmMessageId(message_id)
-			return this.getUser(user_id).markRead(time)
+			return this.pickUser(user_id).markRead(time)
 		}
 	}
 	/** @cqhttp use user.getChatHistory() or group.getChatHistory() */
@@ -382,109 +425,102 @@ export class Client extends BaseClient {
 	async getChatHistory(message_id: string, count = 20) {
 		if (message_id.length > 24) {
 			const { group_id, seq } = parseGroupMessageId(message_id)
-			return this.getGroup(group_id).getChatHistory(seq, count)
+			return this.pickGroup(group_id).getChatHistory(seq, count)
 		} else {
 			const { user_id, time } = parseDmMessageId(message_id)
-			return this.getUser(user_id).getChatHistory(time, count)
+			return this.pickUser(user_id).getChatHistory(time, count)
 		}
 	}
-	/** @cqhttp use group.muteAnonymous() */
+	/** @cqhttp use group.muteAnony() */
 	async setGroupAnonymousBan(group_id: number, flag: string, duration = 1800) {
-		return this.getGroup(group_id).muteAnonymous(flag, duration)
+		return this.pickGroup(group_id).muteAnony(flag, duration)
 	}
-	/** @cqhttp use group.allowAnonymous() */
+	/** @cqhttp use group.allowAnony() */
 	async setGroupAnonymous(group_id: number, enable = true) {
-		return this.getGroup(group_id).allowAnonymous(enable)
+		return this.pickGroup(group_id).allowAnony(enable)
 	}
 	/** @cqhttp use group.muteAll() */
 	async setGroupWholeBan(group_id: number, enable = true) {
-		return this.getGroup(group_id).muteAll(enable)
+		return this.pickGroup(group_id).muteAll(enable)
 	}
 	/** @cqhttp use group.setName() */
 	async setGroupName(group_id: number, name: string) {
-		return this.getGroup(group_id).setName(name)
+		return this.pickGroup(group_id).setName(name)
 	}
 	/** @cqhttp use group.announce() */
 	async sendGroupNotice(group_id: number, content: string) {
-		return this.getGroup(group_id).announce(content)
+		return this.pickGroup(group_id).announce(content)
 	}
 	/** @cqhttp use group.setAdmin() or member.setAdmin() */
 	async setGroupAdmin(group_id: number, user_id: number, enable = true) {
-		return this.getMember(group_id, user_id).setAdmin(enable)
+		return this.pickMember(group_id, user_id).setAdmin(enable)
 	}
 	/** @cqhttp use group.setSpecialTitle() or member.setSpecialTitle() */
 	async setGroupSpecialTitle(group_id: number, user_id: number, special_title: string, duration = -1) {
-		return this.getMember(group_id, user_id).setTitle(special_title, duration)
+		return this.pickMember(group_id, user_id).setTitle(special_title, duration)
 	}
 	/** @cqhttp use group.setCard() or member.setCard() */
 	async setGroupCard(group_id: number, user_id: number, card: string) {
-		return this.getMember(group_id, user_id).setCard(card)
+		return this.pickMember(group_id, user_id).setCard(card)
 	}
 	/** @cqhttp use group.kickMember() or member.kick() */
 	async setGroupKick(group_id: number, user_id: number, reject_add_request = false) {
-		return this.getMember(group_id, user_id).kick(reject_add_request)
+		return this.pickMember(group_id, user_id).kick(reject_add_request)
 	}
 	/** @cqhttp use group.muteMember() or member.mute() */
 	async setGroupBan(group_id: number, user_id: number, duration = 1800) {
-		return this.getMember(group_id, user_id).mute(duration)
+		return this.pickMember(group_id, user_id).mute(duration)
 	}
 	/** @cqhttp use group.quit() */
 	async setGroupLeave(group_id: number) {
-		return this.getGroup(group_id).quit()
+		return this.pickGroup(group_id).quit()
 	}
 	/** @cqhttp use group.pokeMember() or member.poke() */
 	async sendGroupPoke(group_id: number, user_id: number) {
-		return this.getMember(group_id, user_id).poke()
+		return this.pickMember(group_id, user_id).poke()
 	}
 	/** @cqhttp use member.addFriend() */
 	async addFriend(group_id: number, user_id: number, comment = "") {
-		return this.getMember(group_id, user_id).addFriend(comment)
+		return this.pickMember(group_id, user_id).addFriend(comment)
 	}
 	/** @cqhttp use friend.delete() */
 	async deleteFriend(user_id: number, block = true) {
-		return this.getFriend(user_id).delete(block)
+		return this.pickFriend(user_id).delete(block)
 	}
 	/** @cqhttp use group.invite() */
 	async inviteFriend(group_id: number, user_id: number) {
-		return this.getGroup(group_id).invite(user_id)
+		return this.pickGroup(group_id).invite(user_id)
 	}
 	/** @cqhttp use friend.thumbUp() */
 	async sendLike(user_id: number, times = 1) {
-		return this.getFriend(user_id).thumbUp(times)
+		return this.pickFriend(user_id).thumbUp(times)
 	}
-	/** @cqhttp use group.setPortrait() */
+	/** @cqhttp user client.setAvatar() */
+	async setPortrait(file: Parameters<Client["setAvatar"]>[0]) {
+		return this.setAvatar(file)
+	}
+	/** @cqhttp use group.setAvatar() */
 	async setGroupPortrait(group_id: number, file: Parameters<Group["setAvatar"]>[0]) {
-		return this.getGroup(group_id).setAvatar(file)
+		return this.pickGroup(group_id).setAvatar(file)
 	}
 	/** @cqhttp use group.fs */
 	acquireGfs(group_id: number) {
-		return this.getGroup(group_id).fs
+		return this.pickGroup(group_id).fs
 	}
-	/** @cqhttp use user.approveFriendRequest() or user.addFriendBack() */
+	/** @cqhttp use user.setFriendReq() or user.addFriendBack() */
 	async setFriendAddRequest(flag: string, approve = true, remark = "", block = false) {
 		const { user_id, seq, single } = parseFriendRequestFlag(flag)
-		const user = this.getUser(user_id)
-		return single ? user.addFriendBack(seq, remark) : user.approveFriendRequest(seq, approve, remark, block)
+		const user = this.pickUser(user_id)
+		return single ? user.addFriendBack(seq, remark) : user.setFriendReq(seq, approve, remark, block)
 	}
-	/** @cqhttp use user.approveGroupRequest() or user.approveGroupInvitation() */
+	/** @cqhttp use user.setGroupInvite() or user.setGroupReq() */
 	async setGroupAddRequest(flag: string, approve = true, reason = "", block = false) {
 		const { group_id, user_id, seq, invite } = parseGroupRequestFlag(flag)
-		const user = this.getUser(user_id)
-		return invite ? user.approveGroupInvitation(group_id, seq, approve, block) : user.approveGroupRequest(group_id, seq, approve, reason, block)
-	}
-	/** @cqhttp 获取系统消息 */
-	async getSystemMsg() {
-		return this.self.getSystemMessage()
+		const user = this.pickUser(user_id)
+		return invite ? user.setGroupInvite(group_id, seq, approve, block) : user.setGroupReq(group_id, seq, approve, reason, block)
 	}
 
-	/** @cqhttp 清空缓存目录 fs.rm need v14.14 */
-	cleanCache() {
-		const dir = path.join(this.dir, "../image")
-		fs.rm?.(dir, { recursive: true }, () => {
-			fs.mkdir(dir, NOOP)
-		})
-	}
-
+	/** dont use it if not clear the usage */
 	sendOidb(cmd: string, body: Uint8Array, timeout = 5) {
 		const sp = cmd //OidbSvc.0x568_22
 			.replace("OidbSvc.", "")
@@ -501,6 +537,7 @@ export class Client extends BaseClient {
 		return this.sendUni(cmd, body, timeout)
 	}
 
+	/** emit an event */
 	em(name = "", data?: any) {
 		while (true) {
 			this.emit(name, data)
@@ -538,6 +575,35 @@ export class Client extends BaseClient {
 		}
 		return cnt
 	}
+
+	private async _setProfile(k: number, v: Buffer) {
+		const buf = Buffer.allocUnsafe(11 + v.length)
+		buf.writeUInt32BE(this.uin)
+		buf.writeUInt8(0, 4)
+		buf.writeInt32BE(k, 5)
+		buf.writeUInt16BE(v.length, 9)
+		buf.fill(v, 11)
+		const payload = await this.sendOidb("OidbSvc.0x4ff_9", buf)
+		const obj = pb.decode(payload)
+		return obj[3] === 0 || obj[3] === 34
+	}
+
+	/** @deprecated use client.submitSlider() */
+	sliderLogin(ticket: string) {
+		return this.submitSlider(ticket)
+	}
+	/** @deprecated use client.sendSmsCode() */
+	sendSMSCode() {
+		return this.sendSmsCode()
+	}
+	/** @deprecated use client.submitSmsCode() */
+	submitSMSCode(code: string) {
+		return this.submitSmsCode(code)
+	}
+	/** @deprecated use client.status */
+	get online_status() {
+		return this.status
+	}
 }
 
 /** 数据统计 */
@@ -555,7 +621,7 @@ function createDataDir(dir: string, uin: number) {
 	return uin_path
 }
 
-/** 创建一个客户端 */
+/** 创建一个客户端 (=new Client) */
 export function createClient(uin: number, config?: Config) {
 	if (isNaN(Number(uin)))
 		throw new Error(uin + " is not an OICQ account")

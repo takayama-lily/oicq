@@ -5,7 +5,7 @@ import { PNG } from "pngjs"
 import qrt from "qrcode-terminal"
 import { jce } from "../core"
 import { NOOP, OnlineStatus } from "../common"
-import { getFriendSystemMessage, getGroupSystemMessage } from "./sysmsg"
+import { getFrdSysMsg, getGrpSysMsg } from "./sysmsg"
 import { pbGetMsg, pushReadedListener } from "./pbgetmsg"
 import { dmMsgSyncListener, groupMsgListener, discussMsgListener, onlinePushListener, onlinePushTransListener } from "./onlinepush"
 
@@ -27,12 +27,12 @@ async function pushNotifyListener(this: Client, payload: Buffer) {
 	case 84: //群请求
 	case 87: //群邀请
 	case 525: //群请求(来自群员的邀请)
-		return getGroupSystemMessage.call(this)
+		return getGrpSysMsg.call(this)
 	case 187: //好友请求
 	case 191: //单向好友增加
-		return getFriendSystemMessage.call(this)
+		return getFrdSysMsg.call(this)
 	case 528: //黑名单同步
-		return this.self.loadBlackList()
+		return this.reloadBlackList()
 	}
 }
 
@@ -57,20 +57,20 @@ async function eventsListener(this: Client, cmd: string, payload: Buffer, seq: n
 
 /** 上线后加载资源 */
 async function onlineListener(this: Client, token: Buffer, nickname: string, gender: number, age: number) {
-	this.self.nickname = nickname
-	this.self.age = age
-	this.self.sex = gender ? (gender === 1 ? "male" : "female") : "unknown"
+	this.nickname = nickname
+	this.age = age
+	this.sex = gender ? (gender === 1 ? "male" : "female") : "unknown"
 	// 恢复之前的状态
-	this.self.status = this.self.status || OnlineStatus.Online
-	this.self.setStatus(this.self.status).catch(NOOP)
+	this.status = this.status || OnlineStatus.Online
+	this.setOnlineStatus(this.status).catch(NOOP)
 	// 存token
 	tokenUpdatedListener.call(this, token)
 	this.logger.mark(`Welcome, ${this.nickname} ! 正在加载资源...`)
 	await Promise.allSettled([
-		this.self.loadFriendList(),
-		this.self.loadGroupList(),
-		this.self.loadStrangerList(),
-		this.self.loadBlackList(),
+		this.reloadFriendList(),
+		this.reloadGroupList(),
+		this.reloadStrangerList(),
+		this.reloadBlackList(),
 	])
 	this.logger.mark(`加载了${this.fl.size}个好友，${this.gl.size}个群，${this.sl.size}个陌生人`)
 	pbGetMsg.call(this).catch(NOOP)
@@ -127,6 +127,7 @@ function loginErrorListener(this: Client, code: number, message: string) {
 	}
 	// network error
 	else if (code < 0) {
+		this.terminate()
 		this.logger.error(message)
 		if (code === -3) //register failed
 			fs.unlink(path.join(this.dir, "token"), NOOP)

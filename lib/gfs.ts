@@ -51,7 +51,7 @@ export class Gfs {
 	}
 	/** 返回所在群的实例 */
 	get group() {
-		return this.c.getGroup(this.gid)
+		return this.c.pickGroup(this.gid)
 	}
 	/** 返回所属的客户端对象 */
 	get client() {

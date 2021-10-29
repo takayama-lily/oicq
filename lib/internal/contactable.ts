@@ -413,7 +413,7 @@ export abstract class Contactable {
 	}
 
 	/** 制作一条合并转发消息以备发送(理论上传一次所有群和好友都能发) */
-	async makeForwardMessage(iterable: Forwardable[]): Promise<XmlElem> {
+	async makeForwardMsg(iterable: Forwardable[]): Promise<XmlElem> {
 		const nodes = []
 		const makers: Converter[] = []
 		let imgs: Image[] = []
@@ -478,7 +478,7 @@ export abstract class Contactable {
 	}
 
 	/** 下载并解析合并转发 */
-	async parseForwardMessage(resid: string) {
+	async getForwardMsg(resid: string) {
 		const ret = []
 		const buf = await this._downloadMultiMsg(String(resid), 2)
 		let a = pb.decode(buf)[2]
@@ -526,7 +526,7 @@ export abstract class Contactable {
 	}
 
 	/** 获取视频下载地址 */
-	async fetchVideoDownloadUrl(fid: string, md5: string | Buffer) {
+	async getVideoUrl(fid: string, md5: string | Buffer) {
 		const body = pb.encode({
 			1: 400,
 			4: {

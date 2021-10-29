@@ -43,7 +43,6 @@ client.on("system.login.qrcode", function (event) {
 ----
 
 * [Class: Client](#class-client) 客户端
-* [Class: Self](#class-self) 自己
 * [Class: Group](#class-group) 群
 * [Class: User](#class-user) 用户
 * [Class: Friend](#class-friend) 好友
@@ -63,33 +62,53 @@ client.on("system.login.qrcode", function (event) {
 |submitSlider()|提交滑动验证码|
 |sendSmsCode()|发短信|
 |submitSmsCode()|提交短信验证码|
-|getGroup()|得到一个群对象|
-|getFriend()|得到一个好友对象|
-|getMember()|得到一个群员对象|
-|getUser()|创建一个用户对象|
-|getDiscuss()|对象一个讨论组对象|
-|getDiscuss()|对象一个讨论组对象|
-|cleanCache()|清空网络图片缓存|
+|pickGroup()|[得到一个群对象](#class-group)|
+|pickFriend()|[得到一个好友对象](#class-friend)|
+|pickMember()|[得到一个群员对象](#class-member)|
+|pickUser()|[得到一个用户对象](#class-user)|
+|pickDiscuss()|[得到一个讨论组对象](#class-discuss)|
+|setOnlineStatus()|设置在线状态|
+|setNickname()|设置昵称|
+|setGender()|设置性别|
+|setBirthday()|设置生日|
+|setDescription()|设置个人说明|
+|setSignature()|设置个性签名|
+|setAvatar()|设置头像|
+|getRoamingStamp()|获取漫游表情|
+|deleteStamp()|删除漫游表情|
+|addClass()|添加好友分组|
+|deleteClass()|删除好友分组|
+|renameClass()|重命名好友分组|
+|reloadFriendList()|重载好友列表|
+|reloadStrangerList()|重载陌生人列表|
+|reloadGroupList()|重载群列表|
+|reloadBlackList()|重载黑名单列表|
+|getSystemMsg()|获取系统消息|
+|getForwardMsg()|解析合并转发|
+|makeForwardMsg()|制作合并转发|
+|getVideoUrl()|获取视频地址|
+|cleanCache()|清空缓存文件|
 
 |Property|Description|
 |-|-|
 |uin|我的账号|
+|status|在线状态|
+|nickname|昵称|
+|sex|性别|
+|age|年龄|
+|fl|好友列表(Map)|
+|gl|群列表(Map)|
+|sl|陌生人列表(Map)|
+|gml|群员列表缓存(Map)|
+|blacklist|黑名单列表(Set)|
+|classes|好友分组(Map)|
+|stamp|漫游表情(Set))|
 |logger|日志记录器|
 |config|配置|
 |dir|本地存储路径|
 |stat|数据统计|
-|self|[Self](#class-self)|
 |bkn|csrf-token|
 |cookies|cookies|
-|status|=self.status|
-|nickname|=self.nickname|
-|sex|=self.sex|
-|age|=self.age|
-|fl|=self.friends|
-|gl|=self.groups|
-|sl|=self.strangers|
-|gml|=self.members|
-|blacklist|=self.blacklist|
 
 |Event|Description|
 |-|-|
@@ -125,53 +144,17 @@ client.on("system.login.qrcode", function (event) {
 |sync.message|私聊消息同步|
 |sync.readed|已读同步|
 
-### Class: Self
-
-|Method|Description|
-|-|-|
-|setStatus()|设置在线状态|
-|setNickname()|设置昵称|
-|setGender()|设置性别|
-|setBirthday()|设置生日|
-|setDescription()|设置个人说明|
-|setSignature()|设置个性签名|
-|setAvatar()|设置头像|
-|getRoamingStamp()|获取漫游表情|
-|deleteStamp()|删除漫游表情|
-|addClass()|添加好友分组|
-|deleteClass()|删除好友分组|
-|renameClass()|重命名好友分组|
-|loadFriendList()|重载好友列表|
-|loadStrangerList()|重载陌生人列表|
-|loadGroupList()|重载群列表|
-|loadBlackList()|重载黑名单列表|
-|getSystemMessage()|获取系统消息|
-
-|Property|Description|
-|-|-|
-|friends|好友列表(Map)|
-|groups|群列表(Map)|
-|strangers|陌生人列表(Map)|
-|members|群员列表缓存(Map)|
-|blacklist|黑名单列表(Set)|
-|status|在线状态|
-|nickname|昵称|
-|sex|性别|
-|age|年龄|
-|class|好友分组|
-|stamp|漫游表情|
-
 ### Class: Group
 
 |Method|Description|
 |-|-|
-|sendMessage()|发送消息|
-|recallMessage()|撤回消息|
+|sendMsg()|发送消息|
+|recallMsg()|撤回消息|
 |setName()|设置群名|
 |setAvatar()|设置群头像|
 |muteAll()|禁言全员|
 |muteMember()|禁言群员|
-|muteAnonymous()|禁言匿名者|
+|muteAnony()|禁言匿名者|
 |kickMember()|踢人|
 |pokeMember()|戳一戳|
 |setCard()|设置名片|
@@ -179,17 +162,17 @@ client.on("system.login.qrcode", function (event) {
 |setTitle()|设置头衔|
 |invite()|邀请好友|
 |quit()|退群/解散|
-|getAnonymousInfo()|获取匿名身份|
-|allowAnonymous()|允许/禁止匿名|
+|getAnonyInfo()|获取匿名身份|
+|allowAnony()|允许/禁止匿名|
 |getChatHistory()|获取聊天记录|
 |markRead()|标记已读|
-|getAtAllRemainingTimes()|获取@全体剩余次数|
-|fetchFileDownloadUrl()|获取群文件下载地址|
+|getFileUrl()|获取群文件下载地址|
 |shareMusic()|分享音乐|
 |getMemberMap()|获取群员列表|
 |getAvatarUrl()|获取群头像地址|
-|getMember()|[获取群成员对象](#class-member)|
-|fetchInfo()|刷新群资料|
+|pickMember()|[获取一个群成员对象](#class-member)|
+|getAtAllRemainder()|获取@全体剩余次数|
+|renew()|刷新群资料|
 
 |Property|Description|
 |-|-|
@@ -204,20 +187,19 @@ client.on("system.login.qrcode", function (event) {
 
 |Method|Description|
 |-|-|
-|sendMessage()|发送消息|
-|recallMessage()|撤回消息|
+|sendMsg()|发送消息|
+|recallMsg()|撤回消息|
 |getSimpleInfo()|查询资料|
 |getChatHistory()|获取聊天记录|
 |markRead()|标记已读|
-|fetchFileDownloadUrl()|获取离线文件下载地址|
-|shareMusic()|分享音乐|
+|getFileUrl()|获取离线文件下载地址|
 |getAvatarUrl()|获取头像地址|
 |asFriend()|[获取作为好友的对象](#class-friend)|
 |asMember()|[获取作为某群群员的对象](#class-member)|
 |addFriendBack()|回添双向好友|
-|approveFriendRequest()|同意好友申请|
-|approveGroupRequest()|同意加群申请|
-|approveGroupInvitation()|同意群邀请|
+|setFriendReq()|同意好友申请|
+|setGroupReq()|同意加群申请|
+|setGroupInvite()|同意群邀请|
 
 |Property|Description|
 |-|-|
@@ -229,6 +211,7 @@ client.on("system.login.qrcode", function (event) {
 
 |Method|Description|
 |-|-|
+|shareMusic()|分享音乐|
 |setRemark()|设置备注|
 |setClass()|设置分组|
 |thumbUp()|点赞|
@@ -257,6 +240,7 @@ client.on("system.login.qrcode", function (event) {
 |mute()|禁言|
 |poke()|戳一戳|
 |addFriend()|加为好友|
+|renew()|更新群员资料|
 
 |Property|Description|
 |-|-|
@@ -289,9 +273,9 @@ client.on("system.login.qrcode", function (event) {
 |uploadImages()|上传一批图片以备发送|
 |uploadVideo()|上传一个视频以备发送|
 |uploadPtt()|上传一个语音以备发送|
-|makeForwardMessage()|制作合并转发消息以备发送|
-|parseForwardMessage()|解析合并转发消息|
-|fetchVideoDownloadUrl()|获取视频下载地址|
+|makeForwardMsg()|制作合并转发消息以备发送|
+|getForwardMsg()|解析合并转发消息|
+|getVideoUrl()|获取视频下载地址|
 
 |Property|Description|
 |-|-|

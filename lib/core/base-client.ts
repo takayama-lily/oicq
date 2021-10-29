@@ -70,7 +70,7 @@ export interface BaseClient {
 export class BaseClient extends EventEmitter {
 
 	private [IS_ONLINE] = false
-	private readonly [ECDH] = new Ecdh
+	private [ECDH] = new Ecdh
 	private readonly [NET] = new Network
 	// 存放包的回调函数
 	private readonly [HANDLERS] = new Map<number, (buf: Buffer) => void>()
@@ -178,6 +178,8 @@ export class BaseClient extends EventEmitter {
 		if (token.length !== 152)
 			throw new Error("bad token")
 		this.sig.session = randomBytes(4)
+		this.sig.randkey = randomBytes(16)
+		this[ECDH] = new Ecdh
 		this.sig.d2key = token.slice(0, 16)
 		this.sig.d2 = token.slice(16, 80)
 		this.sig.tgt = token.slice(80, 152)
@@ -208,6 +210,9 @@ export class BaseClient extends EventEmitter {
 	/** 使用密码登录 */
 	passwordLogin(md5pass: Buffer) {
 		this.sig.session = randomBytes(4)
+		this.sig.randkey = randomBytes(16)
+		this.sig.tgtgt = randomBytes(16)
+		this[ECDH] = new Ecdh
 		const t = tlv.getPacker(this)
 		let body = new Writer()
 			.writeU16(9)

@@ -29,13 +29,13 @@ type OnlinePushEvent = [name: string, event: any]
 
 const sub0x27: {[k: number]: (this: Client, data: pb.Proto) => OnlinePushEvent | void} = {
 	0: function (data) { //add
-		this.self.class.set(data[3][1], String(data[3][3]))
+		this.classes.set(data[3][1], String(data[3][3]))
 	},
 	1: function (data) { //delete
-		this.self.class.delete(data[4][1])
+		this.classes.delete(data[4][1])
 	},
 	2: function (data) { //rename
-		this.self.class.set(data[5][1], String(data[5][2]))
+		this.classes.set(data[5][1], String(data[5][2]))
 	},
 	4: function (data) { //move
 		const arr = Array.isArray(data[7][1]) ? data[7][1] : [data[7][1]]
@@ -76,16 +76,13 @@ const sub0x27: {[k: number]: (this: Client, data: pb.Proto) => OnlinePushEvent |
 			value = new Date().getFullYear() - o[2].toBuffer().readUInt16BE()
 		} else if (o[1] === 27372 && user_id === this.uin) {
 			const status = o[2].toBuffer()[o[2].toBuffer().length - 1]
-			const old_status = this.self.status, new_status = statuslist[status] || 11
-			this.self.status = new_status
-			if (old_status !== new_status)
-				this.em("sync.status", { old_status, new_status })
+			this.status = statuslist[status] || 11
 			return
 		} else {
 			return
 		}
 		if (user_id === this.uin)
-			this.self[key as "nickname"] = value
+			this[key as "nickname"] = value
 	},
 	40: function (data) {
 		const o = data[9][1], user_id = o[2]
@@ -133,7 +130,7 @@ const push528: {[k: number]: (this: Client, buf: Buffer) =>  OnlinePushEvent | v
 	},
 	0xD4: function (buf) {
 		const group_id = pb.decode(buf)[1]
-		this.getGroup(group_id).fetchInfo().catch(NOOP)
+		this.pickGroup(group_id).renew().catch(NOOP)
 	},
 	0x27: function (buf) {
 		let data = pb.decode(buf)[1]
@@ -155,7 +152,7 @@ const push528: {[k: number]: (this: Client, buf: Buffer) =>  OnlinePushEvent | v
 		const data = pb.decode(buf)
 		const user_id = data[1]
 		const end = data[3][4] === 2
-		return ["internal.input", { user_id, end }]
+		this.emit("internal.input", { user_id, end })
 	},
 }
 
@@ -359,12 +356,13 @@ export function groupMsgListener(this: Client, payload: Buffer) {
 		msg = GroupMessage.combine(arr) as GroupMessage
 	}
 
-	this.getGroup(msg.group_id).info
-	this.config.cache_group_member && this.getMember(msg.group_id, msg.sender.user_id).info
+	this.pickGroup(msg.group_id).info
+	this.config.cache_group_member && this.pickMember(msg.group_id, msg.sender.user_id).info
 
 	if (msg.raw_message) {
-		const _ = this.getGroup(msg.group_id)
-		;(msg as GroupMessageEvent).reply = _.sendMessage.bind(_)
+		(msg as GroupMessageEvent).reply = (content, quote = false) => {
+			return this.pickGroup(msg.group_id).sendMsg(content, quote ? msg : undefined)
+		}
 		const sender = msg.sender
 		const member = this.gml.get(msg.group_id)?.get(sender.user_id)
 		if (member) {
@@ -391,8 +389,8 @@ export function discussMsgListener(this: Client, payload: Buffer, seq: number) {
 	if (msg.user_id === this.uin && this.config.ignore_self)
 		return
 	if (msg.raw_message) {
-		const _ = this.getDiscuss(msg.discuss_id)
-		msg.reply = _.sendMessage.bind(_)
+		const _ = this.pickDiscuss(msg.discuss_id)
+		msg.reply = _.sendMsg.bind(_)
 		this.logger.info(`recv from: [Discuss: ${msg.discuss_name}(${msg.discuss_id}), Member: ${msg.sender.card}(${msg.sender.user_id})] ` + msg)
 		this.em("message.discuss", msg)
 	}

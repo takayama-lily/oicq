@@ -5,18 +5,12 @@ import { ErrorCode, drop } from "./errors"
 import { timestamp, code2uin, PB_CONTENT, NOOP, lock, log } from "./common"
 import { Contactable } from "./internal"
 import { Member } from "./member"
-import { Sendable, GroupMessage, ImageElem, Image, buildMusic, MusicPlatform, Anonymous, parseGroupMessageId, Quotable } from "./message"
+import { Sendable, GroupMessage, Image, buildMusic, MusicPlatform, Anonymous, parseGroupMessageId, Quotable } from "./message"
 import { Gfs } from "./gfs"
 import { MessageRet } from "./events"
 import { GroupInfo, MemberInfo } from "./entities"
 
 type Client = import("./client").Client
-
-/** 我的匿名情报 */
-export interface AnonymousInfo extends Omit<Anonymous, "flag"> {
-	/** 是否可以匿名发言 */
-	enable: boolean
-}
 
 const fetchmap = new Map<string, Promise<Map<number, MemberInfo>>>()
 const weakmap = new WeakMap<GroupInfo, Group>()
@@ -52,7 +46,7 @@ export class Discuss extends Contactable {
 		lock(this, "gid")
 	}
 	/** 发送一条消息 */
-	async sendMessage(content: Sendable): Promise<MessageRet> {
+	async sendMsg(content: Sendable): Promise<MessageRet> {
 		const { rich, brief } = await this._preprocess(content)
 		const body = pb.encode({
 			1: { 4: { 1: this.gid } },
@@ -80,10 +74,10 @@ export class Discuss extends Contactable {
 
 /** 群 */
 export interface Group {
-	recallMessage(msg: GroupMessage): Promise<boolean>
+	recallMsg(msg: GroupMessage): Promise<boolean>
 	/** @cqhttp cqhttp方法用 */
-	recallMessage(msgid: string): Promise<boolean>
-	recallMessage(seq: number, rand: number, pktnum?: number): Promise<boolean>
+	recallMsg(msgid: string): Promise<boolean>
+	recallMsg(seq: number, rand: number, pktnum?: number): Promise<boolean>
 }
 
 /** 群 */
@@ -108,7 +102,7 @@ export class Group extends Discuss {
 	/** 群资料 */
 	get info() {
 		if (!this._info || timestamp() - this._info?.update_time! >= 900)
-			this.fetchInfo().catch(NOOP)
+			this.renew().catch(NOOP)
 		return this._info
 	}
 
@@ -135,7 +129,7 @@ export class Group extends Discuss {
 	}
 
 	/** 获取一枚群员实例 */
-	getMember(uid: number, strict = false) {
+	pickMember(uid: number, strict = false) {
 		return Member.as.call(this.c, this.gid, uid, strict)
 	}
 
@@ -145,7 +139,7 @@ export class Group extends Discuss {
 	}
 
 	/** 强制刷新资料 */
-	async fetchInfo(): Promise<GroupInfo> {
+	async renew(): Promise<GroupInfo> {
 		const body = pb.encode({
 			1: this.c.apk.subid,
 			2: {
@@ -257,14 +251,14 @@ export class Group extends Discuss {
 	/**
 	 * 发送一条消息
 	 * @param source 引用回复的消息
-	 * @param anon 是否匿名
+	 * @param anony 是否匿名
 	 */
-	async sendMessage(content: Sendable, source?: Quotable, anon: AnonymousInfo | boolean = false): Promise<MessageRet> {
+	async sendMsg(content: Sendable, source?: Quotable, anony: Omit<Anonymous, "flag"> | boolean = false): Promise<MessageRet> {
 		const converter = await this._preprocess(content, source)
-		if (anon) {
-			if (anon === true)
-				anon = await this.getAnonymousInfo()
-			converter.anonymize(anon)
+		if (anony) {
+			if (!(anony as Anonymous).id)
+				anony = await this.getAnonyInfo()
+			converter.anonymize(anony as Anonymous)
 		}
 		const rand = randomBytes(4).readUInt32BE()
 		const body = pb.encode({
@@ -306,7 +300,7 @@ export class Group extends Discuss {
 			}
 		} catch {
 			if (this.c.config.resend)
-				message_id = await this._sendMessageByFragments(converter.toFragments())
+				message_id = await this._sendMsgByFrag(converter.toFragments())
 			else
 				drop(ErrorCode.RiskMessageError)
 		}
@@ -317,7 +311,7 @@ export class Group extends Discuss {
 		}
 	}
 
-	private async _sendMessageByFragments(fragments: Uint8Array[]) {
+	private async _sendMsgByFrag(fragments: Uint8Array[]) {
 		let n = 0
 		const rand = randomBytes(4).readUInt32BE()
 		const div = randomBytes(2).readUInt16BE()
@@ -354,7 +348,7 @@ export class Group extends Discuss {
 	}
 
 	/** 撤回一条消息 */
-	async recallMessage(param: number | string | GroupMessage, rand = 0, pktnum = 1) {
+	async recallMsg(param: number | string | GroupMessage, rand = 0, pktnum = 1) {
 		if (param instanceof GroupMessage)
 			var { seq, rand, pktnum } = param
 		else if (typeof param === "string")
@@ -404,7 +398,7 @@ export class Group extends Discuss {
 		return this._setting({ 3: String(name) })
 	}
 	/** 全员禁言 */
-	muteAll(yes: boolean) {
+	muteAll(yes = true) {
 		return this._setting({ 17: yes ? 0xffffffff : 0 })
 	}
 	/** 发送简易群公告 */
@@ -421,7 +415,7 @@ export class Group extends Discuss {
 	}
 
 	/** 允许/禁止匿名 */
-	async allowAnonymous(yes: boolean) {
+	async allowAnony(yes = true) {
 		const buf = Buffer.allocUnsafe(5)
 		buf.writeUInt32BE(this.gid)
 		buf.writeUInt8(yes ? 1 : 0, 4)
@@ -430,7 +424,7 @@ export class Group extends Discuss {
 	}
 
 	/** 设置备注 */
-	async setRemark(remark: string) {
+	async setRemark(remark = "") {
 		const body = pb.encode({
 			1: {
 				1: this.gid,
@@ -442,26 +436,23 @@ export class Group extends Discuss {
 	}
 
 	/** 禁言匿名玩家，默认1800秒 */
-	async muteAnonymous(flag: string, duration = 1800) {
+	async muteAnony(flag: string, duration = 1800) {
 		const [nick, id] = flag.split("@")
-		const cookie = this.c.cookies["qqweb.qq.com"]
-		const body = new URLSearchParams({
+		const Cookie = this.c.cookies["qqweb.qq.com"]
+		let body = new URLSearchParams({
 			anony_id: id,
 			group_code: String(this.gid),
 			seconds: String(duration),
 			anony_nick: nick,
 			bkn: String(this.c.bkn)
 		}).toString()
-		const rsp = await axios.post("https://qqweb.qq.com/c/anonymoustalk/blacklist", body, {
-			headers: { cookie, "content-type": "application/x-www-form-urlencoded" }, timeout: 5000
+		await axios.post("https://qqweb.qq.com/c/anonymoustalk/blacklist", body, {
+			headers: { Cookie, "Content-Type": "application/x-www-form-urlencoded" }, timeout: 5000
 		})
-		if (rsp.status === 200)
-			return JSON.parse(String(rsp.data)).retcode === 0
-		return false
 	}
 
 	/** 获取自己的匿名情报 */
-	async getAnonymousInfo(): Promise<AnonymousInfo> {
+	async getAnonyInfo(): Promise<Omit<Anonymous, "flag">> {
 		const body = pb.encode({
 			1: 1,
 			10: {
@@ -482,7 +473,7 @@ export class Group extends Discuss {
 	}
 
 	/** 获取 @全体成员 的剩余次数 */
-	async getAtAllRemainingTimes() {
+	async getAtAllRemainder() {
 		const body = pb.encode({
 			1: 1,
 			2: 2,
@@ -545,16 +536,16 @@ export class Group extends Discuss {
 	}
 
 	/** 获取群文件下载地址 */
-	async fetchFileDownloadUrl(fid: string) {
+	async getFileUrl(fid: string) {
 		return (await this.fs.download(fid)).url
 	}
 
 	/** 设置群头像 */
-	async setAvatar(file: ImageElem["file"]) {
+	async setAvatar(file: string | Buffer | import("stream").Readable) {
 		const img = new Image({ type: "image", file })
 		await img.task
 		const url = `http://htdata3.qq.com/cgi-bin/httpconn?htcmd=0x6ff0072&ver=5520&ukey=${this.c.sig.skey}&range=0&uin=${this.c.uin}&seq=1&groupuin=${this.gid}&filetype=3&imagetype=5&userdata=0&subcmd=1&subver=101&clip=0_0_0_0&filesize=` + img.size
-		await axios.post(url, img.readable)
+		await axios.post(url, img.readable, { headers: { "Content-Length": String(img.size) } })
 		img.deleteTmpFile()
 	}
 
@@ -583,22 +574,22 @@ export class Group extends Discuss {
 		return jce.decodeWrapper(payload)[1] === 0
 	}
 
-	setAdmin(uid: number, yes: boolean) {
-		return this.getMember(uid).setAdmin(yes)
+	setAdmin(uid: number, yes = true) {
+		return this.pickMember(uid).setAdmin(yes)
 	}
-	setTitle(uid: number, title: string, duration = -1) {
-		return this.getMember(uid).setTitle(title, duration)
+	setTitle(uid: number, title = "", duration = -1) {
+		return this.pickMember(uid).setTitle(title, duration)
 	}
-	setCard(uid: number, card: string) {
-		return this.getMember(uid).setCard(card)
+	setCard(uid: number, card = "") {
+		return this.pickMember(uid).setCard(card)
 	}
 	kickMember(uid: number, block = false) {
-		return this.getMember(uid).kick(block)
+		return this.pickMember(uid).kick(block)
 	}
 	muteMember(uid: number, duration = 600) {
-		return this.getMember(uid).mute(duration)
+		return this.pickMember(uid).mute(duration)
 	}
 	pokeMember(uid: number) {
-		return this.getMember(uid).poke()
+		return this.pickMember(uid).poke()
 	}
 }

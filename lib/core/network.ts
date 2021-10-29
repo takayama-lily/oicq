@@ -7,7 +7,7 @@ import * as tea from "./tea"
 const default_host = "msfwifi.3g.qq.com"
 const default_port = 8080
 let update_time = 0
-let searching: Promise<boolean | void> | undefined
+let searching: Promise<void> | undefined
 let host_port: {[ip: string]: number} = { }
 
 /**
@@ -30,6 +30,7 @@ export default class Network extends Socket {
 			if (this.connected) {
 				this.connected = false
 				delete host_port[this.host]
+				this.resolve()
 				this.emit("lost")
 			}
 		})
@@ -50,45 +51,35 @@ export default class Network extends Socket {
 	}
 
 	join(cb = NOOP) {
-		this.resolve().then(() => {
-			if (this.connecting) return
-			if (this.connected) return cb()
-			this.removeAllListeners("connect")
-			this.connect(this.port, this.host, () => {
-				this.connected = true
-				this.emit("connect2")
-				cb()
-			})
+		if (this.connecting) return
+		if (this.connected) return cb()
+		this.removeAllListeners("connect")
+		this.connect(this.port, this.host, () => {
+			this.connected = true
+			this.emit("connect2")
+			cb()
 		})
+		this.resolve()
 	}
 
-	private async resolve() {
+	private resolve() {
 		if (!this.auto_search) return
 		const iplist = Object.keys(host_port)
 		if (iplist.length > 0) {
 			this.host = iplist[0]
 			this.port = host_port[this.host]
 		}
-		if (timestamp() - update_time >= 3600) {
-			if (!searching) {
-				searching = fetchServerList().then(map => {
-					searching = undefined
+		if (timestamp() - update_time >= 3600 && !searching) {
+			searching = fetchServerList().then(map => {
+				searching = undefined
+				const list = Object.keys(map).slice(0, 3)
+				if (list[0] && list[1]) {
 					update_time = timestamp()
-					const list = Object.keys(map).slice(0, 3)
 					host_port = { }
 					host_port[list[0]] = map[list[0]]
 					host_port[list[1]] = map[list[1]]
-					return true
-				}).catch(NOOP)
-			}
-			if (!this.host) {
-				if ((await searching) === true) {
-					await this.resolve()
-				} else {
-					this.host = default_host
-					this.port = default_port
 				}
-			}
+			}).catch(NOOP)
 		}
 	}
 }

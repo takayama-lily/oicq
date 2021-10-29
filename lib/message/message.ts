@@ -4,8 +4,10 @@ import { lock, parseFunString, GroupRole, Gender, log } from "../common"
 import { Parser, parse} from "./parser"
 import { Quotable, Forwardable, MessageElem, FileElem } from "./elements"
 
-/** 匿名者情报 */
+/** 匿名情报 */
 export interface Anonymous {
+	/** 是否可以匿名发言 */
+	enable: boolean
 	flag: string
 	id: number
 	id2: number
@@ -103,8 +105,8 @@ export abstract class Message implements Quotable, Forwardable {
 	index: number
 	div: number
 
-	/** 反序列化一条消息 */
-	static unserialize(serialized: Buffer) {
+	/** 反序列化一条消息 (私聊消息需要你的uin) */
+	static unserialize(serialized: Buffer, uin?: number) {
 		const proto = pb.decode(serialized)
 		switch (proto[1][3]) {
 		case 82:
@@ -112,7 +114,7 @@ export abstract class Message implements Quotable, Forwardable {
 		case 83:
 			return new DiscussMessage(proto)
 		default:
-			return new PrivateMessage(proto)
+			return new PrivateMessage(proto, uin)
 		}
 	}
 
@@ -293,6 +295,7 @@ export class GroupMessage extends Message {
 				color: String(this.parsed.anon[7]),
 				expire_time: this.parsed.anon[5],
 				flag: String(this.parsed.anon[3]) + "@" + this.parsed.anon[2].toBase64(),
+				enable: true,
 			}
 			this.sender.card = this.sender.nickname = "匿名消息"
 		} else {

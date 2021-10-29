@@ -1,5 +1,4 @@
 import { pb } from "../core"
-import { log } from "../common"
 import { FriendAddReqEvent, GroupAddReqEvent, GroupInviteReqEvent } from "../events"
 
 type Client = import("../client").Client
@@ -121,7 +120,7 @@ const FRD_BUF = pb.encode({
 	11: 2
 })
 
-export async function getFriendSystemMessage(this: Client) {
+export async function getFrdSysMsg(this: Client) {
 	const payload = await this.sendUni("ProfileService.Pb.ReqSystemMsgNew.Friend", FRD_BUF)
 	let rsp = pb.decode(payload)[9]
 	if (!Array.isArray(rsp)) rsp = [rsp]
@@ -205,7 +204,7 @@ const GRP_BUF_RISK = pb.encode({
 	11: 2,
 })
 
-export async function getGroupSystemMessage(this: Client) {
+export async function getGrpSysMsg(this: Client) {
 	let arr: pb.Proto[] = []
 	{
 		const payload = await this.sendUni("ProfileService.Pb.ReqSystemMsgNew.Group", GRP_BUF)
@@ -235,7 +234,7 @@ export async function getGroupSystemMessage(this: Client) {
 	}
 }
 
-export async function getSystemMessage(this: Client) {
+export async function getSysMsg(this: Client) {
 	const ret: Array<FriendAddReqEvent | GroupAddReqEvent | GroupInviteReqEvent> = []
 
 	const task1 = (async () => {

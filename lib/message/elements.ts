@@ -42,7 +42,7 @@ export interface ImageElem {
 	file: string | Buffer | import("stream").Readable
 	/** 网络图片是否使用缓存 */
 	cache?: boolean
-	/** 下载超时时间 */
+	/** 流的超时时间，默认60(秒) */
 	timeout?: number
 	headers?: import("http").OutgoingHttpHeaders
 	/** 这个参数只有在接收时有用 */

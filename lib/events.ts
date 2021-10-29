@@ -10,8 +10,7 @@ export interface MessageRet {
 }
 
 interface MessageEvent {
-	/** @deprecated */
-	reply(content: Sendable): Promise<MessageRet>
+	reply(content: Sendable, quote?: boolean): Promise<MessageRet>
 }
 
 /** 私聊消息事件 */
@@ -290,16 +289,13 @@ export interface EventMap<T = any> {
 	/** 私聊同步 */
 	"sync.message": (this: T, event: PrivateMessage) => void
 
-	/** 在线状态同步 */
-	"sync.status": (this: T, event: { old_status: number, new_status: number }) => void
-
 	/** 消息已读同步 */
-	"sync.readed.private": (this: T, event: { user_id: number, time: number }) => void
-	"sync.readed.group": (this: T, event: { group_id: number, seq: number }) => void
-	"sync.readed": (this: T, event: { user_id: number, time: number } | { group_id: number, seq: number }) => void
+	"sync.read.private": (this: T, event: { user_id: number, time: number }) => void
+	"sync.read.group": (this: T, event: { group_id: number, seq: number }) => void
+	"sync.read": (this: T, event: { user_id: number, time: number } | { group_id: number, seq: number }) => void
 
-	/** 实验性事件: 监听所有收到的包 */
+	/** 隐藏事件: 监听所有收到的包 */
 	"internal.sso": (this: T, cmd: string, payload: Buffer, seq: number) => void
-	/** 实验性事件: 对方正在输入 */
+	/** 隐藏事件: 对方正在输入 */
 	"internal.input": (this: T, event: { user_id: number, end: boolean }) => void
 }

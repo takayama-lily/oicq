@@ -5,7 +5,7 @@ export namespace segment {
 	/** @deprecated 建议直接使用字符串 */
 	function text(text: string): T.TextElem
 	/** AT */
-	function at(qq: number, text?: string, dummy?: boolean): T.AtElem
+	function at(qq: number | "all", text?: string, dummy?: boolean): T.AtElem
 	/** 经典表情(id=0~324) */
 	function face(id: number): T.FaceElem
 	/** 小表情(id规则不明) */
