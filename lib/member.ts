@@ -40,23 +40,23 @@ export class Member extends User {
 		return this.gid
 	}
 	get card() {
-		return this.info?.card || this._info?.nickname
+		return this.info?.card || this.info?.nickname
 	}
 	get title() {
-		return this._info?.title
+		return this.info?.title
 	}
 	get is_friend() {
 		return this.c.fl.has(this.uid)
 	}
 	get is_owner() {
-		return this._info?.role === "owner"
+		return this.info?.role === "owner"
 	}
 	get is_admin() {
-		return this._info?.role === "admin" || this.is_owner
+		return this.info?.role === "admin" || this.is_owner
 	}
 	/** 禁言剩余时间 */
 	get mute_left() {
-		const t = this._info?.shutup_time! - timestamp()
+		const t = this.info?.shutup_time! - timestamp()
 		return t > 0 ? t : 0
 	}
 
@@ -74,6 +74,8 @@ export class Member extends User {
 	async renew(): Promise<MemberInfo> {
 		if (!this.c.gml.has(this.gid) && this.c.config.cache_group_member)
 			this.group.getMemberMap()
+		if (this._info)
+			this._info.update_time = timestamp()
 		const body = pb.encode({
 			1: this.gid,
 			2: this.uid,

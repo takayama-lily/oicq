@@ -315,19 +315,19 @@ export class Friend extends User {
 	}
 
 	get nickname() {
-		return this._info?.nickname
+		return this.info?.nickname
 	}
 	get sex() {
-		return this._info?.sex
+		return this.info?.sex
 	}
 	get remark() {
-		return this._info?.remark
+		return this.info?.remark
 	}
 	get class_id() {
-		return this._info?.class_id
+		return this.info?.class_id
 	}
 	get class_name() {
-		return this.c.classes.get(this._info?.class_id!)
+		return this.c.classes.get(this.info?.class_id!)
 	}
 
 	protected constructor(c: Client, uid: number, private _info?: FriendInfo) {

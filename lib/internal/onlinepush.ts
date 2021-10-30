@@ -192,6 +192,7 @@ const push732: {[k: number]: (this: Client, group_id: number, buf: Buffer) =>  O
 				this.gl.get(group_id)!.shutup_time_me = duration ? (timestamp() + duration) : 0
 			this.gml.get(group_id)!.get(user_id)!.shutup_time = duration ? (timestamp() + duration) : 0
 		} catch { }
+		this.logger.info(`用户${user_id}在群${group_id}被禁言${duration}秒`)
 		return ["notice.group.ban", {
 			group_id, operator_id, user_id, duration
 		}]
@@ -224,6 +225,7 @@ const push732: {[k: number]: (this: Client, group_id: number, buf: Buffer) =>  O
 		if (buf[14] !== 0) {
 			const nickname = String(buf.slice(15, 15 + buf[14]))
 			const operator_id = buf.readUInt32BE(6)
+			this.logger.info(`匿名用户${nickname}在群${group_id}被禁言${duration}秒`)
 			return ["notice.group.ban", {
 				group_id, operator_id,
 				user_id: 80000000, nickname,
@@ -281,24 +283,24 @@ export function onlinePushTransListener(this: Client, payload: Buffer, seq: numb
 		if (buf[5] === 0 || buf[5] === 1) {
 			const user_id = buf.readUInt32BE(6)
 			const set = buf[10] > 0
-			const info = this.gml.get(group_id)?.get(user_id)
-			info && (info.role = (set ? "admin" : "member"))
+			this.logger.info(`群${group_id}设置管理员${user_id}: ` + set)
 			emitNoticeEvent(this, "notice.group.admin", {
 				group_id, user_id, set
 			})
+			if (user_id === this.uin)
+				this.gl.get(group_id)!.admin_flag = set
+			this.gml.get(group_id)!.get(user_id)!.role = set ? "admin" : "member"
 		} else if (buf[5] === 0xFF) {
 			const operator_id = buf.readUInt32BE(6)
 			const user_id = buf.readUInt32BE(10)
-			const i1 = this.gml.get(group_id)?.get(operator_id)
-			const i2 = this.gml.get(group_id)?.get(user_id)
-			i1 && (i1.role = "member")
-			i2 && (i2.role = "owner")
+			this.logger.info(`群${group_id}被转让给` + user_id)
 			emitNoticeEvent(this, "notice.group.transfer", {
 				group_id, operator_id, user_id
 			})
+			this.gml.get(group_id)!.get(user_id)!.role = "owner"
+			this.gml.get(group_id)!.get(operator_id)!.role = "member"
 		}
-	}
-	if (push[3] === 34) {
+	} else if (push[3] === 34) {
 		const user_id = buf.readUInt32BE(5)
 		let operator_id, dismiss = false, group
 		let member = this.gml.get(group_id)?.get(user_id)
@@ -329,7 +331,9 @@ export function onlinePushTransListener(this: Client, payload: Buffer, seq: numb
 export function dmMsgSyncListener(this: Client, payload: Buffer, seq: number) {
 	const proto = pb.decode(payload)
 	handleOnlinePush.call(this, proto[2], seq)
-	this.em("sync.message", new PrivateMessage(proto[1], this.uin))
+	const msg = new PrivateMessage(proto[1], this.uin)
+	msg.sender.nickname = this.nickname
+	this.em("sync.message", msg)
 }
 
 const fragmap = new Map<string, GroupMessage[]>()

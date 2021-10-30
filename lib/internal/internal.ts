@@ -245,6 +245,7 @@ export async function loadGL(this: Client) {
 			last_join_time: v[27],
 			shutup_time_whole: v[9] ? 0xffffffff : 0,
 			shutup_time_me: v[10] > timestamp() ? v[10] : 0,
+			admin_flag: !!v[11],
 			update_time: 0,
 		}
 		this.gl.set(gid, Object.assign(this.gl.get(gid) || { }, info))

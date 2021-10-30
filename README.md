@@ -8,13 +8,16 @@
 * QQ(安卓)协议基于Node.js的实现，支持最低node版本为 v14
 * 若你不熟悉Node.js或不会组织代码，可通过 [template](https://github.com/takayama-lily/oicq-template) 创建一个简单的应用程序
 * [API参考](#api-documentation) / [详细文档](https://takayama-lily.github.io/oicq/)
+* [从v1.x升级](https://github.com/takayama-lily/oicq/projects/3#column-16638290)
 
 ----
 
 **Install:**
 
+> 此分支(v2.0)暂时处于beta状态
+
 ```bash
-> npm i oicq  # or > yarn add oicq
+> npm i oicq@beta  # or > yarn add oicq@beta
 ```
 
 **Usage:**
@@ -179,6 +182,8 @@ client.on("system.login.qrcode", function (event) {
 |gid|群号|
 |name|群名|
 |info|群资料|
+|is_owner|我是否群主|
+|is_admin|我是否管理|
 |all_muted|是否全员禁言|
 |mute_left|我的禁言剩余时间|
 |fs|[群文件系统](#class-gfs)|
@@ -249,7 +254,7 @@ client.on("system.login.qrcode", function (event) {
 |title|头衔|
 |is_friend|是否好友|
 |is_owner|是否群主|
-|is_admin|是否管理员|
+|is_admin|是否管理|
 |mute_left|禁言剩余时间|
 |group|[所在群对象](#class-group)|
 |info|群员资料|

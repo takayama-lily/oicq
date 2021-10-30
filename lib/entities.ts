@@ -20,6 +20,7 @@ export interface GroupInfo {
 	member_count: number
 	max_member_count: number
 	owner_id: number
+	admin_flag: boolean
 	last_join_time: number
 	last_sent_time?: number
 	shutup_time_whole: number

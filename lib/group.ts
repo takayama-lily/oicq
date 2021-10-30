@@ -27,6 +27,7 @@ const GI_BUF = pb.encode({
 	45: 0,
 	46: 0,
 	49: 0,
+	50: 0,
 	54: 0,
 	89: "",
 })
@@ -107,15 +108,23 @@ export class Group extends Discuss {
 	}
 
 	get name() {
-		return this._info?.group_name
+		return this.info?.group_name
+	}
+	/** 我是否是群主 */
+	get is_owner() {
+		return this.info?.owner_id === this.c.uin
+	}
+	/** 我是否是管理 */
+	get is_admin() {
+		return this.is_owner || !!this.info?.admin_flag
 	}
 	/** 是否全员禁言 */
 	get all_muted() {
-		return this._info?.shutup_time_whole! > timestamp()
+		return this.info?.shutup_time_whole! > timestamp()
 	}
 	/** 我的禁言剩余时间 */
 	get mute_left() {
-		const t = this._info?.shutup_time_me! - timestamp()
+		const t = this.info?.shutup_time_me! - timestamp()
 		return t > 0 ? t : 0
 	}
 
@@ -140,6 +149,8 @@ export class Group extends Discuss {
 
 	/** 强制刷新资料 */
 	async renew(): Promise<GroupInfo> {
+		if (this._info)
+			this._info.update_time = timestamp()
 		const body = pb.encode({
 			1: this.c.apk.subid,
 			2: {
@@ -147,8 +158,6 @@ export class Group extends Discuss {
 				2: GI_BUF,
 			},
 		})
-		if (this._info)
-			this._info.update_time = timestamp()
 		const payload = await this.c.sendOidb("OidbSvc.0x88d_0", body)
 		const proto = pb.decode(payload)[4][1][3]
 		if (!proto) {
@@ -162,6 +171,7 @@ export class Group extends Discuss {
 			member_count: proto[6],
 			max_member_count: proto[5],
 			owner_id: proto[1],
+			admin_flag: !!proto[50],
 			last_join_time: proto[49],
 			last_sent_time: proto[54],
 			shutup_time_whole: proto[45] ? 0xffffffff : 0,
