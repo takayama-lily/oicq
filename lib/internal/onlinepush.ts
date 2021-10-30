@@ -1,5 +1,5 @@
 import { pb, jce } from "../core"
-import { NOOP, timestamp, OnlineStatus, log } from "../common"
+import { NOOP, timestamp, OnlineStatus, lock, log } from "../common"
 import { PrivateMessage, GroupMessage, DiscussMessage, genDmMessageId, genGroupMessageId } from "../message"
 import { GroupMessageEvent, DiscussMessageEvent } from "../events"
 
@@ -303,7 +303,7 @@ export function onlinePushTransListener(this: Client, payload: Buffer, seq: numb
 		}
 	} else if (push[3] === 34) {
 		const user_id = buf.readUInt32BE(5)
-		let operator_id, dismiss = false, group
+		let operator_id, dismiss = false
 		let member = this.gml.get(group_id)?.get(user_id)
 		if (buf[9] === 0x82 || buf[9] === 0x2) {
 			operator_id = user_id
@@ -313,7 +313,6 @@ export function onlinePushTransListener(this: Client, payload: Buffer, seq: numb
 			if (buf[9] === 0x01 || buf[9] === 0x81)
 				dismiss = true
 			if (user_id === this.uin) {
-				group = this.gl.get(group_id)
 				this.gl.delete(group_id)
 				this.gml.delete(group_id)
 				this.logger.info(`更新了群列表，删除了群：${group_id}`)
@@ -323,7 +322,7 @@ export function onlinePushTransListener(this: Client, payload: Buffer, seq: numb
 			}
 		}
 		emitNoticeEvent(this, "notice.group.decrease", {
-			group_id, user_id, operator_id, dismiss, member, group
+			group_id, user_id, operator_id, dismiss, member
 		})
 		this.gl.get(group_id)!.member_count--
 	}
@@ -342,7 +341,7 @@ const fragmap = new Map<string, GroupMessage[]>()
 export function groupMsgListener(this: Client, payload: Buffer) {
 	this.stat.recv_msg_cnt++
 	if (!this._sync_cookie) return
-	let msg = new GroupMessage(pb.decode(payload)[1])
+	let msg = new GroupMessage(pb.decode(payload)[1]) as GroupMessageEvent
 	this.emit(`internal.${msg.group_id}.${msg.rand}`, msg.message_id)
 
 	if (msg.user_id === this.uin && this.config.ignore_self)
@@ -358,30 +357,35 @@ export function groupMsgListener(this: Client, payload: Buffer) {
 		setTimeout(()=>fragmap.delete(k), 5000)
 		if (arr.length !== msg.pktnum)
 			return
-		msg = GroupMessage.combine(arr) as GroupMessage
+		msg = GroupMessage.combine(arr) as GroupMessageEvent
 	}
 
-	this.pickGroup(msg.group_id).info
-	this.config.cache_group_member && this.pickMember(msg.group_id, msg.sender.user_id).info
-
 	if (msg.raw_message) {
-		(msg as GroupMessageEvent).reply = (content, quote = false) => {
-			return this.pickGroup(msg.group_id).sendMsg(content, quote ? msg : undefined)
+		msg.group = this.pickGroup(msg.group_id)
+		msg.member = msg.group.pickMember(msg.user_id)
+		lock(msg, "group")
+		lock(msg, "member")
+		msg.reply = function (content, quote = false) {
+			return this.group.sendMsg(content, quote ? this : undefined)
+		}
+		msg.recall = function () {
+			return this.group.recallMsg(this)
 		}
 		const sender = msg.sender
-		const member = this.gml.get(msg.group_id)?.get(sender.user_id)
-		if (member) {
-			sender.nickname = member.nickname
-			sender.sex = member.sex
-			sender.age = member.age
-			sender.area = member.area || ""
-			member.card = sender.card
-			member.title = sender.title
-			member.level = sender.level
-			member.last_sent_time = timestamp()
+		if (msg.member.info) {
+			const info = msg.member.info
+			sender.nickname = info.nickname
+			sender.sex = info.sex
+			sender.age = info.age
+			sender.area = info.area || ""
+			info.card = sender.card
+			info.title = sender.title
+			info.level = sender.level
+			info.last_sent_time = timestamp()
 		}
 		this.logger.info(`recv from: [Group: ${msg.group_name}(${msg.group_id}), Member: ${sender.card || sender.nickname}(${sender.user_id})] ` + msg)
 		this.em("message.group." + msg.sub_type, msg)
+		msg.group.info!.last_sent_time = timestamp()
 	}
 }
 

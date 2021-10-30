@@ -1,6 +1,6 @@
 import { randomBytes } from "crypto"
 import { pb, jce } from "../core"
-import { uin2code, NOOP, timestamp, log } from "../common"
+import { uin2code, NOOP, timestamp, lock, log } from "../common"
 import { PrivateMessage } from "../message"
 import { PrivateMessageEvent } from "../events"
 
@@ -110,13 +110,14 @@ async function handleSyncMsg(this: Client, proto: pb.Proto) {
 		this.stat.recv_msg_cnt++
 		const msg = new PrivateMessage(proto, this.uin) as PrivateMessageEvent
 		if (msg.raw_message) {
-			const friend = this.pickFriend(msg.from_id)
+			msg.friend = this.pickFriend(msg.from_id)
+			lock(msg, "friend")
 			if (msg.sub_type === "friend")
-				msg.sender.nickname = friend.info?.nickname || this.sl.get(msg.from_id)?.nickname || ""
+				msg.sender.nickname = msg.friend.info?.nickname || this.sl.get(msg.from_id)?.nickname || ""
 			else if (msg.sub_type === "self")
 				msg.sender.nickname = this.nickname
-			msg.reply = (content, quote = false) => {
-				return friend.sendMsg(content, quote ? msg : undefined)
+			msg.reply = function (content, quote = false) {
+				return this.friend.sendMsg(content, quote ? this : undefined)
 			}
 			this.logger.info(`recv from: [Private: ${msg.from_id}(${msg.sub_type})] ` + msg)
 			this.em("message.private." + msg.sub_type, msg)

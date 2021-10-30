@@ -1,5 +1,9 @@
 import { Gender, GroupRole } from "./common"
 import { PrivateMessage, GroupMessage, DiscussMessage, Sendable } from "./message"
+import { Friend } from "./friend"
+import { Group } from "./group"
+import { Member } from "./member"
+import { MemberInfo } from "./entities"
 
 /** 发消息的返回值 */
 export interface MessageRet {
@@ -9,14 +13,20 @@ export interface MessageRet {
 	time: number
 }
 
-interface MessageEvent {
+export interface MessageEvent {
 	reply(content: Sendable, quote?: boolean): Promise<MessageRet>
 }
 
 /** 私聊消息事件 */
-export interface PrivateMessageEvent extends PrivateMessage, MessageEvent { }
+export interface PrivateMessageEvent extends PrivateMessage, MessageEvent {
+	friend: Friend
+}
 /** 群消息事件 */
-export interface GroupMessageEvent extends GroupMessage, MessageEvent { }
+export interface GroupMessageEvent extends GroupMessage, MessageEvent {
+	recall(): Promise<boolean>
+	group: Group
+	member: Member
+}
 /** 讨论组消息事件 */
 export interface DiscussMessageEvent extends DiscussMessage, MessageEvent { }
 
@@ -139,6 +149,7 @@ export interface MemberDecreaseEvent {
 	operator_id: number
 	user_id: number
 	dismiss: boolean
+	member?: MemberInfo
 }
 
 /** 群消息撤回 */

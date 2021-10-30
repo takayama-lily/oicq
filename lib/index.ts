@@ -11,7 +11,7 @@ export { Message, PrivateMessage, GroupMessage, DiscussMessage, ForwardMessage, 
 	TextElem, AtElem, FaceElem, BfaceElem, MfaceElem, ImageElem, MiraiElem,
 	FlashElem, PttElem, VideoElem, XmlElem, JsonElem, ShareElem, LocationElem, PokeElem,
 	parseDmMessageId, parseGroupMessageId, parseImageFileParam } from "./message"
-export { PrivateMessageEvent, GroupMessageEvent, DiscussMessageEvent, MessageRet,
+export { PrivateMessageEvent, GroupMessageEvent, DiscussMessageEvent, MessageEvent, MessageRet,
 	FriendAddReqEvent, GroupAddReqEvent, GroupInviteReqEvent, EventMap,
 	FriendIncreaseEvent, FriendDecreaseEvent, FriendRecallEvent, FriendPokeEvent,
 	MemberIncreaseEvent, MemberDecreaseEvent, GroupRecallEvent, GroupPokeEvent,
