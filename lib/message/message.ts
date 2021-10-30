@@ -86,6 +86,7 @@ export abstract class Message implements Quotable, Forwardable {
 		return this.sender?.card || this.sender?.nickname || ""
 	}
 
+	post_type = "message" as "message"
 	time: number
 	message: MessageElem[]
 	raw_message: string

@@ -56,6 +56,7 @@ function parseFrdSysMsg(proto: pb.Proto): FriendAddReqEvent {
 	const sex = proto[50][67] === 0 ? "male" : (proto[50][67] === 1 ? "female" : "unknown")
 	const age = proto[50][68]
 	return {
+		post_type: "request",
 		request_type: "friend",
 		sub_type: single ? "single" : "add",
 		user_id, nickname, source, comment, seq, sex, age, flag, time
@@ -72,6 +73,7 @@ function parseGrpSysMsg(proto: pb.Proto): GroupAddReqEvent | GroupInviteReqEvent
 	const seq = proto[3]
 	if (type === 2) { //invite
 		return {
+			post_type: "request",
 			request_type: "group",
 			sub_type: "invite",
 			time,
@@ -85,6 +87,7 @@ function parseGrpSysMsg(proto: pb.Proto): GroupAddReqEvent | GroupInviteReqEvent
 		}
 	} else if (type === 1 || type === 22) { //add
 		return {
+			post_type: "request",
 			request_type: "group",
 			sub_type: "add",
 			time,

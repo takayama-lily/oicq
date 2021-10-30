@@ -22,6 +22,7 @@ export interface DiscussMessageEvent extends DiscussMessage, MessageEvent { }
 
 /** 好友申请 */
 export interface FriendAddReqEvent {
+	post_type: "request"
 	request_type: "friend"
 	/** 为single时对方已将你加为单向好友 */
 	sub_type: "add" | "single"
@@ -40,6 +41,7 @@ export interface FriendAddReqEvent {
 
 /** 群申请 */
 export interface GroupAddReqEvent {
+	post_type: "request"
 	request_type: "group"
 	sub_type: "add"
 	user_id: number
@@ -58,6 +60,7 @@ export interface GroupAddReqEvent {
 
 /** 群邀请 */
 export interface GroupInviteReqEvent {
+	post_type: "request"
 	request_type: "group"
 	sub_type: "invite"
 	user_id: number
@@ -75,6 +78,7 @@ export interface GroupInviteReqEvent {
 
 /** 好友增加 */
 export interface FriendIncreaseEvent {
+	post_type: "notice"
 	notice_type: "friend"
 	sub_type: "increase"
 	user_id: number
@@ -83,6 +87,7 @@ export interface FriendIncreaseEvent {
 
 /** 好友减少 */
 export interface FriendDecreaseEvent {
+	post_type: "notice"
 	notice_type: "friend"
 	sub_type: "decrease"
 	user_id: number
@@ -91,6 +96,7 @@ export interface FriendDecreaseEvent {
 
 /** 好友消息撤回 */
 export interface FriendRecallEvent {
+	post_type: "notice"
 	notice_type: "friend"
 	sub_type: "recall"
 	user_id: number
@@ -104,6 +110,7 @@ export interface FriendRecallEvent {
 
 /** 好友戳一戳 */
 export interface FriendPokeEvent {
+	post_type: "notice"
 	notice_type: "friend"
 	sub_type: "poke"
 	user_id: number
@@ -115,6 +122,7 @@ export interface FriendPokeEvent {
 
 /** 群员增加 */
 export interface MemberIncreaseEvent {
+	post_type: "notice"
 	notice_type: "group"
 	sub_type: "increase"
 	group_id: number
@@ -124,6 +132,7 @@ export interface MemberIncreaseEvent {
 
 /** 群员减少 */
 export interface MemberDecreaseEvent {
+	post_type: "notice"
 	notice_type: "group"
 	sub_type: "decrease"
 	group_id: number
@@ -134,6 +143,7 @@ export interface MemberDecreaseEvent {
 
 /** 群消息撤回 */
 export interface GroupRecallEvent {
+	post_type: "notice"
 	notice_type: "group"
 	sub_type: "recall"
 	group_id: number
@@ -148,6 +158,7 @@ export interface GroupRecallEvent {
 
 /** 群戳一戳 */
 export interface GroupPokeEvent {
+	post_type: "notice"
 	notice_type: "group"
 	sub_type: "poke"
 	group_id: number
@@ -161,6 +172,7 @@ export interface GroupPokeEvent {
 
 /** 管理员变更 */
 export interface GroupAdminEvent {
+	post_type: "notice"
 	notice_type: "group"
 	sub_type: "admin"
 	group_id: number
@@ -170,6 +182,7 @@ export interface GroupAdminEvent {
 
 /** 群禁言 */
 export interface GroupMuteEvent {
+	post_type: "notice"
 	notice_type: "group"
 	sub_type: "ban"
 	group_id: number
@@ -181,6 +194,7 @@ export interface GroupMuteEvent {
 
 /** 群转让 */
 export interface GroupTransferEvent {
+	post_type: "notice"
 	notice_type: "group"
 	sub_type: "transfer"
 	group_id: number

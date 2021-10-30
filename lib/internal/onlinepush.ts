@@ -237,6 +237,7 @@ const push732: {[k: number]: (this: Client, group_id: number, buf: Buffer) =>  O
 
 function emitNoticeEvent(c: Client, name: string, event: any) {
 	const sp = name.split(".")
+	event.post_type = "notice"
 	event.notice_type = sp[1]
 	event.sub_type = sp[2]
 	c.em(name, event)
