@@ -571,7 +571,7 @@ function onlineListener(this: BaseClient) {
 		})
 	}
 	const buf = Buffer.alloc(9)
-	buf.writeInt32BE(this.uin)
+	buf.writeUInt32BE(this.uin)
 	buf.writeInt32BE(0x19e39, 5)
 	this.sig.hb480 = Buffer.from(pb.encode({
 		1: 1152,

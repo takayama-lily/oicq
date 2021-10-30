@@ -37,6 +37,7 @@ const ErrorMessage: {[code: number]: string} = {
 	10: "消息过长",
 	34: "消息过长",
 	120: "在该群被禁言",
+	121: "AT全体剩余次数不足"
 }
 
 export function drop(code: number, message?: string): never {

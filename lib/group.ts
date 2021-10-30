@@ -190,6 +190,8 @@ export class Group extends Discuss {
 
 	private async _fetchMembers() {
 		let next = 0
+		if (!this.c.gml.has(this.gid))
+			this.c.gml.set(this.gid, new Map)
 		try {
 			while (true) {
 				const GTML = jce.encodeStruct([
@@ -230,10 +232,10 @@ export class Group extends Discuss {
 			this.c.logger.error("加载群员列表超时")
 		}
 		fetchmap.delete(this.c.uin + "-" + this.gid)
-		const mlist = this.c.gml.get(this.gid)!
-		if (!mlist.size || !this.c.config.cache_group_member)
+		const mlist = this.c.gml.get(this.gid)
+		if (!mlist?.size || !this.c.config.cache_group_member)
 			this.c.gml.delete(this.gid)
-		return mlist
+		return mlist || new Map<number, MemberInfo>()
 	}
 
 	/** 获取群员列表 */
@@ -308,10 +310,7 @@ export class Group extends Discuss {
 				})
 			}
 		} catch {
-			if (this.c.config.resend)
-				message_id = await this._sendMsgByFrag(converter.toFragments())
-			else
-				drop(ErrorCode.RiskMessageError)
+			message_id = await this._sendMsgByFrag(converter.toFragments())
 		}
 		this.c.logger.info(`succeed to send: [Group(${this.gid})] ` + converter.brief)
 		{
@@ -321,6 +320,9 @@ export class Group extends Discuss {
 	}
 
 	private async _sendMsgByFrag(fragments: Uint8Array[]) {
+		if (!this.c.config.resend)
+			drop(ErrorCode.RiskMessageError)
+		this.c.logger.warn("群消息可能被风控，将尝试使用分片发送")
 		let n = 0
 		const rand = randomBytes(4).readUInt32BE()
 		const div = randomBytes(2).readUInt16BE()

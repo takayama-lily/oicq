@@ -545,7 +545,12 @@ export class Client extends BaseClient {
 
 	/** emit an event */
 	em(name = "", data?: any) {
-		data = Object.defineProperty(data || { }, "self_id", { value: this.uin })
+		data = Object.defineProperty(data || { }, "self_id", {
+			value: this.uin,
+			writable: true,
+			enumerable: true,
+			configurable: true,
+		})
 		while (true) {
 			this.emit(name, data)
 			let i = name.lastIndexOf(".")
