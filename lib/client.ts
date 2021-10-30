@@ -147,7 +147,7 @@ export class Client extends BaseClient {
 	constructor(uin: number, conf?: Config) {
 
 		const config = {
-			log_level: "trace" as LogLevel,
+			log_level: "info" as LogLevel,
 			platform: Platform.Android,
 			auto_server: true,
 			ignore_self: true,
