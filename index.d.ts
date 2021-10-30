@@ -1116,7 +1116,7 @@ export namespace segment {
     /** @deprecated 普通文本 */
     function text(text: string): TextElem;
     /** at */
-    function at(qq: number, text?: string, dummy?: boolean): AtElem;
+    function at(qq: number | "all", text?: string, dummy?: boolean): AtElem;
     /** 经典表情 */
     function face(id: number, text?: string): FaceElem;
     /** 小表情 */
@@ -1169,7 +1169,7 @@ export namespace segment {
 export namespace cqcode {
     /** @deprecated */
     function text(text: string): string;
-    function at(qq: number, text?: string, dummy?: boolean): string;
+    function at(qq: number | "all", text?: string, dummy?: boolean): string;
     function face(id: number, text?: string): string;
     function sface(id: number, text?: string): string;
     function bface(file: string): string;
