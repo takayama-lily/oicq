@@ -12,7 +12,7 @@ import { EventMap } from "./events"
 import { User, Friend } from "./friend"
 import { Discuss, Group } from "./group"
 import { Member } from "./member"
-import { Forwardable, Sendable, parseDmMessageId, parseGroupMessageId, Image } from "./message"
+import { Forwardable, Quotable, Sendable, parseDmMessageId, parseGroupMessageId, Image} from "./message"
 
 /** 日志记录器接口 */
 export interface Logger {
@@ -214,6 +214,12 @@ export class Client extends BaseClient {
 		}
 	}
 
+	/** 修改日志级别 */
+	set log_level(level: LogLevel) {
+		(this.logger as log4js.Logger).level = level
+		this.config.log_level = level
+	}
+
 	/**
 	 * 会优先尝试使用token登录 (token在上次登录成功后存放在`this.dir`下)
 	 * 
@@ -382,15 +388,15 @@ export class Client extends BaseClient {
 		return this.gml.get(group_id)?.get(user_id)!
 	}
 	/** @cqhttp use friend.sendMsg() */
-	async sendPrivateMsg(user_id: number, message: Sendable) {
+	async sendPrivateMsg(user_id: number, message: Sendable, source?: Quotable) {
 		return this.pickFriend(user_id).sendMsg(message)
 	}
 	/** @cqhttp use group.sendMsg() */
-	async sendGroupMsg(group_id: number, message: Sendable) {
+	async sendGroupMsg(group_id: number, message: Sendable, source?: Quotable) {
 		return this.pickGroup(group_id).sendMsg(message)
 	}
 	/** @cqhttp use discuss.sendMsg() */
-	async sendDiscussMsg(discuss_id: number, message: Sendable) {
+	async sendDiscussMsg(discuss_id: number, message: Sendable, source?: Quotable) {
 		return this.pickDiscuss(discuss_id).sendMsg(message)
 	}
 	/** @cqhttp use member.sendMsg() */

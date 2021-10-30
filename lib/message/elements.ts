@@ -1,4 +1,4 @@
-/** TEXT */
+/** TEXT (此元素可使用字符串代替) */
 export interface TextElem {
 	type: "text"
 	text: string
@@ -167,5 +167,5 @@ export type ChainElem = TextElem | FaceElem | BfaceElem | MfaceElem | ImageElem 
 export type MessageElem = TextElem | FaceElem | BfaceElem | MfaceElem | ImageElem | AtElem | MiraiElem | ReplyElem |
 	FlashElem | PttElem | VideoElem | JsonElem | XmlElem | PokeElem | LocationElem | ShareElem | FileElem
 
-/** 可通过sendMessage发送的类型集合 */
+/** 可通过sendMsg发送的类型集合 */
 export type Sendable = string | MessageElem | (string | MessageElem)[]

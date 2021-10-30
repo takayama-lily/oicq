@@ -4,7 +4,6 @@ import { pb, jce } from "./core"
 import { ErrorCode, drop } from "./errors"
 import { timestamp, code2uin, PB_CONTENT, NOOP, lock, log } from "./common"
 import { Contactable } from "./internal"
-import { Member } from "./member"
 import { Sendable, GroupMessage, Image, buildMusic, MusicPlatform, Anonymous, parseGroupMessageId, Quotable } from "./message"
 import { Gfs } from "./gfs"
 import { MessageRet } from "./events"
@@ -139,7 +138,7 @@ export class Group extends Discuss {
 
 	/** 获取一枚群员实例 */
 	pickMember(uid: number, strict = false) {
-		return Member.as.call(this.c, this.gid, uid, strict)
+		return this.c.pickMember(this.gid, uid, strict)
 	}
 
 	/** 获取群头像url (history=1,2,3...) */
