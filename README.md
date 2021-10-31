@@ -1,13 +1,13 @@
 # oicq
 
-[![npm version](https://img.shields.io/npm/v/oicq.svg?logo=npm)](https://www.npmjs.com/package/oicq)
+[![npm version](https://img.shields.io/npm/v/oicq/beta.svg)](https://www.npmjs.com/package/oicq)
 [![dm](https://shields.io/npm/dm/oicq)](https://www.npmjs.com/package/oicq)
-[![node engine](https://img.shields.io/node/v/oicq.svg)](https://nodejs.org)
+[![node engine](https://img.shields.io/node/v/oicq/beta.svg)](https://nodejs.org)
 [![discord](https://img.shields.io/static/v1?label=chat&message=on%20discord&color=7289da&logo=discord)](https://discord.gg/gKnU7BARzv)
 
 * QQ(安卓)协议基于Node.js的实现，支持最低node版本为 v14
 * 若你不熟悉Node.js或不会组织代码，可通过 [template](https://github.com/takayama-lily/oicq-template) 创建一个简单的应用程序
-* [API参考](#api-documentation) / [详细文档](https://takayama-lily.github.io/oicq/)
+* [API参考](#api-documentation) / [TypeScriptDoc](https://takayama-lily.github.io/oicq/)
 * [从v1.x升级](https://github.com/takayama-lily/oicq/projects/3#column-16638290)
 
 ----
@@ -54,7 +54,7 @@ client.on("system.login.qrcode", function (event) {
 * [Class: Contactable](#class-contactable) 群和用户的基类
 * [Class: Gfs](#class-gfs) 群文件系统
 * [Class: Message](#class-message) 消息
-* [namespace: segment](#namespace-segment) 消息元素
+* [Namespace: segment](#namespace-segment) 消息元素
 * [使用密码登录](#使用密码登录)
 
 ### Class: Client
@@ -145,7 +145,7 @@ client.on("system.login.qrcode", function (event) {
 |notice.group|群通知|
 |notice|全部通知|
 |sync.message|私聊消息同步|
-|sync.readed|已读同步|
+|sync.read|已读同步|
 
 ### Class: Group
 
@@ -263,7 +263,7 @@ client.on("system.login.qrcode", function (event) {
 
 |Method|Description|
 |-|-|
-|sendMessage()|发送消息|
+|sendMsg()|发送消息|
 
 |Property|Description|
 |-|-|
@@ -344,7 +344,30 @@ client.on("system.login.qrcode", function (event) {
 
 > 基本同 `Message`
 
-### namespace: segment
+### Interface: MessageEvent extends Message
+
+|Method|Description|
+|-|-|
+|reply()|快速回复|
+
+### Interface: GroupMessageEvent extends MessageEvent
+
+|Method|Description|
+|-|-|
+|recall()|撤回|
+
+|Property|Description|
+|-|-|
+|group|[群对象](#class-group)|
+|member|[群员对象](#class-member)|
+
+### Interface: PrivateMessageEvent extends MessageEvent
+
+|Property|Description|
+|-|-|
+|friend|[好友对象](#class-friend)|
+
+### Namespace: segment
 
 |Method|Description|
 |-|-|
