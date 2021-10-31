@@ -7,7 +7,7 @@
 
 * QQ(安卓)协议基于Node.js的实现，支持最低node版本为 v14
 * 若你不熟悉Node.js或不会组织代码，可通过 [template](https://github.com/takayama-lily/oicq-template) 创建一个简单的应用程序
-* [API参考](#api-documentation) / [TypeScriptDoc](https://takayama-lily.github.io/oicq/)
+* [API Reference](#api-reference) / [Type Docs](https://takayama-lily.github.io/oicq/)
 * [从v1.x升级](https://github.com/takayama-lily/oicq/projects/3#column-16638290)
 
 ----
@@ -41,7 +41,7 @@ client.on("system.login.qrcode", function (event) {
 }).login()
 ```
 
-## Api Documentation
+## Api Reference
 
 * [Class: Client](#class-client) 客户端
 * [Class: Group](#class-group) 群
