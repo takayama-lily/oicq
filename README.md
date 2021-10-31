@@ -48,7 +48,6 @@ client.on("system.login.qrcode", function (event) {
 * [Class: User](#class-user) 用户
 * [Class: Friend](#class-friend) 好友
 * [Class: Member](#class-member) 群员
-* [Class: Discuss](#class-discuss) 讨论组
 * [Class: Contactable](#class-contactable) 群和用户的基类
 * [Class: Gfs](#class-gfs) 群文件系统
 * [Class: Message](#class-message) 消息
@@ -67,7 +66,7 @@ client.on("system.login.qrcode", function (event) {
 |pickFriend()|[得到一个好友对象](#class-friend)|
 |pickMember()|[得到一个群员对象](#class-member)|
 |pickUser()|[得到一个用户对象](#class-user)|
-|pickDiscuss()|[得到一个讨论组对象](#class-discuss)|
+|pickDiscuss()|得到一个讨论组对象|
 |setOnlineStatus()|设置在线状态|
 |setNickname()|设置昵称|
 |setGender()|设置性别|
@@ -261,18 +260,6 @@ client.on("system.login.qrcode", function (event) {
 |group|[所在群对象](#class-group)|
 |info|群员资料|
 
-### Class: Discuss
-
-> 所有的`message.discuss`事件中含有此实例
-
-|Method|Description|
-|-|-|
-|sendMsg()|发送消息|
-
-|Property|Description|
-|-|-|
-|gid|讨论组群号|
-
 ### Class: Contactable
 
 > 抽象类，用户和群的基类，里面的方法和属性都会被继承
@@ -321,7 +308,7 @@ client.on("system.login.qrcode", function (event) {
 
 |Static Method|Description|
 |-|-|
-|unserialize()|反序列化一条消息|
+|deserialize()|反序列化一条消息|
 
 |Property|Description|
 |-|-|
