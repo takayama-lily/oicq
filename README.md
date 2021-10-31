@@ -43,8 +43,6 @@ client.on("system.login.qrcode", function (event) {
 
 ## Api Documentation
 
-----
-
 * [Class: Client](#class-client) 客户端
 * [Class: Group](#class-group) 群
 * [Class: User](#class-user) 用户
