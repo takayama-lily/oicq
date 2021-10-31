@@ -1,7 +1,7 @@
 import { randomBytes } from "crypto"
 import { pb, jce } from "./core"
 import { ErrorCode, drop } from "./errors"
-import { Gender, PB_CONTENT, code2uin, timestamp, lock, log } from "./common"
+import { Gender, PB_CONTENT, code2uin, timestamp, lock, hide } from "./common"
 import { Sendable, PrivateMessage, buildMusic, MusicPlatform, Quotable, rand2uuid, genDmMessageId, parseDmMessageId } from "./message"
 import { buildSyncCookie, Contactable } from "./internal"
 import { MessageRet } from "./events"
@@ -332,6 +332,7 @@ export class Friend extends User {
 
 	protected constructor(c: Client, uid: number, private _info?: FriendInfo) {
 		super(c, uid)
+		hide(this, "_info")
 	}
 
 	/** 发送音乐分享 */
@@ -376,9 +377,9 @@ export class Friend extends User {
 	}
 
 	/** 戳一戳 */
-	async poke(uid = this.uid) {
+	async poke(self = false) {
 		const body = pb.encode({
-			1: Number(uid),
+			1: self ? this.c.uin : this.uid,
 			5: this.uid,
 		})
 		const payload = await this.c.sendOidb("OidbSvc.0xed3", body)

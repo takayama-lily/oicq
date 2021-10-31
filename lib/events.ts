@@ -1,7 +1,7 @@
 import { Gender, GroupRole } from "./common"
 import { PrivateMessage, GroupMessage, DiscussMessage, Sendable } from "./message"
-import { Friend } from "./friend"
-import { Group } from "./group"
+import { Friend, User } from "./friend"
+import { Group, Discuss } from "./group"
 import { Member } from "./member"
 import { MemberInfo } from "./entities"
 
@@ -14,102 +14,92 @@ export interface MessageRet {
 }
 
 export interface MessageEvent {
+	/** 快速回复 */
 	reply(content: Sendable, quote?: boolean): Promise<MessageRet>
 }
 
 /** 私聊消息事件 */
 export interface PrivateMessageEvent extends PrivateMessage, MessageEvent {
+	/** 好友对象 */
 	friend: Friend
 }
 /** 群消息事件 */
 export interface GroupMessageEvent extends GroupMessage, MessageEvent {
+	/** 快速撤回 */
 	recall(): Promise<boolean>
+	/** 群对象 */
 	group: Group
+	/** 发送者群员对象 */
 	member: Member
 }
 /** 讨论组消息事件 */
-export interface DiscussMessageEvent extends DiscussMessage, MessageEvent { }
+export interface DiscussMessageEvent extends DiscussMessage, MessageEvent {
+	discuss: Discuss
+}
 
-/** 好友申请 */
-export interface FriendAddReqEvent {
+export interface RequestEvent {
 	post_type: "request"
+	user_id: number
+	nickname: string
+	/** @cqhttp cqhttp方法用 */
+	flag: string
+	seq: number
+	time: number
+	/** 快速操作方法 */
+	approve(yes?: boolean): Promise<boolean>
+}
+/** 好友申请 */
+export interface FriendRequestEvent extends RequestEvent {
 	request_type: "friend"
 	/** 为single时对方已将你加为单向好友 */
 	sub_type: "add" | "single"
-	user_id: number
-	nickname: string
-	/** @cqhttp cqhttp方法用 */
-	flag: string
 	comment: string
 	source: string
-	/** 同意申请需要此参数 */
-	seq: number
 	age: number
 	sex: Gender
-	time: number
 }
-
 /** 群申请 */
-export interface GroupAddReqEvent {
-	post_type: "request"
+export interface GroupRequestEvent extends RequestEvent {
 	request_type: "group"
 	sub_type: "add"
-	user_id: number
-	nickname: string
-	/** @cqhttp cqhttp方法用 */
-	flag: string
 	group_id: number
 	group_name: string
 	comment: string
-	/** 同意申请需要此参数 */
-	seq: number
 	inviter_id?: number
 	tips: string
-	time: number
 }
-
 /** 群邀请 */
-export interface GroupInviteReqEvent {
-	post_type: "request"
+export interface GroupInviteEvent extends RequestEvent {
 	request_type: "group"
 	sub_type: "invite"
-	user_id: number
-	nickname: string
-	/** @cqhttp cqhttp方法用 */
-	flag: string
 	group_id: number
 	group_name: string
-	/** 同意申请需要此参数 */
-	seq: number
 	/** 邀请者在群里的权限 */
 	role: GroupRole
-	time: number
 }
 
+/** 好友通知共通属性 */
+export interface FriendNoticeEvent {
+	post_type: "notice"
+	notice_type: "friend"
+	/** 对方账号 */
+	user_id: number
+	/** 好友对象 */
+	friend: Friend
+}
 /** 好友增加 */
-export interface FriendIncreaseEvent {
-	post_type: "notice"
-	notice_type: "friend"
+export interface FriendIncreaseEvent extends FriendNoticeEvent {
 	sub_type: "increase"
-	user_id: number
 	nickname: string
 }
-
 /** 好友减少 */
-export interface FriendDecreaseEvent {
-	post_type: "notice"
-	notice_type: "friend"
+export interface FriendDecreaseEvent extends FriendNoticeEvent {
 	sub_type: "decrease"
-	user_id: number
 	nickname: string
 }
-
 /** 好友消息撤回 */
-export interface FriendRecallEvent {
-	post_type: "notice"
-	notice_type: "friend"
+export interface FriendRecallEvent extends FriendNoticeEvent {
 	sub_type: "recall"
-	user_id: number
 	operator_id: number
 	/** @cqhttp cqhttp方法用 */
 	message_id: string
@@ -117,47 +107,41 @@ export interface FriendRecallEvent {
 	rand: number
 	time: number
 }
-
 /** 好友戳一戳 */
-export interface FriendPokeEvent {
-	post_type: "notice"
-	notice_type: "friend"
+export interface FriendPokeEvent extends FriendNoticeEvent {
 	sub_type: "poke"
-	user_id: number
 	operator_id: number
 	target_id: number
 	action: string
 	suffix: string
 }
 
-/** 群员增加 */
-export interface MemberIncreaseEvent {
+/** 群通知共通属性 */
+export interface GroupNoticeEvent {
 	post_type: "notice"
 	notice_type: "group"
-	sub_type: "increase"
+	/** 群号 */
 	group_id: number
+	/** 群对象 */
+	group: Group
+}
+/** 群员增加 */
+export interface MemberIncreaseEvent extends GroupNoticeEvent {
+	sub_type: "increase"
 	user_id: number
 	nickname: string
 }
-
 /** 群员减少 */
-export interface MemberDecreaseEvent {
-	post_type: "notice"
-	notice_type: "group"
+export interface MemberDecreaseEvent extends GroupNoticeEvent {
 	sub_type: "decrease"
-	group_id: number
 	operator_id: number
 	user_id: number
 	dismiss: boolean
 	member?: MemberInfo
 }
-
 /** 群消息撤回 */
-export interface GroupRecallEvent {
-	post_type: "notice"
-	notice_type: "group"
+export interface GroupRecallEvent extends GroupNoticeEvent {
 	sub_type: "recall"
-	group_id: number
 	user_id: number
 	operator_id: number
 	/** @cqhttp cqhttp方法用 */
@@ -166,13 +150,9 @@ export interface GroupRecallEvent {
 	rand: number
 	time: number
 }
-
 /** 群戳一戳 */
-export interface GroupPokeEvent {
-	post_type: "notice"
-	notice_type: "group"
+export interface GroupPokeEvent extends GroupNoticeEvent {
 	sub_type: "poke"
-	group_id: number
 	/** @deprecated 群中该值永远等于target_id */
 	user_id: number
 	operator_id: number
@@ -180,35 +160,24 @@ export interface GroupPokeEvent {
 	action: string
 	suffix: string
 }
-
 /** 管理员变更 */
-export interface GroupAdminEvent {
-	post_type: "notice"
-	notice_type: "group"
+export interface GroupAdminEvent extends GroupNoticeEvent {
 	sub_type: "admin"
-	group_id: number
 	user_id: number
 	set: boolean
 }
-
 /** 群禁言 */
-export interface GroupMuteEvent {
-	post_type: "notice"
-	notice_type: "group"
+export interface GroupMuteEvent extends GroupNoticeEvent {
 	sub_type: "ban"
-	group_id: number
 	operator_id: number
 	user_id: number
-	nickname?: string
 	duration: number
+	/** 匿名禁言才有此属性 */
+	nickname?: string
 }
-
 /** 群转让 */
-export interface GroupTransferEvent {
-	post_type: "notice"
-	notice_type: "group"
+export interface GroupTransferEvent extends GroupNoticeEvent {
 	sub_type: "transfer"
-	group_id: number
 	operator_id: number
 	user_id: number
 }
@@ -236,21 +205,21 @@ export interface EventMap<T = any> {
 	//^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 	/** 好友申请 */
-	"request.friend.add": (this: T, event: FriendAddReqEvent) => void
+	"request.friend.add": (this: T, event: FriendRequestEvent) => void
 	/** 对方已将你加为单向好友，可回添对方 */
-	"request.friend.single": (this: T, event: FriendAddReqEvent) => void
+	"request.friend.single": (this: T, event: FriendRequestEvent) => void
 
-	"request.friend": (this: T, event: FriendAddReqEvent) => void
+	"request.friend": (this: T, event: FriendRequestEvent) => void
 
 	/** 加群申请 */
-	"request.group.add": (this: T, event: GroupAddReqEvent) => void
+	"request.group.add": (this: T, event: GroupRequestEvent) => void
 	/** 群邀请 */
-	"request.group.invite": (this: T, event: GroupInviteReqEvent) => void
+	"request.group.invite": (this: T, event: GroupInviteEvent) => void
 
-	"request.group": (this: T, event: GroupAddReqEvent | GroupInviteReqEvent) => void
+	"request.group": (this: T, event: GroupRequestEvent | GroupInviteEvent) => void
 
 	/** 所有request */
-	"request": (this: T, event: FriendAddReqEvent | GroupAddReqEvent | GroupInviteReqEvent) => void
+	"request": (this: T, event: FriendRequestEvent | GroupRequestEvent | GroupInviteEvent) => void
 
 	//^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 

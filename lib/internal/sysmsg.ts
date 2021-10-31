@@ -1,5 +1,5 @@
 import { pb } from "../core"
-import { FriendAddReqEvent, GroupAddReqEvent, GroupInviteReqEvent } from "../events"
+import { FriendRequestEvent, GroupRequestEvent, GroupInviteEvent } from "../events"
 
 type Client = import("../client").Client
 
@@ -38,7 +38,7 @@ export function parseGroupRequestFlag(flag: string) {
 	return { user_id, group_id, seq, invite }
 }
 
-function parseFrdSysMsg(proto: pb.Proto): FriendAddReqEvent {
+function parseFrdSysMsg(proto: pb.Proto): Omit<FriendRequestEvent, "approve"> {
 	let single: boolean
 	if (proto[50][1] === 9 && String(proto[50][6]) === "")
 		single = true
@@ -63,7 +63,7 @@ function parseFrdSysMsg(proto: pb.Proto): FriendAddReqEvent {
 	}
 }
 
-function parseGrpSysMsg(proto: pb.Proto): GroupAddReqEvent | GroupInviteReqEvent {
+function parseGrpSysMsg(proto: pb.Proto): Omit<GroupRequestEvent, "approve"> | Omit<GroupInviteEvent, "approve"> {
 	if (proto[50][1] !== 1)
 		throw new Error("unsupported group request type: " + proto[50][1])
 	const type = proto[50][12]
@@ -129,18 +129,21 @@ export async function getFrdSysMsg(this: Client) {
 	if (!Array.isArray(rsp)) rsp = [rsp]
 	for (const proto of rsp) {
 		try {
-			const e = parseFrdSysMsg(proto)
+			const e = parseFrdSysMsg(proto) as FriendRequestEvent
 			if (this._msgExists(e.user_id, 0, proto[3], e.time))
 				continue
+			e.approve = (yes = true) => {
+				return this.pickUser(e.user_id).setFriendReq(e.seq, yes)
+			}
 			if (e.sub_type === "single") {
 				this.sl.set(e.user_id, {
 					user_id: e.user_id,
 					nickname: e.nickname,
 				})
-				this.logger.info(`${e.user_id}(${e.nickname}) 将你添加为单向好友 (flag: ${e.flag})`)
+				this.logger.info(`${e.user_id}(${e.nickname}) 将你添加为单向好友 (seq: ${e.seq}, flag: ${e.flag})`)
 				this.em("request.friend.single", e)
 			} else {
-				this.logger.info(`收到 ${e.user_id}(${e.nickname}) 的加好友请求 (flag: ${e.flag})`)
+				this.logger.info(`收到 ${e.user_id}(${e.nickname}) 的加好友请求 (seq: ${e.seq}, flag: ${e.flag})`)
 				this.em("request.friend.add", e)
 			}
 		} catch (e: any) {
@@ -221,14 +224,17 @@ export async function getGrpSysMsg(this: Client) {
 	}
 	for (let proto of arr) {
 		try {
-			const e = parseGrpSysMsg(proto)
+			const e = parseGrpSysMsg(proto) as GroupRequestEvent
 			if (this._msgExists(e.group_id, proto[50][12], proto[3], e.time))
 				continue
+			e.approve = (yes = true) => {
+				return this.pickUser(e.user_id)[e.sub_type === "add" ? "setGroupReq" : "setGroupInvite"](e.group_id, e.seq, yes)
+			}
 			if (e.sub_type === "add") {
-				this.logger.info(`用户 ${e.user_id}(${e.nickname}) 请求加入群 ${e.group_id}(${e.group_name}) (flag: ${e.flag})`)
+				this.logger.info(`用户 ${e.user_id}(${e.nickname}) 请求加入群 ${e.group_id}(${e.group_name}) (seq: ${e.seq}, flag: ${e.flag})`)
 				this.em("request.group.add", e)
 			} else {
-				this.logger.info(`用户 ${e.user_id}(${e.nickname}) 邀请你加入群 ${e.group_id}(${e.group_name}) (flag: ${e.flag})`)
+				this.logger.info(`用户 ${e.user_id}(${e.nickname}) 邀请你加入群 ${e.group_id}(${e.group_name}) (seq: ${e.seq}, flag: ${e.flag})`)
 				this.em("request.group.invite", e)
 			}
 		} catch (e: any) {
@@ -238,7 +244,7 @@ export async function getGrpSysMsg(this: Client) {
 }
 
 export async function getSysMsg(this: Client) {
-	const ret: Array<FriendAddReqEvent | GroupAddReqEvent | GroupInviteReqEvent> = []
+	const ret: Array<FriendRequestEvent | GroupRequestEvent | GroupInviteEvent> = []
 
 	const task1 = (async () => {
 		const blob = await this.sendUni("ProfileService.Pb.ReqSystemMsgNew.Friend", FRD_BUF)
@@ -249,7 +255,10 @@ export async function getSysMsg(this: Client) {
 		const dbl = new Set
 		for (let proto of rsp) {
 			try {
-				const e = parseFrdSysMsg(proto)
+				const e = parseFrdSysMsg(proto) as FriendRequestEvent
+				e.approve = (yes = true) => {
+					return this.pickUser(e.user_id).setFriendReq(e.seq, yes)
+				}
 				if (dbl.has(e.user_id)) continue
 				dbl.add(e.user_id)
 				ret.push(e)
@@ -260,18 +269,21 @@ export async function getSysMsg(this: Client) {
 	const task2 = (async () => {
 		let arr: pb.Proto[] = []
 		{
-			const blob = await this.sendUni("ProfileService.Pb.ReqSystemMsgNew.Group", GRP_BUF)
-			let rsp = pb.decode(blob)[10]
+			const payload = await this.sendUni("ProfileService.Pb.ReqSystemMsgNew.Group", GRP_BUF)
+			let rsp = pb.decode(payload)[10]
 			if (rsp) arr = arr.concat(rsp)
 		}
 		{
-			const blob = await this.sendUni("ProfileService.Pb.ReqSystemMsgNew.Group", GRP_BUF_RISK)
-			let rsp = pb.decode(blob)[10]
+			const payload = await this.sendUni("ProfileService.Pb.ReqSystemMsgNew.Group", GRP_BUF_RISK)
+			let rsp = pb.decode(payload)[10]
 			if (rsp) arr = arr.concat(rsp)
 		}
 		for (let proto of arr) {
 			try {
-				const e = parseGrpSysMsg(proto)
+				const e = parseGrpSysMsg(proto) as GroupRequestEvent
+				e.approve = (yes = true) => {
+					return this.pickUser(e.user_id)[e.sub_type === "add" ? "setGroupReq" : "setGroupInvite"](e.group_id, e.seq, yes)
+				}
 				ret.push(e)
 			} catch { }
 		}

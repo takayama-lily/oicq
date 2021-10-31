@@ -1,6 +1,6 @@
 import { pb, jce } from "./core"
 import { ErrorCode, drop } from "./errors"
-import { timestamp, parseFunString, NOOP, lock } from "./common"
+import { timestamp, parseFunString, NOOP, lock, hide } from "./common"
 import { MemberInfo } from "./entities"
 import { User } from "./friend"
 
@@ -68,6 +68,7 @@ export class Member extends User {
 	protected constructor(c: Client, public readonly gid: number, uid: number, private _info?: MemberInfo) {
 		super(c, uid)
 		lock(this, "gid")
+		hide(this, "_info")
 	}
 
 	/** 强制刷新资料 */

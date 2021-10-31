@@ -51,3 +51,12 @@ export function lock(obj: any, prop: string) {
 		writable: false,
 	})
 }
+
+/** 隐藏一个属性 */
+export function hide(obj: any, prop: string) {
+	Reflect.defineProperty(obj, prop, {
+		configurable: false,
+		enumerable: false,
+		writable: true,
+	})
+}

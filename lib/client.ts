@@ -3,7 +3,7 @@ import * as path from "path"
 import * as log4js from "log4js"
 import { BaseClient, Platform, pb, generateShortDevice, ShortDevice, Domain } from "./core"
 const pkg = require("../package.json")
-import { md5, timestamp, NOOP, lock, Gender, OnlineStatus } from "./common"
+import { md5, timestamp, NOOP, lock, Gender, OnlineStatus, hide } from "./common"
 import { bindInternalListeners, parseFriendRequestFlag, parseGroupRequestFlag,
 	getSysMsg, setAvatar, setSign, setStatus, addClass, delClass, renameClass,
 	loadBL, loadFL, loadGL, loadSL, getStamp, delStamp } from "./internal"
@@ -202,6 +202,7 @@ export class Client extends BaseClient {
 		lock(this, "sl")
 		lock(this, "gml")
 		lock(this, "blacklist")
+		hide(this, "_sync_cookie")
 
 		let n = 0
 		this.heartbeat = () => {

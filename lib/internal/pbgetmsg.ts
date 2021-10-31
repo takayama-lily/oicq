@@ -1,8 +1,9 @@
 import { randomBytes } from "crypto"
 import { pb, jce } from "../core"
-import { uin2code, NOOP, timestamp, lock, log } from "../common"
+import { uin2code, NOOP, timestamp, log } from "../common"
 import { PrivateMessage } from "../message"
 import { PrivateMessageEvent } from "../events"
+import { emitGroupNoticeEvent } from "./onlinepush"
 
 type Client = import("../client").Client
 
@@ -74,34 +75,36 @@ async function handleSyncMsg(this: Client, proto: pb.Proto) {
 
 	//群员入群
 	if (type === 33) {
-		const group_id = uin2code(from)
+		const gid = uin2code(from)
 		const user_id = head[15]
 		const nickname = String(head[16])
-		const ginfo = await this.pickGroup(group_id).renew().catch(NOOP)
-		if (!ginfo) return
+		const g = this.pickGroup(gid)
+		await g.renew().catch(NOOP)
 		if (user_id === this.uin) {
-			this.logger.info(`更新了群列表，新增了群：${group_id}`)
-			this.config.cache_group_member && this.getGroupMemberList(group_id)
+			this.config.cache_group_member && g.getMemberMap()
+			this.logger.info(`更新了群列表，新增了群：${gid}`)
 		} else {
-			this.config.cache_group_member && await this.getGroupMemberInfo(group_id, user_id).catch(NOOP)
-			this.logger.info(`${user_id}(${nickname}) 加入了群 ${group_id}`)
+			this.config.cache_group_member && await g.pickMember(user_id).renew().catch(NOOP)
+			this.logger.info(`${user_id}(${nickname}) 加入了群 ${gid}`)
 		}
-		this.em("notice.group.increase", {
-			group_id, user_id, nickname
+		emitGroupNoticeEvent(this, gid, {
+			sub_type: "increase",
+			user_id, nickname
 		})
 	}
 
 	//被管理批准入群，建群
 	else if (type === 85 || type === 38) {
-		const group_id = uin2code(from)
+		const gid = uin2code(from)
 		const user_id = this.uin
 		const nickname = this.nickname
-		const ginfo = await this.pickGroup(group_id).renew().catch(NOOP)
-		if (!ginfo) return
-		this.logger.info(`更新了群列表，新增了群：${group_id}`)
-		this.config.cache_group_member && this.getGroupMemberList(group_id)
-		this.em("notice.group.increase", {
-			group_id, user_id, nickname
+		const g = this.pickGroup(gid)
+		await g.renew().catch(NOOP)
+		this.config.cache_group_member && g.getMemberMap()
+		this.logger.info(`更新了群列表，新增了群：${gid}`)
+		emitGroupNoticeEvent(this, gid, {
+			sub_type: "increase",
+			user_id, nickname
 		})
 	}
 
@@ -111,7 +114,6 @@ async function handleSyncMsg(this: Client, proto: pb.Proto) {
 		const msg = new PrivateMessage(proto, this.uin) as PrivateMessageEvent
 		if (msg.raw_message) {
 			msg.friend = this.pickFriend(msg.from_id)
-			lock(msg, "friend")
 			if (msg.sub_type === "friend")
 				msg.sender.nickname = msg.friend.info?.nickname || this.sl.get(msg.from_id)?.nickname || ""
 			else if (msg.sub_type === "self")

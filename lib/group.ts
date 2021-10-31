@@ -2,7 +2,7 @@ import { randomBytes } from "crypto"
 import axios from "axios"
 import { pb, jce } from "./core"
 import { ErrorCode, drop } from "./errors"
-import { timestamp, code2uin, PB_CONTENT, NOOP, lock, log } from "./common"
+import { timestamp, code2uin, PB_CONTENT, NOOP, lock, hide } from "./common"
 import { Contactable } from "./internal"
 import { Sendable, GroupMessage, Image, buildMusic, MusicPlatform, Anonymous, parseGroupMessageId, Quotable } from "./message"
 import { Gfs } from "./gfs"
@@ -134,6 +134,7 @@ export class Group extends Discuss {
 		super(c, gid)
 		this.fs = new Gfs(c, gid)
 		lock(this, "fs")
+		hide(this, "_info")
 	}
 
 	/** 获取一枚群员实例 */

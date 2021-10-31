@@ -149,6 +149,8 @@ client.on("system.login.qrcode", function (event) {
 
 ### Class: Group
 
+> 所有的`notice.group`和`message.group`事件中含有此实例
+
 |Method|Description|
 |-|-|
 |sendMsg()|发送消息|
@@ -212,7 +214,8 @@ client.on("system.login.qrcode", function (event) {
 
 ### Class: Friend
 
-> 继承 [User](#class-user) 的所有方法和属性
+> 继承 [User](#class-user) 的所有方法和属性  
+> 所有的`notice.friend`和`message.private`事件中含有此实例
 
 |Method|Description|
 |-|-|
@@ -235,6 +238,7 @@ client.on("system.login.qrcode", function (event) {
 ### Class: Member
 
 > 继承 [User](#class-user) 的所有方法和属性
+> 所有的`message.group`事件中含有此实例
 
 |Method|Description|
 |-|-|
@@ -261,6 +265,8 @@ client.on("system.login.qrcode", function (event) {
 
 ### Class: Discuss
 
+> 所有的`message.discuss`事件中含有此实例
+
 |Method|Description|
 |-|-|
 |sendMsg()|发送消息|
@@ -271,7 +277,7 @@ client.on("system.login.qrcode", function (event) {
 
 ### Class: Contactable
 
-> 所有用户和群的基类，里面的方法和属性都会被继承
+> 抽象类，用户和群的基类，里面的方法和属性都会被继承
 
 |Method|Description|
 |-|-|
@@ -343,29 +349,6 @@ client.on("system.login.qrcode", function (event) {
 ### Class: ForwardMessage
 
 > 基本同 `Message`
-
-### Interface: MessageEvent extends Message
-
-|Method|Description|
-|-|-|
-|reply()|快速回复|
-
-### Interface: GroupMessageEvent extends MessageEvent
-
-|Method|Description|
-|-|-|
-|recall()|撤回|
-
-|Property|Description|
-|-|-|
-|group|[群对象](#class-group)|
-|member|[群员对象](#class-member)|
-
-### Interface: PrivateMessageEvent extends MessageEvent
-
-|Property|Description|
-|-|-|
-|friend|[好友对象](#class-friend)|
 
 ### Namespace: segment
 
