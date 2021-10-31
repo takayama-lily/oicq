@@ -107,7 +107,7 @@ export abstract class Message implements Quotable, Forwardable {
 	div: number
 
 	/** 反序列化一条消息 (私聊消息需要你的uin) */
-	static unserialize(serialized: Buffer, uin?: number) {
+	static deserialize(serialized: Buffer, uin?: number) {
 		const proto = pb.decode(serialized)
 		switch (proto[1][3]) {
 		case 82:
@@ -203,7 +203,7 @@ export class PrivateMessage extends Message {
 	}
 
 	/** 反序列化一条私聊消息，你需要传入你的`uin`，否则无法知道你是发送者还是接收者 */
-	static unserialize(serialized: Buffer, uin?: number) {
+	static deserialize(serialized: Buffer, uin?: number) {
 		return new PrivateMessage(pb.decode(serialized), uin)
 	}
 
@@ -276,7 +276,7 @@ export class GroupMessage extends Message {
 	}
 
 	/** 反序列化一条群消息 */
-	static unserialize(serialized: Buffer) {
+	static deserialize(serialized: Buffer) {
 		return new GroupMessage(pb.decode(serialized))
 	}
 
@@ -333,7 +333,7 @@ export class DiscussMessage extends Message {
 	}
 
 	/** 反序列化一条讨论组消息 */
-	static unserialize(serialized: Buffer) {
+	static deserialize(serialized: Buffer) {
 		return new DiscussMessage(pb.decode(serialized))
 	}
 
@@ -364,7 +364,7 @@ export class ForwardMessage implements Forwardable {
 	raw_message: string
 
 	/** 反序列化一条转发消息 */
-	static unserialize(serialized: Buffer) {
+	static deserialize(serialized: Buffer) {
 		return new ForwardMessage(pb.decode(serialized))
 	}
 
