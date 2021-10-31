@@ -124,20 +124,8 @@ export class Member extends User {
 		buf.writeUInt8(yes ? 1 : 0, 8)
 		const payload = await this.c.sendOidb("OidbSvc.0x55c_1", buf)
 		const ret = pb.decode(payload)[3] === 0
-		if (ret) {
-			setImmediate(async() => {
-				const $old = (await this.c.gml.get(this.gid))?.get(this.uid)?.role
-				const $new = yes ? "admin" : "member"
-				if ($old && $old !== "owner" && $old !== $new) {
-					(await this.c.gml.get(this.gid))!.get(this.uid)!.role = $new
-					this.c.em("notice.group.admin", {
-						group_id: this.gid,
-						user_id: this.uid,
-						set: !!yes,
-					})
-				}
-			})
-		}
+		if (ret && this.info && !this.is_owner)
+			this.info.role = yes ? "admin" : "member"
 		return ret
 	}
 
@@ -167,7 +155,9 @@ export class Member extends User {
 		])
 		const body = jce.encodeWrapper({ MGCREQ }, "mqq.IMService.FriendListServiceServantObj", "ModifyGroupCardReq")
 		const payload = await this.c.sendUni("friendlist.ModifyGroupCardReq", body)
-		return jce.decodeWrapper(payload)[3].length > 0
+		const ret = jce.decodeWrapper(payload)[3].length > 0
+		ret && this.info && (this.info.card = String(card))
+		return ret
 	}
 
 	/** 踢 */
@@ -182,18 +172,7 @@ export class Member extends User {
 		})
 		const payload = await this.c.sendOidb("OidbSvc.0x8a0_0", body)
 		const ret = pb.decode(payload)[4][2][1] === 0
-		if (ret) {
-			setImmediate(async() => {
-				const member = (await this.c.gml.get(this.gid))?.get(this.uid)
-				;(await this.c.gml.get(this.gid))?.delete(this.uid) && this.c.em("notice.group.decrease", {
-					group_id: this.gid,
-					user_id: this.uid,
-					operator_id: this.c.uin,
-					dismiss: false,
-					member
-				})
-			})
-		}
+		ret && this.c.gml.get(this.gid)?.delete(this.uid)
 		return ret
 	}
 

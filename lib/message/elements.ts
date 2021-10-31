@@ -148,7 +148,9 @@ export interface Quotable {
 	user_id: number
 	time: number
 	seq: number
+	/** 私聊回复必须 */
 	rand: number
+	/** 收到的引用回复永远是字符串 */
 	message: Sendable
 }
 

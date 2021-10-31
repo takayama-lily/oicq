@@ -235,7 +235,7 @@ client.on("system.login.qrcode", function (event) {
 
 ### Class: Member
 
-> 继承 [User](#class-user) 的所有方法和属性
+> 继承 [User](#class-user) 的所有方法和属性  
 > 所有的`message.group`事件中含有此实例
 
 |Method|Description|
