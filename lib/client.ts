@@ -213,6 +213,9 @@ export class Client extends BaseClient {
 				this.setOnlineStatus()
 			}
 		}
+
+		if (!this.config.auto_server)
+			this.setRemoteServer("msfwifi.3g.qq.com", 8080)
 	}
 
 	/** 修改日志级别 */

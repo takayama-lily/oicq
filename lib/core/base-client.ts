@@ -320,21 +320,20 @@ export class BaseClient extends EventEmitter {
 				this.sig.qrsig = qrsig
 				this.emit("internal.qrcode", t[0x17])
 			} else {
-				this.emit("internal.error.qrocde", retcode, "获取二维码失败，请重试")
+				this.emit("internal.error.qrcode", retcode, "获取二维码失败，请重试")
 			}
 		}).catch(() => this.emit("internal.error.network", -2, "server is busy"))
 	}
-	/** 扫码后调用此方法登录 (若返回false说明还在等待扫码，可以继续调用) */
+	/** 扫码后调用此方法登录 */
 	async qrcodeLogin() {
 		const { retcode, uin, t106, t16a, t318, tgtgt } = await this.queryQrcodeResult()
 		if (retcode < 0) {
 			this.emit("internal.error.network", -2, "server is busy")
-			return true
 		} else if (retcode === 0 && t106 && t16a && t318 && tgtgt) {
 			this.sig.qrsig = BUF0
 			if (uin !== this.uin) {
-				this.emit("internal.error.qrocde", retcode, `扫码账号(${uin})与登录账号(${this.uin})不符`)
-				return true
+				this.emit("internal.error.qrcode", retcode, `扫码账号(${uin})与登录账号(${this.uin})不符`)
+				return
 			}
 			this.sig.tgtgt = tgtgt
 			const t = tlv.getPacker(this)
@@ -370,7 +369,6 @@ export class BaseClient extends EventEmitter {
 				.writeTlv(t318)
 				.read()
 			this[FN_SEND_LOGIN]("wtlogin.login", body)
-			return true
 		} else {
 			let message
 			switch (retcode) {
@@ -378,10 +376,10 @@ export class BaseClient extends EventEmitter {
 				message = "二维码超时，请重新获取"
 				break
 			case QrcodeResult.WaitingForScan:
-				message = "正在等待扫码"
+				message = "二维码尚未扫描"
 				break
 			case QrcodeResult.WaitingForConfirm:
-				message = "已扫码，正在等待确认"
+				message = "二维码尚未确认"
 				break
 			case QrcodeResult.Canceled:
 				message = "二维码被取消，请重新获取"
@@ -390,13 +388,8 @@ export class BaseClient extends EventEmitter {
 				message = "扫码遇到未知错误，请重新获取"
 				break
 			}
-			this.emit("internal.verbose", `二维码扫码结果: ${retcode} (${message})`, VerboseLevel.Mark)
-			if (retcode !== QrcodeResult.WaitingForScan && retcode !== QrcodeResult.WaitingForConfirm) {
-				this.sig.qrsig = BUF0
-				this.emit("internal.error.qrocde", retcode, message)
-				return true
-			}
-			return false
+			this.sig.qrsig = BUF0
+			this.emit("internal.error.qrcode", retcode, message)
 		}
 	}
 	/** 获取扫码结果(可定时查询，retcode为0则调用qrcodeLogin登录) */

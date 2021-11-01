@@ -48,9 +48,6 @@ export function drop(code: number, message?: string): never {
 
 /** 不在内的都属于未知错误，暂时无法解决 */
 export enum LoginErrorCode {
-	ScanWrongUin = 0,
-	ScanTimeout = 17,
-	ScanCancelled = 54,
 	WrongPassword = 1,
 	AccountFrozen = 40,
 	TooManySms = 162,

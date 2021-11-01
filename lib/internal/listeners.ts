@@ -145,6 +145,12 @@ function loginErrorListener(this: Client, code: number, message: string) {
 	}
 }
 
+function qrcodeErrorListener(this: Client, code: number, message: string) {
+	this.logger.error(`二维码扫码遇到错误: ${code} (${message})`)
+	this.logger.mark("二维码已更新")
+	this.login()
+}
+
 export function bindInternalListeners(this: Client) {
 	this.on("internal.online", onlineListener)
 	this.on("internal.kickoff", kickoffListener)
@@ -154,7 +160,7 @@ export function bindInternalListeners(this: Client) {
 	this.on("internal.verify", verifyListener)
 	this.on("internal.error.token", loginErrorListener)
 	this.on("internal.error.login", loginErrorListener)
-	this.on("internal.error.qrcode", loginErrorListener)
+	this.on("internal.error.qrcode", qrcodeErrorListener)
 	this.on("internal.error.network", loginErrorListener)
 	this.on("internal.sso", eventsListener)
 }
