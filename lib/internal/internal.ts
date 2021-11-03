@@ -32,7 +32,7 @@ export async function setStatus(this: Client, status: OnlineStatus) {
 	const payload = await this.sendUni("StatSvc.SetStatusFromClient", body)
 	const ret = !!jce.decodeWrapper(payload)[9]
 	if (ret)
-		this.status = status
+		this.status = Number(status)
 	return ret
 }
 
@@ -143,7 +143,7 @@ export async function addClass(this: Client, name: string) {
 
 export async function delClass(this: Client, id: number) {
 	const SetGroupReq = jce.encodeStruct([
-		2, this.uin, Buffer.from([id])
+		2, this.uin, Buffer.from([Number(id)])
 	])
 	const body = jce.encodeWrapper({ SetGroupReq }, "mqq.IMService.FriendListServiceServantObj", "SetGroupReq")
 	await this.sendUni("friendlist.SetGroupReq", body)
@@ -152,7 +152,7 @@ export async function delClass(this: Client, id: number) {
 export async function renameClass(this: Client, id: number, name: string) {
 	const len = Buffer.byteLength(name)
 	const buf = Buffer.allocUnsafe(2 + len)
-	buf.writeUInt8(id)
+	buf.writeUInt8(Number(id))
 	buf.writeUInt8(len, 1)
 	buf.fill(name, 2)
 	const SetGroupReq = jce.encodeStruct([

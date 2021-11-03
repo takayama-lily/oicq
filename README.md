@@ -178,7 +178,7 @@ client.on("system.login.qrcode", function (event) {
 
 |Property|Description|
 |-|-|
-|gid|群号|
+|group_id|群号|
 |name|群名|
 |info|群资料|
 |is_owner|我是否群主|
@@ -207,7 +207,7 @@ client.on("system.login.qrcode", function (event) {
 
 |Property|Description|
 |-|-|
-|uid|QQ号|
+|user_id|QQ号|
 
 ### Class: Friend
 
@@ -250,7 +250,7 @@ client.on("system.login.qrcode", function (event) {
 
 |Property|Description|
 |-|-|
-|gid|群号|
+|group_id|群号|
 |card|名片或昵称|
 |title|头衔|
 |is_friend|是否好友|
@@ -294,7 +294,7 @@ client.on("system.login.qrcode", function (event) {
 
 |Property|Description|
 |-|-|
-|gid|群号|
+|group_id|群号|
 |client|所在客户端对象|
 
 ### Class: Message

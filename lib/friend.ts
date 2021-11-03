@@ -87,11 +87,12 @@ export class User extends Contactable {
 
 	/** 获取`time`往前的`cnt`条聊天记录，`time`默认当前时间，`cnt`默认20不能超过20 */
 	async getChatHistory(time = timestamp(), cnt = 20) {
+		if (cnt > 20) cnt = 20
 		const body = pb.encode({
 			1: this.uid,
 			2: Number(time),
 			3: 0,
-			4: cnt
+			4: Number(cnt)
 		})
 		const payload = await this.c.sendUni("MessageSvc.PbGetOneDayRoamMsg", body)
 		const obj = pb.decode(payload), messages: PrivateMessage[] = []
@@ -132,10 +133,10 @@ export class User extends Contactable {
 				1: [{
 					1: this.c.uin,
 					2: this.uid,
-					3: seq,
-					4: rand2uuid(rand),
-					5: time,
-					6: rand,
+					3: Number(seq),
+					4: rand2uuid(Number(rand)),
+					5: Number(time),
+					6: Number(rand),
 				}],
 				2: 0,
 				3: {
@@ -209,7 +210,7 @@ export class User extends Contactable {
 	async setFriendReq(seq: number, yes = true, remark = "", block = false) {
 		const body = pb.encode({
 			1: 1,
-			2: seq,
+			2: Number(seq),
 			3: this.uid,
 			4: 1,
 			5: 6,
@@ -228,7 +229,7 @@ export class User extends Contactable {
 	async setGroupReq(gid: number, seq: number, yes = true, reason = "", block = false) {
 		const body = pb.encode({
 			1: 1,
-			2: seq,
+			2: Number(seq),
 			3: this.uid,
 			4: 1,
 			5: 3,
@@ -249,7 +250,7 @@ export class User extends Contactable {
 	async setGroupInvite(gid: number, seq: number, yes = true, block = false) {
 		const body = pb.encode({
 			1: 1,
-			2: seq,
+			2: Number(seq),
 			3: this.uid,
 			4: 1,
 			5: 3,
@@ -352,7 +353,8 @@ export class Friend extends User {
 	async setClass(id: number) {
 		const buf = Buffer.alloc(10)
 		buf[0] = 1, buf[2] = 5
-		buf.writeUInt32BE(this.uid, 3), buf[7] = id
+		buf.writeUInt32BE(this.uid, 3)
+		buf[7] = Number(id)
 		const MovGroupMemReq = jce.encodeStruct([
 			this.c.uin, 0, buf
 		])
@@ -362,14 +364,12 @@ export class Friend extends User {
 
 	/** 点赞，默认一次 */
 	async thumbUp(times = 1) {
-		times = Number(times)
-		if (!(times > 0 && times <= 20))
-			times = 1
+		if (times > 20) times = 20
 		const ReqFavorite = jce.encodeStruct([
 			jce.encodeNested([
 				this.c.uin, 1, this.c.sig.seq + 1, 1, 0, Buffer.from("0C180001060131160131", "hex")
 			]),
-			this.uid, 0, 1, times
+			this.uid, 0, 1, Number(times)
 		])
 		const body = jce.encodeWrapper({ ReqFavorite }, "VisitorSvc", "ReqFavorite")
 		const payload = await this.c.sendUni("VisitorSvc.ReqFavorite", body)

@@ -531,7 +531,7 @@ export class Group extends Discuss {
 		const body = pb.encode({
 			1: this.gid,
 			2: from_seq,
-			3: seq,
+			3: Number(seq),
 			6: 0
 		})
 		const payload = await this.c.sendUni("MessageSvc.PbGetGroupMsg", body)
