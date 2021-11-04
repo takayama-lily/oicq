@@ -171,3 +171,159 @@ export type MessageElem = TextElem | FaceElem | BfaceElem | MfaceElem | ImageEle
 
 /** 可通过sendMsg发送的类型集合 */
 export type Sendable = string | MessageElem | (string | MessageElem)[]
+
+/** 用于构造消息元素 */
+export const segment = {
+	/** @deprecated 文本，建议直接使用字符串 */
+	text(text: string): TextElem {
+		return {
+			type: "text", text
+		}
+	},
+	/** 经典表情(id=0~324) */
+	face(id: number): FaceElem {
+		return {
+			type: "face", id
+		}
+	},
+	/** 小表情(id规则不明) */
+	sface(id: number, text?: string): FaceElem {
+		return {
+			type: "sface", id, text
+		}
+	},
+	/** 原创表情(file规则不明) */
+	bface(file: string, text: string): BfaceElem {
+		return {
+			type: "bface", file, text
+		}
+	},
+	/** 猜拳(id=1~3) */
+	rps(id?: number): MfaceElem {
+		return {
+			type: "rps", id
+		}
+	},
+	/** 骰子(id=1~6) */
+	dice(id?: number): MfaceElem {
+		return {
+			type: "dice", id
+		}
+	},
+	/** mention@提及 */
+	at(qq: number | "all", text?: string, dummy?: boolean): AtElem {
+		return {
+			type: "at", qq, text, dummy
+		}
+	},
+	/** 图片(支持http://,base64://) */
+	image(file: ImageElem["file"], cache?: boolean, timeout?: number, headers?: import("http").OutgoingHttpHeaders): ImageElem {
+		return {
+			type: "image", file, cache, timeout, headers
+		}
+	},
+	/** 闪照(支持http://,base64://) */
+	flash(file: ImageElem["file"], cache?: boolean, timeout?: number, headers?: import("http").OutgoingHttpHeaders): FlashElem {
+		return {
+			type: "flash", file, cache, timeout, headers
+		}
+	},
+	/** 语音(支持http://,base64://) */
+	record(file: string | Buffer): PttElem {
+		return {
+			type: "record", file
+		}
+	},
+	/** 视频(仅支持本地文件) */
+	video(file: string): VideoElem {
+		return {
+			type: "video", file
+		}
+	},
+	json(data: any): JsonElem {
+		return {
+			type: "json", data
+		}
+	},
+	xml(data: string, id?: number): XmlElem {
+		return {
+			type: "xml", data, id
+		}
+	},
+	/** 一种特殊消息(官方客户端无法解析) */
+	mirai(data: string): MiraiElem {
+		return {
+			type: "mirai", data
+		}
+	},
+	/** 链接分享 */
+	share(url: string, title: string, image?: string, content?: string): ShareElem {
+		return {
+			type: "share", url, title, image, content
+		}
+	},
+	/** 位置分享 */
+	location(lat: number, lng: number, address: string, id?: string): LocationElem {
+		return {
+			type: "location", lat, lng, address, id
+		}
+	},
+	/** id 0~6 */
+	poke(id: number): PokeElem {
+		return {
+			type: "poke", id
+		}
+	},
+	/** @deprecated 将CQ码转换为消息链 */
+	fromCqcode(str: string) {
+		const elems: MessageElem[] = []
+		const res = str.matchAll(/\[CQ:[^\]]+\]/g)
+		let prev_index = 0
+		for (let v of res) {
+			const text = str.slice(prev_index, v.index).replace(/&#91;|&#93;|&amp;/g, unescapeCQ)
+			if (text)
+				elems.push({ type: "text", text })
+			const element = v[0]
+			let cq = element.replace("[CQ:", "type=")
+			cq = cq.substr(0, cq.length - 1)
+			elems.push(qs(cq))
+			prev_index = v.index as number + element.length
+		}
+		if (prev_index < str.length) {
+			const text = str.slice(prev_index).replace(/&#91;|&#93;|&amp;/g, unescapeCQ)
+			if (text)
+				elems.push({ type: "text", text })
+		}
+		return elems
+	}
+}
+
+function unescapeCQ(s: string) {
+	if (s === "&#91;") return "["
+	if (s === "&#93;") return "]"
+	if (s === "&amp;") return "&"
+	return ""
+}
+function unescapeCQInside(s: string) {
+	if (s === "&#44;") return ","
+	if (s === "&#91;") return "["
+	if (s === "&#93;") return "]"
+	if (s === "&amp;") return "&"
+	return ""
+}
+function qs(s: string, sep = ",", equal = "=") {
+	const ret: any = { }
+	const split = s.split(sep)
+	for (let v of split) {
+		const i = v.indexOf(equal)
+		if (i === -1) continue
+		ret[v.substring(0, i)] = v.substr(i + 1).replace(/&#44;|&#91;|&#93;|&amp;/g, unescapeCQInside)
+	}
+	for (let k in ret) {
+		try {
+			if (k !== "text")
+				ret[k] = JSON.parse(ret[k])
+		} catch { }
+	}
+	return ret as MessageElem
+}

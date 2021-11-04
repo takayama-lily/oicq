@@ -230,7 +230,7 @@ export class Converter {
 	private record(elem: PttElem) {
 		let file = String(elem.file)
 		if (!file.startsWith("protobuf://"))
-			return
+			throw new Error("非法的语音元素: " + file)
 		const buf = Buffer.from(file.replace("protobuf://", ""), "base64")
 		this.rich[4] = buf
 		this.brief += "[语音]"
@@ -239,7 +239,7 @@ export class Converter {
 	private video(elem: VideoElem) {
 		let file = String(elem.file)
 		if (!file.startsWith("protobuf://"))
-			return
+			throw new Error("非法的视频元素: " + file)
 		const buf = Buffer.from(file.replace("protobuf://", ""), "base64")
 		this.elems.push({ 19: buf })
 		this.elems.push({ 1: {

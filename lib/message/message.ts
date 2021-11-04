@@ -119,7 +119,7 @@ export abstract class Message implements Quotable, Forwardable {
 		}
 	}
 
-	/** 组合分片消息 */
+	/** 组合分片消息(通常仅内部使用) */
 	static combine(msgs: Message[]) {
 		msgs.sort((a, b) => a.index - b.index)
 		const host = msgs[0] as GroupMessage

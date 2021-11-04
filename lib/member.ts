@@ -8,13 +8,9 @@ type Client = import("./client").Client
 
 const weakmap = new WeakMap<MemberInfo, Member>()
 
-/** @ts-ignore ts(2417) 群员(继承用户) */
+/** @ts-ignore ts(2417) 群员(继承User) */
 export class Member extends User {
 
-	/**
-	 * 创建一个群员对象，若`gid`,`uid`相同，且默认开启群员列表缓存，则每次返回同一对象，不会重复创建
-	 * @param strict 严格模式，如果群员不存在则抛错(不建议开启)
-	 */
 	static as(this: Client, gid: number, uid: number, strict = false) {
 		const info = this.gml.get(gid)?.get(uid)
 		if (strict && !info)

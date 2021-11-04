@@ -11,15 +11,13 @@ type Client = import("./client").Client
 
 const weakmap = new WeakMap<FriendInfo, Friend>()
 
-/** 用户 */
 export interface User {
+	/** 撤回消息 */
 	recallMsg(msg: PrivateMessage): Promise<boolean>
-	/** @cqhttp cqhttp方法用 */
 	recallMsg(msgid: string): Promise<boolean>
 	recallMsg(seq: number, rand: number, time: number): Promise<boolean>
 }
 
-/** 用户 */
 export class User extends Contactable {
 
 	/** `this.uid`的别名 */
@@ -27,7 +25,6 @@ export class User extends Contactable {
 		return this.uid
 	}
 
-	/** 创建一个用户对象 */
 	static as(this: Client, uid: number) {
 		return new User(this, Number(uid))
 	}
@@ -37,12 +34,12 @@ export class User extends Contactable {
 		lock(this, "uid")
 	}
 
-	/** 获取作为好友的实例 */
+	/** 返回作为好友的实例 */
 	asFriend(strict = false) {
 		return this.c.pickFriend(this.uid, strict)
 	}
 
-	/** 获取作为某群群员的实例 */
+	/** 返回作为某群群员的实例 */
 	asMember(gid: number, strict = false) {
 		return this.c.pickMember(gid, this.uid, strict)
 	}
@@ -85,7 +82,7 @@ export class User extends Contactable {
 		drop(ErrorCode.UserNotExists)
 	}
 
-	/** 获取`time`往前的`cnt`条聊天记录，`time`默认当前时间，`cnt`默认20不能超过20 */
+	/** 获取`time`往前的`cnt`条聊天记录，默认当前时间，`cnt`默认20不能超过20 */
 	async getChatHistory(time = timestamp(), cnt = 20) {
 		if (cnt > 20) cnt = 20
 		const body = pb.encode({
@@ -107,7 +104,7 @@ export class User extends Contactable {
 		return messages
 	}
 
-	/** 标记`time`之前为已读，`time`默认当前时间 */
+	/** 标记`time`之前为已读，默认当前时间 */
 	async markRead(time = timestamp()) {
 		const body = pb.encode({
 			3: {
@@ -120,7 +117,6 @@ export class User extends Contactable {
 		await this.c.sendUni("PbMessageSvc.PbMsgReadedReport", body)
 	}
 
-	/** 撤回一条消息 */
 	async recallMsg(param: number | string | PrivateMessage, rand = 0, time = 0) {
 		if (param instanceof PrivateMessage)
 			var { seq, rand, time } = param
@@ -291,13 +287,9 @@ export class User extends Contactable {
 	}
 }
 
-/** 好友(继承用户) */
+/** 好友(继承User) */
 export class Friend extends User {
 
-	/**
-	 * 创建一个好友对象，若`uid`相同则每次返回同一对象，不会重复创建
-	 * @param strict 严格模式，如果好友不存在则抛错(默认false)
-	 */
 	static as(this: Client, uid: number, strict = false) {
 		const info = this.fl.get(uid)
 		if (strict && !info)

@@ -5,5 +5,3 @@ lib/**/*.d.ts
 lib/**/*.js
 !lib/**/protobuf.min.d.ts
 !lib/**/protobuf.min.js
-!lib/**/util.d.ts
-!lib/**/util.js

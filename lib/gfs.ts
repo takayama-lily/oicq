@@ -123,7 +123,7 @@ export class Gfs {
 		}
 	}
 
-	/** 列出目录下的所有文件和目录 */
+	/** 列出目录下的所有文件和目录(根目录pid为`/`) */
 	async dir(pid = "/", start = 0, limit = 100) {
 		const body = pb.encode({
 			2: {

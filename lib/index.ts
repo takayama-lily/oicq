@@ -10,7 +10,7 @@ export { Message, PrivateMessage, GroupMessage, DiscussMessage, ForwardMessage, 
 	MusicPlatform, Sendable, Anonymous, MessageElem, FileElem, ReplyElem,
 	TextElem, AtElem, FaceElem, BfaceElem, MfaceElem, ImageElem, MiraiElem,
 	FlashElem, PttElem, VideoElem, XmlElem, JsonElem, ShareElem, LocationElem, PokeElem,
-	parseDmMessageId, parseGroupMessageId, parseImageFileParam } from "./message"
+	parseDmMessageId, parseGroupMessageId, parseImageFileParam, segment } from "./message"
 export { PrivateMessageEvent, GroupMessageEvent, DiscussMessageEvent, MessageRet,
 	MessageEvent, RequestEvent, FriendNoticeEvent, GroupNoticeEvent,
 	FriendRequestEvent, GroupRequestEvent, GroupInviteEvent, EventMap,
@@ -18,7 +18,6 @@ export { PrivateMessageEvent, GroupMessageEvent, DiscussMessageEvent, MessageRet
 	MemberIncreaseEvent, MemberDecreaseEvent, GroupRecallEvent, GroupPokeEvent,
 	GroupAdminEvent, GroupMuteEvent, GroupTransferEvent } from "./events"
 export { ApiRejection, Device, Apk, Platform, Domain } from "./core"
-export { segment } from "./util"
 export * as core from "./core"
 
 export function getGroupImageUrl(md5: string) {

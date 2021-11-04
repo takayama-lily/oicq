@@ -5,7 +5,7 @@ const OICQ_PUBLIC_KEY = Buffer.from("04EBCA94D733E399B2DB96EACDD3F69A8BB0F74224E
 // const v2 = Buffer.from("0440eaf325b9c66225143aa7f3961c953c3d5a8048c2b73293cdc7dcbab7f35c4c66aa8917a8fd511f9d969d02c8501bcaa3e3b11746f00567e3aea303ac5f2d25", "hex")
 
 export default class Ecdh {
-	protected _ecdh = createECDH("prime256v1")
-	public_key = this._ecdh.generateKeys()
-	share_key = md5(this._ecdh.computeSecret(OICQ_PUBLIC_KEY).slice(0, 16))
+	private ecdh = createECDH("prime256v1")
+	public_key = this.ecdh.generateKeys()
+	share_key = md5(this.ecdh.computeSecret(OICQ_PUBLIC_KEY).slice(0, 16))
 }

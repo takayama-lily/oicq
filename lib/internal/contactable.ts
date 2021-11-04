@@ -119,7 +119,7 @@ export abstract class Contactable {
 		const res1 = await Promise.allSettled(tasks) as PromiseRejectedResult[]
 		for (let i = 0; i < res1.length; i++) {
 			if (res1[i].status === "rejected")
-				this.c.logger.debug(`图片${i+1}失败, reason: ` + res1[i].reason?.message)
+				this.c.logger.warn(`图片${i+1}失败, reason: ` + res1[i].reason?.message)
 		}
 		let n = 0
 		while (imgs.length > n) {
@@ -134,7 +134,7 @@ export abstract class Contactable {
 			for (let i = 0; i < res2.length; i++) {
 				if (res2[i].status === "rejected") {
 					res1[n+i] = res2[i]
-					this.c.logger.debug(`图片${n+i+1}上传失败, reason: ` + res2[i].reason?.message)
+					this.c.logger.warn(`图片${n+i+1}上传失败, reason: ` + res2[i].reason?.message)
 				}
 			}
 			n += 20

@@ -14,46 +14,6 @@ import { Discuss, Group } from "./group"
 import { Member } from "./member"
 import { Forwardable, Quotable, Sendable, parseDmMessageId, parseGroupMessageId, Image} from "./message"
 
-/** 日志记录器接口 */
-export interface Logger {
-	trace(msg: any, ...args: any[]): any
-	debug(msg: any, ...args: any[]): any
-	info(msg: any, ...args: any[]): any
-	warn(msg: any, ...args: any[]): any
-	error(msg: any, ...args: any[]): any
-	fatal(msg: any, ...args: any[]): any
-	mark(msg: any, ...args: any[]): any
-}
-
-/** 日志等级 */
-export type LogLevel = "trace" | "debug" | "info" | "warn" | "error" | "fatal" | "mark" | "off"
-
-/** 配置项 */
-export interface Config {
-	/** 日志等级，默认info (打印日志会降低性能，若消息量巨大建议修改此参数) */
-	log_level?: LogLevel
-	/** 1:安卓手机(默认) 2:aPad 3:安卓手表 4:MacOS 5:iPad */
-	platform?: Platform
-	/** 群聊过滤自己的消息(默认true) */
-	ignore_self?: boolean
-	/** 被风控时是否尝试用分片发送，默认true */
-	resend?: boolean
-	/** 数据存储文件夹，需要可写权限，默认主模块下的data文件夹 */
-	data_dir?: string
-	/**
-	 * 触发system.offline.network事件后的重新登录间隔秒数，默认5(秒)，不建议设置低于3(秒)
-	 * 设置为0则不会自动重连，然后你可以监听此事件自己处理
-	 */
-	reconn_interval?: number
-	/** 是否缓存群员列表(默认true)，群多的时候(500~1000)会多占据约100MB+内存，关闭后进程只需不到20MB内存 */
-	cache_group_member?: boolean
-	/** 自动选择最优服务器(默认true)，关闭后会一直使用`msfwifi.3g.qq.com:8080`进行连接 */
-	auto_server?: boolean
-	/** ffmpeg */
-	ffmpeg_path?: string
-	ffprobe_path?: string
-}
-
 /** 事件接口 */
 export interface Client extends BaseClient {
 	on<T extends keyof EventMap>(event: T, listener: EventMap<this>[T]): this
@@ -82,9 +42,9 @@ export class Client extends BaseClient {
 
 	/** 日志记录器 */
 	logger: Logger | log4js.Logger
-	/** 账号存储目录 */
+	/** 账号本地数据存储目录 */
 	readonly dir: string
-	/** 配置(支持热修改) */
+	/** 配置 */
 	readonly config: Required<Config>
 
 	protected readonly _cache = new Map<number, Set<string>>()
@@ -116,6 +76,7 @@ export class Client extends BaseClient {
 	sex: Gender = "unknown"
 	age = 0
 	bid = ""
+	/** 漫游表情缓存 */
 	stamp = new Set<string>()
 
 	/** csrf token */
@@ -141,6 +102,12 @@ export class Client extends BaseClient {
 	get stat() {
 		this.statistics.msg_cnt_per_min = this._calcMsgCntPerMin()
 		return this.statistics
+	}
+
+	/** 修改日志级别 */
+	set log_level(level: LogLevel) {
+		(this.logger as log4js.Logger).level = level
+		this.config.log_level = level
 	}
 
 	//@ts-ignore ts2376??
@@ -216,12 +183,6 @@ export class Client extends BaseClient {
 
 		if (!this.config.auto_server)
 			this.setRemoteServer("msfwifi.3g.qq.com", 8080)
-	}
-
-	/** 修改日志级别 */
-	set log_level(level: LogLevel) {
-		(this.logger as log4js.Logger).level = level
-		this.config.log_level = level
 	}
 
 	/**
@@ -429,7 +390,7 @@ export class Client extends BaseClient {
 	}
 	/** @cqhttp use user.getChatHistory() or group.getChatHistory() */
 	async getMsg(message_id: string) {
-		return this.getChatHistory(message_id, 1)
+		return (await this.getChatHistory(message_id, 1)).pop()
 	}
 	/** @cqhttp use user.getChatHistory() or group.getChatHistory() */
 	async getChatHistory(message_id: string, count = 20) {
@@ -620,6 +581,46 @@ export class Client extends BaseClient {
 	get online_status() {
 		return this.status
 	}
+}
+
+/** 日志记录器接口 */
+export interface Logger {
+	trace(msg: any, ...args: any[]): any
+	debug(msg: any, ...args: any[]): any
+	info(msg: any, ...args: any[]): any
+	warn(msg: any, ...args: any[]): any
+	error(msg: any, ...args: any[]): any
+	fatal(msg: any, ...args: any[]): any
+	mark(msg: any, ...args: any[]): any
+}
+
+/** 日志等级 */
+export type LogLevel = "trace" | "debug" | "info" | "warn" | "error" | "fatal" | "mark" | "off"
+
+/** 配置项 */
+export interface Config {
+	/** 日志等级，默认info (打印日志会降低性能，若消息量巨大建议修改此参数) */
+	log_level?: LogLevel
+	/** 1:安卓手机(默认) 2:aPad 3:安卓手表 4:MacOS 5:iPad */
+	platform?: Platform
+	/** 群聊过滤自己的消息(默认true) */
+	ignore_self?: boolean
+	/** 被风控时是否尝试用分片发送，默认true */
+	resend?: boolean
+	/** 数据存储文件夹，需要可写权限，默认主模块下的data文件夹 */
+	data_dir?: string
+	/**
+	 * 触发system.offline.network事件后的重新登录间隔秒数，默认5(秒)，不建议设置低于3(秒)
+	 * 设置为0则不会自动重连，然后你可以监听此事件自己处理
+	 */
+	reconn_interval?: number
+	/** 是否缓存群员列表(默认true)，群多的时候(500~1000)会多占据约100MB+内存，关闭后进程只需不到20MB内存 */
+	cache_group_member?: boolean
+	/** 自动选择最优服务器(默认true)，关闭后会一直使用`msfwifi.3g.qq.com:8080`进行连接 */
+	auto_server?: boolean
+	/** ffmpeg */
+	ffmpeg_path?: string
+	ffprobe_path?: string
 }
 
 /** 数据统计 */

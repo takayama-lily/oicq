@@ -329,6 +329,7 @@ export function onlinePushTransListener(this: Client, payload: Buffer, seq: numb
 		if (buf[9] === 0x82 || buf[9] === 0x2) {
 			operator_id = user_id
 			this.gml.get(gid)?.delete(user_id)
+			this.logger.info(`${user_id}离开了群${gid}`)
 		} else {
 			operator_id = buf.readUInt32BE(10)
 			if (buf[9] === 0x01 || buf[9] === 0x81)

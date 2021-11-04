@@ -33,7 +33,7 @@ const GI_BUF = pb.encode({
 
 /** 讨论组 */
 export class Discuss extends Contactable {
-	/** 创建一个讨论组对象 */
+
 	static as(this: Client, gid: number) {
 		return new Discuss(this, Number(gid))
 	}
@@ -74,8 +74,8 @@ export class Discuss extends Contactable {
 
 /** 群 */
 export interface Group {
+	/** 撤回消息 */
 	recallMsg(msg: GroupMessage): Promise<boolean>
-	/** @cqhttp cqhttp方法用 */
 	recallMsg(msgid: string): Promise<boolean>
 	recallMsg(seq: number, rand: number, pktnum?: number): Promise<boolean>
 }
@@ -83,10 +83,6 @@ export interface Group {
 /** 群 */
 export class Group extends Discuss {
 
-	/**
-	 * 创建一个群对象，若`gid`相同则每次返回同一对象，不会重复创建
-	 * @param strict 严格模式，如果群不存在则抛错(默认false)
-	 */
 	static as(this: Client, gid: number, strict = false) {
 		const info = this.gl.get(gid)
 		if (strict && !info)
@@ -263,7 +259,7 @@ export class Group extends Discuss {
 	/**
 	 * 发送一条消息
 	 * @param source 引用回复的消息
-	 * @param anony 是否匿名
+	 * @param anony 匿名
 	 */
 	async sendMsg(content: Sendable, source?: Quotable, anony: Omit<Anonymous, "flag"> | boolean = false): Promise<MessageRet> {
 		const converter = await this._preprocess(content, source)
@@ -359,7 +355,6 @@ export class Group extends Discuss {
 		}
 	}
 
-	/** 撤回一条消息 */
 	async recallMsg(param: number | string | GroupMessage, rand = 0, pktnum = 1) {
 		if (param instanceof GroupMessage)
 			var { seq, rand, pktnum } = param
@@ -511,7 +506,7 @@ export class Group extends Discuss {
 		return pb.decode(payload)[4][1][3][22]
 	}
 
-	/** 标记`seq`之前为已读，`seq`默认为最后一条发言 */
+	/** 标记`seq`之前为已读，默认到最后一条发言 */
 	async markRead(seq = 0) {
 		const body = pb.encode({
 			1: {
@@ -522,7 +517,7 @@ export class Group extends Discuss {
 		await this.c.sendUni("PbMessageSvc.PbMsgReadedReport", body)
 	}
 
-	/** 获取`seq`之前的`cnt`条聊天记录，`seq`默认为最后一条发言，`cnt`默认20不能超过20 */
+	/** 获取`seq`之前的`cnt`条聊天记录，默认从最后一条发言往前，`cnt`默认20不能超过20 */
 	async getChatHistory(seq = 0, cnt = 20) {
 		if (cnt > 20) cnt = 20
 		if (!seq)

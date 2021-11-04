@@ -51,7 +51,7 @@ client.on("system.login.qrcode", function (event) {
 * [Class: Contactable](#class-contactable) 群和用户的基类
 * [Class: Gfs](#class-gfs) 群文件系统
 * [Class: Message](#class-message) 消息
-* [Namespace: segment](#namespace-segment) 消息元素
+* [Namespace: segment](#namespace-segment) 构造消息元素
 * [使用密码登录](#使用密码登录)
 
 ### Class: Client
@@ -279,6 +279,8 @@ client.on("system.login.qrcode", function (event) {
 
 ### Class: Gfs
 
+> 群文件系统
+
 |Method|Description|
 |-|-|
 |df()|查询使用空间|
@@ -356,8 +358,8 @@ client.on("system.login.qrcode", function (event) {
 
 ### 使用密码登录
 
-初次使用建议扫码，因为密码可能需要处理滑动验证码，目前非手机环境的滑动无法通过。  
-几天后不会再弹出滑动验证码，此时可以改用密码登录。
+首次登录建议使用扫码，因为使用密码可能需要处理滑动验证码，目前非手机环境的滑动无法通过。  
+登录几天后不会再弹出滑动验证码，此时建议改用密码登录，更加稳定。
 
 ```js
 const { createClient } = require("oicq")
@@ -372,7 +374,6 @@ client.login("password")
 **其他：**
 
 * [QQWebApi](./web-api.md) QQ Web Api 收集整理 (途中)
-* [ErrorCode](./error-code.md) 错误码错误信息 收集整理 (途中)
 * [码云镜像仓库](https://gitee.com/takayama/oicq)
 
 [![group:236172566](https://img.shields.io/badge/group-236172566-blue)](https://qm.qq.com/cgi-bin/qm/qr?k=NXw3NEA5lzPjkRhyEpjVBqMpdg1WHRKJ&jump_from=webapi)

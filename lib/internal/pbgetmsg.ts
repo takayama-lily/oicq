@@ -79,11 +79,15 @@ async function handleSyncMsg(this: Client, proto: pb.Proto) {
 		const user_id = head[15]
 		const nickname = String(head[16])
 		const g = this.pickGroup(gid)
-		await g.renew().catch(NOOP)
 		if (user_id === this.uin) {
+			await g.renew().catch(NOOP)
 			this.config.cache_group_member && g.getMemberMap()
 			this.logger.info(`更新了群列表，新增了群：${gid}`)
 		} else {
+			try {
+				g.info!.member_count++
+				g.info!.last_join_time = timestamp()
+			} catch { }
 			this.config.cache_group_member && await g.pickMember(user_id).renew().catch(NOOP)
 			this.logger.info(`${user_id}(${nickname}) 加入了群 ${gid}`)
 		}
