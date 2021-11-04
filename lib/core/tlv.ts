@@ -268,9 +268,29 @@ const map: {[tag: number]: (this: BaseClient, ...args: any[]) => Writer} = {
 	},
 	0x511: function () {
 		const domains = new Set<Domain>([
-			"tenpay.com", "openmobile.qq.com", "docs.qq.com", "connect.qq.com",
-			"qzone.qq.com", "vip.qq.com", "qun.qq.com", "game.qq.com", "qqweb.qq.com",
-			"office.qq.com", "ti.qq.com", "mail.qq.com", "gamecenter.qq.com", "mma.qq.com",
+			"aq.qq.com",
+			"buluo.qq.com",
+			"connect.qq.com",
+			"docs.qq.com",
+			"game.qq.com",
+			"gamecenter.qq.com",
+			// "graph.qq.com",
+			"haoma.qq.com",
+			"id.qq.com",
+			// "imgcache.qq.com",
+			"kg.qq.com",
+			"mail.qq.com",
+			"mma.qq.com",
+			"office.qq.com",
+			// "om.qq.com",
+			"openmobile.qq.com",
+			"qqweb.qq.com",
+			"qun.qq.com",
+			"qzone.qq.com",
+			"ti.qq.com",
+			"v.qq.com",
+			"vip.qq.com",
+			"y.qq.com",
 		])
 		const stream = new Writer().writeU16(domains.size)
 		for (let v of domains)
@@ -312,18 +332,27 @@ export function getPacker(c: BaseClient) {
 	return packTlv.bind(c)
 }
 
-export type Domain = "tenpay.com"
-	| "docs.qq.com"
-	| "office.qq.com"
+export type Domain = "aq.qq.com"
+	| "buluo.qq.com"
 	| "connect.qq.com"
-	| "vip.qq.com"
-	| "mail.qq.com"
-	| "qzone.qq.com"
-	| "gamecenter.qq.com"
-	| "mma.qq.com"
+	| "docs.qq.com"
 	| "game.qq.com"
-	| "qqweb.qq.com"
+	| "gamecenter.qq.com"
+	// | "graph.qq.com"
+	| "haoma.qq.com"
+	| "id.qq.com"
+	// | "imgcache.qq.com"
+	| "kg.qq.com"
+	| "mail.qq.com"
+	| "mma.qq.com"
+	| "office.qq.com"
+	// | "om.qq.com"
 	| "openmobile.qq.com"
+	| "qqweb.qq.com"
 	| "qun.qq.com"
+	| "qzone.qq.com"
 	| "ti.qq.com"
+	| "v.qq.com"
+	| "vip.qq.com"
+	| "y.qq.com"
 	| ""
