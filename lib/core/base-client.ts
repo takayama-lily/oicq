@@ -8,7 +8,7 @@ import * as tlv from "./tlv"
 import * as tea from "./tea"
 import * as pb from "./protobuf"
 import * as jce from "./jce"
-import { BUF0, BUF16, NOOP, md5, timestamp, lock, unzip, int32ip2str } from "./constants"
+import { BUF0, BUF16, NOOP, md5, timestamp, lock, hide, unzip, int32ip2str } from "./constants"
 import { ShortDevice, Device, generateFullDevice, Platform, Apk, getApkInfo } from "./device"
 
 const FN_NEXT_SEQ = Symbol("FN_NEXT_SEQ")
@@ -100,7 +100,9 @@ export class BaseClient extends EventEmitter {
 		emp_time: 0,
 	}
 	readonly pskey: {[domain: string]: Buffer} = { }
-	/** 随心跳一起触发的函数，可以随意设定(心跳间隔为30秒) */
+	/** 心跳间隔(秒) */
+	protected interval = 30
+	/** 随心跳一起触发的函数，可以随意设定 */
 	protected heartbeat = NOOP
 	// 心跳定时器
 	private [HEARTBEAT]: NodeJS.Timeout
@@ -143,6 +145,8 @@ export class BaseClient extends EventEmitter {
 		lock(this, "sig")
 		lock(this, "pskey")
 		lock(this, "statistics")
+		hide(this, "heartbeat")
+		hide(this, "interval")
 	}
 
 	/** 设置连接服务器，不设置则自动搜索 */
@@ -581,7 +585,7 @@ function onlineListener(this: BaseClient) {
 				this[NET].destroy()
 			})
 		}).then(refreshToken.bind(this))
-	}, 30000)
+	}, this.interval * 1000)
 }
 
 function lostListener(this: BaseClient) {
