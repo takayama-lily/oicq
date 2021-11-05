@@ -123,6 +123,8 @@ async function handleSyncMsg(this: Client, proto: pb.Proto) {
 			else if (msg.sub_type === "self")
 				msg.sender.nickname = this.nickname
 			msg.reply = function (content, quote = false) {
+				if (this.sender.group_id)
+					return this.friend.asMember(this.sender.group_id).sendMsg(content, quote ? this : undefined)
 				return this.friend.sendMsg(content, quote ? this : undefined)
 			}
 			this.logger.info(`recv from: [Private: ${msg.from_id}(${msg.sub_type})] ` + msg)
