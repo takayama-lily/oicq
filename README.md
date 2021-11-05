@@ -5,8 +5,8 @@
 [![node engine](https://img.shields.io/node/v/oicq.svg)](https://nodejs.org)
 [![discord](https://img.shields.io/static/v1?label=chat&message=on%20discord&color=7289da&logo=discord)](https://discord.gg/gKnU7BARzv)
 
-* QQ(安卓)协议基于Node.js的实现，使用CQHTTP风格的API
-* 高度抽象地封装了大部分常用功能，支持最低node版本为 v12.16
+* [v2.0](../../tree/main) 已发布，此分支版本会继续维护bug至2022/4/30 (不过似乎也没什么重大bug)
+* QQ(安卓)协议基于Node.js的实现，支持最低node版本为 v12.16
 * 若你不熟悉Node.js或不会组织代码，可通过 [template](https://github.com/takayama-lily/oicq-template) 创建一个简单的应用程序
 * [API参考文档](https://github.com/takayama-lily/oicq/wiki/91.API%E6%96%87%E6%A1%A3) / [事件参考文档](https://github.com/takayama-lily/oicq/wiki/92.%E4%BA%8B%E4%BB%B6%E6%96%87%E6%A1%A3) / [wiki列表](https://github.com/takayama-lily/oicq/wiki)
 
@@ -63,35 +63,11 @@ client.on("system.login.slider", function (event) { //监听滑动验证码事�
 }).login("password"); //需要填写密码或md5后的密码
 ```
 
-**常用功能：**
-
-```js
-client.sendGroupMsg(gid, "hello") //群聊
-client.sendPrivateMsg(uid, "hello") //私聊
-client.deleteMsg(id) //撤回
-client.setGroupKick(gid, uid) //踢人
-client.setGroupBan(gid, uid, 3600) //禁言
-```
-
-----
-
-**全局安装并启动：**
-
-可作为 [http-api](./http-api) 或调试程序使用
-
-```bash
-> npm i -g oicq
-> oicq <account>
-```
-
 ----
 
 **其他：**
 
-* [常见问题](https://github.com/takayama-lily/oicq/wiki/02.%E5%85%B6%E4%BB%96%E5%B8%B8%E8%A7%81%E9%97%AE%E9%A2%98) (登录、风控等相关问题)
 * [QQWebApi](./web-api.md) QQ Web Api 收集整理 (途中)
-* [ErrorCode](./error-code.md) 错误码错误信息 收集整理 (途中)
-* [awesome](./awesome.md) 社区相关应用收集
 * [码云镜像仓库](https://gitee.com/takayama/oicq)
 
  [![group:236172566](https://img.shields.io/badge/group-236172566-blue)](https://qm.qq.com/cgi-bin/qm/qr?k=NXw3NEA5lzPjkRhyEpjVBqMpdg1WHRKJ&jump_from=webapi)

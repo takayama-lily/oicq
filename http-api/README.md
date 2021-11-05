@@ -10,7 +10,7 @@
 
 ```bash
 # install
-> npm i oicq -g
+> npm i oicq@1 -g
 
 # startup
 > oicq <account>
