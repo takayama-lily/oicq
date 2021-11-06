@@ -96,7 +96,16 @@ export class BaseClient extends EventEmitter {
 			sig_session: BUF0,
 			session_key: BUF0,
 		},
-		hb480: BUF0,
+		hb480: (() => {
+			const buf = Buffer.alloc(9)
+			buf.writeUInt32BE(this.uin)
+			buf.writeInt32BE(0x19e39, 5)
+			return pb.encode({
+				1: 1152,
+				2: 9,
+				4: buf
+			})
+		})(),
 		emp_time: 0,
 	}
 	readonly pskey: {[domain: string]: Buffer} = { }
@@ -527,8 +536,6 @@ function ssoListener(this: BaseClient, cmd: string, payload: Buffer, seq: number
 	case "StatSvc.ReqMSFOffline":
 	case "MessageSvc.PushForceOffline":
 		{
-			this[IS_ONLINE] = false
-			clearInterval(this[HEARTBEAT])
 			const nested = jce.decodeWrapper(payload)
 			const msg = nested[4] ? `[${nested[4]}]${nested[3]}` : `[${nested[1]}]${nested[2]}`
 			this.emit(EVENT_KICKOFF, msg)
@@ -564,31 +571,14 @@ function onlineListener(this: BaseClient) {
 	if (!this.listenerCount(EVENT_KICKOFF)) {
 		this.once(EVENT_KICKOFF, (msg: string) => {
 			this[IS_ONLINE] = false
+			clearInterval(this[HEARTBEAT])
 			this.emit("internal.kickoff", msg)
 		})
 	}
-	const buf = Buffer.alloc(9)
-	buf.writeUInt32BE(this.uin)
-	buf.writeInt32BE(0x19e39, 5)
-	this.sig.hb480 = Buffer.from(pb.encode({
-		1: 1152,
-		2: 9,
-		4: buf
-	}))
-	this[HEARTBEAT] = setInterval(async () => {
-		if (typeof this.heartbeat === "function")
-			await this.heartbeat()
-		this.sendUni("OidbSvc.0x480_9_IMCore", this.sig.hb480).catch(() => {
-			this.emit("internal.verbose", "heartbeat timeout", VerboseLevel.Warn)
-			this.sendUni("OidbSvc.0x480_9_IMCore", this.sig.hb480).catch(() => {
-				this.emit("internal.verbose", "heartbeat timeout x 2", VerboseLevel.Error)
-				this[NET].destroy()
-			})
-		}).then(refreshToken.bind(this))
-	}, this.interval * 1000)
 }
 
 function lostListener(this: BaseClient) {
+	clearInterval(this[HEARTBEAT])
 	if (this[IS_ONLINE]) {
 		this[IS_ONLINE] = false
 		this.statistics.lost_times++
@@ -653,6 +643,8 @@ async function packetListener(this: BaseClient, pkt: Buffer) {
 }
 
 async function register(this: BaseClient, logout = false) {
+	this[IS_ONLINE] = false
+	clearInterval(this[HEARTBEAT])
 	const pb_buf = pb.encode({
 		1: [
 			{ 1: 46, 2: timestamp() },
@@ -679,15 +671,24 @@ async function register(this: BaseClient, logout = false) {
 		const rsp = jce.decodeWrapper(payload)
 		const result = rsp[9] ? true : false
 		if (!result) {
-			clearInterval(this[HEARTBEAT])
 			this.emit("internal.error.token")
 		} else {
 			this[IS_ONLINE] = true
+			this[HEARTBEAT] = setInterval(async () => {
+				if (typeof this.heartbeat === "function")
+					await this.heartbeat()
+				this.sendUni("OidbSvc.0x480_9_IMCore", this.sig.hb480).catch(() => {
+					this.emit("internal.verbose", "heartbeat timeout", VerboseLevel.Warn)
+					this.sendUni("OidbSvc.0x480_9_IMCore", this.sig.hb480).catch(() => {
+						this.emit("internal.verbose", "heartbeat timeout x 2", VerboseLevel.Error)
+						this[NET].destroy()
+					})
+				}).then(refreshToken.bind(this))
+			}, this.interval * 1000)
 		}
 	} catch {
-		if (logout) return
-		clearInterval(this[HEARTBEAT])
-		this.emit("internal.error.network", -3, "server is busy(register)")
+		if (!logout)
+			this.emit("internal.error.network", -3, "server is busy(register)")
 	}
 }
 
@@ -726,7 +727,6 @@ async function refreshToken(this: BaseClient) {
 		const t = readTlv(stream)
 		if (type === 0) {
 			const { token } = decodeT119.call(this, t[0x119])
-			this[IS_ONLINE] = false
 			await register.call(this)
 			if (this[IS_ONLINE])
 				this.emit("internal.token", token)
