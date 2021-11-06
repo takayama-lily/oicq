@@ -10,7 +10,7 @@ export { Message, PrivateMessage, GroupMessage, DiscussMessage, ForwardMessage, 
 	MusicPlatform, Sendable, Anonymous, MessageElem, FileElem, ReplyElem,
 	TextElem, AtElem, FaceElem, BfaceElem, MfaceElem, ImageElem, MiraiElem,
 	FlashElem, PttElem, VideoElem, XmlElem, JsonElem, ShareElem, LocationElem, PokeElem,
-	parseDmMessageId, parseGroupMessageId, parseImageFileParam, segment } from "./message"
+	parseDmMessageId, parseGroupMessageId, parseImageFileParam, getGroupImageUrl, segment } from "./message"
 export { PrivateMessageEvent, GroupMessageEvent, DiscussMessageEvent, MessageRet,
 	MessageEvent, RequestEvent, FriendNoticeEvent, GroupNoticeEvent,
 	FriendRequestEvent, GroupRequestEvent, GroupInviteEvent, EventMap,
@@ -19,7 +19,3 @@ export { PrivateMessageEvent, GroupMessageEvent, DiscussMessageEvent, MessageRet
 	GroupAdminEvent, GroupMuteEvent, GroupTransferEvent } from "./events"
 export { ApiRejection, Device, Apk, Platform, Domain } from "./core"
 export * as core from "./core"
-
-export function getGroupImageUrl(md5: string) {
-	return `https://gchat.qpic.cn/gchatpic_new/0/0-0-${md5.toUpperCase()}/0`
-}

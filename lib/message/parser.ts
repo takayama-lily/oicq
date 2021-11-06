@@ -314,11 +314,15 @@ export class Parser {
 			elem = {
 				type,
 				file: buildImageFileParam(proto[13].toHex(), proto[25], proto[22], proto[23], proto[20]),
-				url: proto[16] ? `https://gchat.qpic.cn${proto[16]}` : `https://gchat.qpic.cn/gchatpic_new/0/0-0-${proto[13].toHex().toUpperCase()}/0`,
+				url: proto[16] ? `https://gchat.qpic.cn${proto[16]}` : getGroupImageUrl(proto[13].toHex()),
 			}
 			if (elem.type === "image")
 				elem.asface = proto[34]?.[1] === 1
 		}
 		return elem
 	}
+}
+
+export function getGroupImageUrl(md5: string) {
+	return `https://gchat.qpic.cn/gchatpic_new/0/0-0-${md5.toUpperCase()}/0`
 }

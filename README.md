@@ -1,23 +1,21 @@
 # oicq
 
-[![npm version](https://img.shields.io/npm/v/oicq/beta.svg)](https://www.npmjs.com/package/oicq)
+[![npm version](https://img.shields.io/npm/v/oicq/latest.svg)](https://www.npmjs.com/package/oicq)
 [![dm](https://shields.io/npm/dm/oicq)](https://www.npmjs.com/package/oicq)
-[![node engine](https://img.shields.io/node/v/oicq/beta.svg)](https://nodejs.org)
+[![node engine](https://img.shields.io/node/v/oicq/latest.svg)](https://nodejs.org)
 [![discord](https://img.shields.io/static/v1?label=chat&message=on%20discord&color=7289da&logo=discord)](https://discord.gg/gKnU7BARzv)
 
 * QQ(安卓)协议基于Node.js的实现，支持最低node版本为 v14
 * 若你不熟悉Node.js或不会组织代码，可通过 [template](https://github.com/takayama-lily/oicq-template) 创建一个简单的应用程序
 * [API Reference](#api-reference) / [Type Docs](https://takayama-lily.github.io/oicq/)
-* [从v1.x升级](https://github.com/takayama-lily/oicq/projects/3#column-16638290)
+* [从v1.x升级](https://github.com/takayama-lily/oicq/projects/3#column-16638290) (v1在master分支)
 
 ----
 
 **Install:**
 
-> 此分支(v2.0)暂时处于beta状态
-
 ```bash
-> npm i oicq@beta  # or > yarn add oicq@beta
+> npm i oicq  # or > yarn add oicq
 ```
 
 **Usage:**
@@ -28,12 +26,12 @@ const account = 147258369
 const client = createClient(account)
 
 client.on("system.online", () => console.log("Logged in!"))
-client.on("message", msg => {
-  console.log(msg)
-  msg.reply("hello world")
+client.on("message", e => {
+  console.log(e)
+  e.reply("hello world", true) //true表示引用对方的消息
 })
 
-client.on("system.login.qrcode", function (event) {
+client.on("system.login.qrcode", function (e) {
   //扫码后按回车登录
   process.stdin.once("data", () => {
     this.login()
@@ -146,7 +144,7 @@ client.on("system.login.qrcode", function (event) {
 
 ### Class: Group
 
-> 所有的`notice.group`和`message.group`事件中含有此实例
+> 所有的`notice.group`和`message.group`事件的上报数据中含有此实例 (`e.group`访问)
 
 |Method|Description|
 |-|-|
@@ -212,7 +210,7 @@ client.on("system.login.qrcode", function (event) {
 ### Class: Friend
 
 > 继承 [User](#class-user) 的所有方法和属性  
-> 所有的`notice.friend`和`message.private`事件中含有此实例
+> 所有的`notice.friend`和`message.private`事件中含有此实例 (`e.friend`访问)
 
 |Method|Description|
 |-|-|
@@ -235,7 +233,7 @@ client.on("system.login.qrcode", function (event) {
 ### Class: Member
 
 > 继承 [User](#class-user) 的所有方法和属性  
-> 所有的`message.group`事件中含有此实例
+> 所有的`message.group`事件中含有此实例 (`e.member`访问)
 
 |Method|Description|
 |-|-|
