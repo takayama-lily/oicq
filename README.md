@@ -295,6 +295,7 @@ client.on("system.login.qrcode", function (e) {
 |Property|Description|
 |-|-|
 |group_id|群号|
+|group|[所在群对象](#class-group)|
 |client|所在客户端对象|
 
 ### Class: Message
