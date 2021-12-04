@@ -38,7 +38,7 @@ export interface GfsDirStat extends GfsBaseStat {
 }
 
 function checkRsp(rsp: pb.Proto) {
-	if (rsp[1] === 0) return
+	if (!rsp[1]) return
 	drop(rsp[1], rsp[2])
 }
 
@@ -58,7 +58,10 @@ export class Gfs {
 		return this.c
 	}
 
-	constructor(private c: Client, public readonly gid: number) { }
+	constructor(private readonly c: Client, public readonly gid: number) {
+		common.lock(this, "c")
+		common.lock(this, "gid")
+	}
 
 	/** 获取使用空间和文件数 */
 	async df() {
