@@ -373,7 +373,7 @@ export class ForwardMessage implements Forwardable {
 		const head = proto[1]
 		this.time = head[6] | 0
 		this.user_id = head[1] | 0
-		this.nickname = head[14]?.toString() || ""
+		this.nickname = head[14]?.toString() || head[9]?.[4]?.toString() || ""
 		this.parsed = parse(proto[3][1])
 		this.message = this.parsed.message
 		this.raw_message = this.parsed.brief
