@@ -150,7 +150,8 @@ export class Parser {
 					this.atall = true
 				} else {
 					elem.qq = buf.readUInt32BE(7)
-					this.atme = elem.qq === this.uin
+					if (elem.qq === this.uin)
+						this.atme = true
 				}
 				brief = brief || ("@" + elem.qq)
 				content = `{at:${elem.qq}}`
