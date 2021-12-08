@@ -125,7 +125,7 @@ export class Parser {
 		default:
 			return
 		}
-		this.message.push(elem)
+		this.message = [elem]
 		this.brief = "[" + brief + "]"
 		this.exclusive = true
 	}
