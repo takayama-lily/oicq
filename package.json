@@ -1,9 +1,9 @@
 {
   "name": "oicq",
   "app_name": "oicq",
-  "version": "1.21.2",
-  "app_version": "1.21.2",
-  "upday": "2021/10/10",
+  "version": "1.21.3",
+  "app_version": "1.21.3",
+  "upday": "2021/12/08",
   "protocol_version": "v11",
   "description": "QQ protocol!",
   "main": "index.js",
