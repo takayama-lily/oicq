@@ -598,6 +598,8 @@ async function parseSso(buf: Buffer) {
 	len = buf.readUInt32BE(offset) // length of session_id
 	offset += len
 	const flag = buf.readInt32BE(offset)
+	len = buf.readInt32BE(offset) // unknown data (2021.12.8)
+	offset += len
 	let payload
 	if (flag === 0)
 		payload = buf.slice(offset + 8)
