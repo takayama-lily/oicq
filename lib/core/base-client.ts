@@ -587,6 +587,7 @@ function lostListener(this: BaseClient) {
 }
 
 async function parseSso(buf: Buffer) {
+	const headlen = buf.readUInt32BE()
 	const seq = buf.readInt32BE(4)
 	const retcode = buf.readInt32BE(8)
 	if (retcode !== 0)
@@ -598,15 +599,13 @@ async function parseSso(buf: Buffer) {
 	len = buf.readUInt32BE(offset) // length of session_id
 	offset += len
 	const flag = buf.readInt32BE(offset)
-	len = buf.readInt32BE(offset) // unknown data (2021.12.8)
-	offset += len
 	let payload
 	if (flag === 0)
-		payload = buf.slice(offset + 8)
+		payload = buf.slice(headlen + 4)
 	else if (flag === 1)
-		payload = await unzip(buf.slice(offset + 8))
+		payload = await unzip(buf.slice(headlen + 4))
 	else if (flag === 8)
-		payload = buf.slice(offset + 4)
+		payload = buf.slice(headlen)
 	else
 		throw new Error("unknown compressed flag: " + flag)
 	return {

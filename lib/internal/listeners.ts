@@ -13,7 +13,11 @@ type Client = import("../client").Client
 
 async function pushNotifyListener(this: Client, payload: Buffer) {
 	if (!this._sync_cookie) return
-	const nested = jce.decodeWrapper(payload.slice(15))
+	try {
+		var nested = jce.decodeWrapper(payload.slice(4))
+	} catch {
+		var nested = jce.decodeWrapper(payload.slice(15))
+	}
 	switch (nested[5]) {
 	case 33: //群员入群
 	case 38: //建群
