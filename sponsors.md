@@ -1,6 +1,6 @@
 # Sponsors
 
-> sponse后尽量自行PR哦
+> 金额不论，sponse后尽量自行PR哦
 
 |Date|Sponser|Amount|
 |-|-|-|
