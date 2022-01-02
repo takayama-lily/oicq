@@ -408,6 +408,10 @@ function escapeCQInside(s: string) {
 function genCqcode(content: MessageElem[]) {
 	let cqcode = ""
 	for (let elem of content) {
+		if (elem.type === "text") {
+			cqcode += elem.text
+			continue
+		}
 		const tmp = { ...elem } as Partial<MessageElem>
 		tmp.type = undefined 
 		const str = qs.stringify(tmp as NodeJS.Dict<any>, ",", "=", { encodeURIComponent: (s) => s.replace(/&|,|\[|\]/g, escapeCQInside) })
