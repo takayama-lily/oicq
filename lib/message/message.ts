@@ -221,7 +221,7 @@ export class PrivateMessage extends Message {
 					type: "file",
 					name: String(trans[5]),
 					size: trans[6],
-					md5: trans[4].toHex(),
+					md5: trans[4]?.toHex() || "",
 					duration: trans[51] || 0,
 					fid: String(trans[3]),
 				} as FileElem
@@ -371,8 +371,8 @@ export class ForwardMessage implements Forwardable {
 	constructor(protected proto: pb.Proto) {
 		this.proto = proto
 		const head = proto[1]
-		this.time = head[6] | 0
-		this.user_id = head[1] | 0
+		this.time = head[6] || 0
+		this.user_id = head[1] || 0
 		this.nickname = head[14]?.toString() || head[9]?.[4]?.toString() || ""
 		this.parsed = parse(proto[3][1])
 		this.message = this.parsed.message

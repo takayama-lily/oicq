@@ -54,7 +54,9 @@ export async function pbGetMsg(this: Client) {
 			const item = { ...msg[1] }
 			item[3] = 187
 			rubbish.push(item)
-			handleSyncMsg.call(this, msg)
+			handleSyncMsg.call(this, msg).catch(e => {
+				this.logger.debug(e)
+			})
 		}
 	}
 	if (rubbish.length)
