@@ -7,7 +7,10 @@ export interface TextElem {
 /** AT */
 export interface AtElem {
 	type: "at"
+	/** 在频道消息中该值为0 */
 	qq: number | "all"
+	/** 频道中的tiny_id */
+	id?: string | "all"
 	text?: string
 	/** 假at */
 	dummy?: boolean
@@ -210,10 +213,16 @@ export const segment = {
 			type: "dice", id
 		}
 	},
-	/** mention@提及 */
-	at(qq: number | "all", text?: string, dummy?: boolean): AtElem {
+	/** mention@提及，频道中的AT第一个参数传入对方的tiny_id */
+	at(qq: number | "all" | string, text?: string, dummy?: boolean): AtElem {
+		// 频道中的AT
+		if (Number(qq) < 0xffffffff === false) {
+			return {
+				type: "at", qq: 0, id: String(qq), text, dummy
+			}
+		}
 		return {
-			type: "at", qq, text, dummy
+			type: "at", qq: Number(qq), text, dummy
 		}
 	},
 	/** 图片(支持http://,base64://) */

@@ -1,5 +1,6 @@
 import { Gender, GroupRole } from "./common"
 import { PrivateMessage, GroupMessage, DiscussMessage, Sendable } from "./message"
+import { GuildMessageEvent } from "./internal/guild"
 import { Friend } from "./friend"
 import { Group, Discuss } from "./group"
 import { Member } from "./member"
@@ -296,4 +297,7 @@ export interface EventMap<T = any> {
 	"internal.sso": (this: T, cmd: string, payload: Buffer, seq: number) => void
 	/** 隐藏事件: 对方正在输入 */
 	"internal.input": (this: T, event: { user_id: number, end: boolean }) => void
+
+	/** 频道相关: 频道消息 */
+	"guild.message": (this: T, event: GuildMessageEvent) => void
 }

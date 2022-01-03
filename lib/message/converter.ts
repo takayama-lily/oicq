@@ -96,7 +96,20 @@ export class Converter {
 	}
 
 	private at(elem: AtElem) {
-		let { qq, text, dummy } = elem
+		let { qq, id, text, dummy } = elem
+		if (qq === 0 && id) {
+			// 频道中的AT
+			this.elems.push({
+				1: {
+					1: text || (id === "all" ? "@全体成员" : ("@"+id)),
+					12: {
+						3: 2,
+						5: id === "all" ? 0 : BigInt(id)
+					}
+				}
+			})
+			return
+		}
 		if (qq === "all") {
 			var q = 0, flag = 1, display = "全体成员"
 		} else {

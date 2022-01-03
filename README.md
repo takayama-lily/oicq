@@ -109,6 +109,7 @@ client.on("system.login.qrcode", function (e) {
 | stat      | 数据统计        |
 | bkn       | csrf-token  |
 | cookies   | cookies     |
+| tiny_id   | 我的频道账号 |
 
 | Event                  | Description |
 | ---------------------- | ----------- |
@@ -143,6 +144,7 @@ client.on("system.login.qrcode", function (e) {
 | notice                 | 全部通知        |
 | sync.message           | 私聊消息同步      |
 | sync.read              | 已读同步        |
+| guild.message          | 频道消息        |
 
 ### Class: Group
 

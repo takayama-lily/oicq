@@ -109,16 +109,16 @@ export type Apk = typeof mobile
 
 const mobile = {
 	id: "com.tencent.mobileqq",
-	name: "A8.4.1.2703aac4",
-	version: "8.4.1.2703",
-	ver: "8.4.1",
+	name: "A8.8.68.7265",
+	version: "8.8.68.7265",
+	ver: "8.8.68",
 	sign: Buffer.from([166, 183, 69, 191, 36, 162, 194, 119, 82, 119, 22, 246, 243, 110, 182, 141]),
-	buildtime: 1591690260,
+	buildtime: 1642742430,
 	appid: 16,
-	subid: 537064989,
+	subid: 537112589,
 	bitmap: 184024956,
 	sigmap: 34869472,
-	sdkver: "6.0.0.2428",
+	sdkver: "6.0.0.2487",
 	display: "Android",
 }
 const watch: Apk = {
@@ -137,16 +137,16 @@ const watch: Apk = {
 }
 const hd: Apk = {
 	id: "com.tencent.minihd.qq",
-	name: "A5.8.9.3460",
-	version: "5.8.9.3460",
-	ver: "5.8.9",
+	name: "A5.9.3.3468",
+	version: "5.9.3.3468",
+	ver: "5.9.3",
 	sign: Buffer.from([170, 57, 120, 244, 31, 217, 111, 249, 145, 74, 102, 158, 24, 100, 116, 199]),
-	buildtime: 1595836208,
+	buildtime: 1637427966,
 	appid: 16,
-	subid: 537065549,
+	subid: 537067382,
 	bitmap: 150470524,
 	sigmap: 1970400,
-	sdkver: "6.0.0.2433",
+	sdkver: "6.0.0.2487",
 	display: "aPad",
 }
 

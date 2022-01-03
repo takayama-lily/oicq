@@ -155,6 +155,16 @@ export class Parser {
 				}
 				brief = brief || ("@" + elem.qq)
 				content = `{at:${elem.qq}}`
+			} else if (proto[12]) {
+				// 频道中的AT
+				elem = {
+					type: "at",
+					qq: 0,
+					text: brief
+				}
+				elem.id = proto[12][5] ? String(proto[12][5]) : "all"
+				brief = brief || ("@" + elem.qq)
+				content = `{at:${elem.qq}}`
 			} else {
 				if (!brief)
 					return

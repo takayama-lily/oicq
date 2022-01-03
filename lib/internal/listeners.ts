@@ -3,11 +3,12 @@ import * as path from "path"
 import jsqr from "jsqr"
 import { PNG } from "pngjs"
 import qrt from "qrcode-terminal"
-import { jce } from "../core"
+import { jce, pb } from "../core"
 import { NOOP, OnlineStatus } from "../common"
 import { getFrdSysMsg, getGrpSysMsg } from "./sysmsg"
 import { pbGetMsg, pushReadedListener } from "./pbgetmsg"
 import { dmMsgSyncListener, groupMsgListener, discussMsgListener, onlinePushListener, onlinePushTransListener } from "./onlinepush"
+import { guildMsgListener } from "./guild"
 
 type Client = import("../client").Client
 
@@ -48,6 +49,8 @@ const events = {
 	"OnlinePush.PbC2CMsgSync": dmMsgSyncListener,
 	"MessageSvc.PushNotify": pushNotifyListener,
 	"MessageSvc.PushReaded": pushReadedListener,
+	// "trpc.group_pro.synclogic.SyncLogic.PushFirstView": guildListPushListener,
+	"MsgPush.PushGroupProMsg": guildMsgListener,
 }
 
 /** 事件总线, 在这里捕获奇怪的错误 */
@@ -76,6 +79,9 @@ async function onlineListener(this: Client, token: Buffer, nickname: string, gen
 		this.reloadStrangerList(),
 		this.reloadBlackList(),
 	])
+	await this.sendUni("trpc.group_pro.synclogic.SyncLogic.SyncFirstView", pb.encode({ 1: 0, 2: 0, 3: 0 })).then(payload => {
+		this.tiny_id = String(pb.decode(payload)[6])
+	}).catch(NOOP)
 	this.logger.mark(`加载了${this.fl.size}个好友，${this.gl.size}个群，${this.sl.size}个陌生人`)
 	pbGetMsg.call(this).catch(NOOP)
 	this.em("system.online")

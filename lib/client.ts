@@ -81,6 +81,8 @@ export class Client extends BaseClient {
 	bid = ""
 	/** 漫游表情缓存 */
 	stamp = new Set<string>()
+	/** 相当于频道中的qq号 */
+	tiny_id = ""
 
 	/** csrf token */
 	get bkn() {
@@ -295,6 +297,20 @@ export class Client extends BaseClient {
 	reloadBlackList() {
 		return loadBL.call(this)
 	}
+	// reloadGuildList() {
+	// 	this.writeUni("trpc.group_pro.synclogic.SyncLogic.SyncFirstView", pb.encode({ 1: 0, 2: 0, 3: 0 }))
+	// 	return new Promise<void>((resolve, reject) => {
+	// 		const id = setTimeout(() => {
+	// 			this.off("internal.loadguilds", tmp)
+	// 			reject()
+	// 		}, 5000)
+	// 		this.once("internal.loadguilds", tmp)
+	// 		function tmp() {
+	// 			clearTimeout(id)
+	// 			resolve()
+	// 		}
+	// 	})
+	// }
 	/** 清空缓存文件 fs.rm need v14.14 */
 	cleanCache() {
 		const dir = path.join(this.dir, "../image")
@@ -606,7 +622,7 @@ export interface Config {
 	log_level?: LogLevel
 	/** 1:安卓手机(默认) 2:aPad 3:安卓手表 4:MacOS 5:iPad */
 	platform?: Platform
-	/** 群聊过滤自己的消息(默认true) */
+	/** 群聊和频道中过滤自己的消息(默认true) */
 	ignore_self?: boolean
 	/** 被风控时是否尝试用分片发送，默认true */
 	resend?: boolean

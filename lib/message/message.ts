@@ -77,6 +77,7 @@ export abstract class Message implements Quotable, Forwardable {
 	/**
 	 * 该值永远指向消息发送者。
 	 * 对于私聊消息，请使用`from_id`和`to_id`来确定发送者和接收者。
+	 * 建议使用 `sender.user_id`
 	 * @deprecated 未来会改为访问器，仅供内部转发消息时使用。
 	 */
 	user_id: number
