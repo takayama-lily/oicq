@@ -309,7 +309,7 @@ export class GroupMessage extends Message {
 				this.sender.nickname = this.sender.card = parseFunString(group[4].toBuffer())
 			if (ext?.[4])
 				this.sender.role = ext[4] === 8 ? "owner" : "admin"
-			this.sender.level = ext?.[3] | 0
+			this.sender.level = ext?.[3] || 0
 			this.sender.title = ext?.[7]?.toString() || ""
 
 		}

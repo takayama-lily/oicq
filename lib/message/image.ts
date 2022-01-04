@@ -43,9 +43,9 @@ export function parseImageFileParam(file: string) {
 	let md5: string, size: number, width: number, height: number, ext: string
 	let sp = file.split("-")
 	md5 = sp[0].slice(0, 32)
-	size = Number(sp[0].slice(32)) | 0
-	width = Number(sp[1]) | 0
-	height = Number(sp[2]) | 0
+	size = Number(sp[0].slice(32)) || 0
+	width = Number(sp[1]) || 0
+	height = parseInt(sp[2]) || 0
 	sp = file.split(".")
 	ext = sp[1] || "jpg"
 	return { md5, size, width, height, ext }
