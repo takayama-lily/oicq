@@ -37,3 +37,7 @@ if (account > 10000 && account < 0xffffffff) {
 } else {
     console.log(help);
 }
+
+process.on("unhandledRejection", (a) => {
+  console.log(a)
+})
