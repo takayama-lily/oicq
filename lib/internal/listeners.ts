@@ -19,24 +19,24 @@ async function pushNotifyListener(this: Client, payload: Buffer) {
 		var nested = jce.decodeWrapper(payload.slice(15))
 	}
 	switch (nested[5]) {
-	case 33: //群员入群
-	case 38: //建群
-	case 85: //群申请被同意
-	case 141: //陌生人
-	case 166: //好友
-	case 167: //单向好友
-	case 208: //好友语音
-	case 529: //离线文件
-		return pbGetMsg.call(this)
-	case 84: //群请求
-	case 87: //群邀请
-	case 525: //群请求(来自群员的邀请)
-		return getGrpSysMsg.call(this)
-	case 187: //好友请求
-	case 191: //单向好友增加
-		return getFrdSysMsg.call(this)
-	case 528: //黑名单同步
-		return this.reloadBlackList()
+		case 33: //群员入群
+		case 38: //建群
+		case 85: //群申请被同意
+		case 141: //陌生人
+		case 166: //好友
+		case 167: //单向好友
+		case 208: //好友语音
+		case 529: //离线文件
+			return pbGetMsg.call(this)
+		case 84: //群请求
+		case 87: //群邀请
+		case 525: //群请求(来自群员的邀请)
+			return getGrpSysMsg.call(this)
+		case 187: //好友请求
+		case 191: //单向好友增加
+			return getFrdSysMsg.call(this)
+		case 528: //黑名单同步
+			return this.reloadBlackList()
 	}
 }
 
@@ -76,6 +76,9 @@ async function onlineListener(this: Client, token: Buffer, nickname: string, gen
 		this.reloadStrangerList(),
 		this.reloadBlackList(),
 	])
+	// 删除二维码图片
+	const qrcode = path.join(this.dir, "qrcode.png")
+	fs.access(qrcode, err => !err && fs.unlink(qrcode, NOOP))
 	this.logger.mark(`加载了${this.fl.size}个好友，${this.gl.size}个群，${this.sl.size}个陌生人`)
 	pbGetMsg.call(this).catch(NOOP)
 	this.em("system.online")
@@ -99,7 +102,7 @@ function qrcodeListener(this: Client, image: Buffer) {
 		try {
 			const qrdata = PNG.sync.read(image)
 			const qr = jsqr(new Uint8ClampedArray(qrdata.data), qrdata.width, qrdata.height)!
-			qrt.generate(qr.data, console.log as any)
+			qrt.generate(qr.data, { small: true })
 		} catch { }
 		this.logger.mark("请用手机QQ扫描二维码，若打印出错请打开：" + file)
 		this.em("system.login.qrcode", { image })
