@@ -51,9 +51,9 @@ export function code2uin(code: number) {
 		left += 1990
 	else if (left >= 210 && left <= 309)
 		left += 3890
-	else if (left >= 310 && left <= 334)
+	else if (left >= 310 && left <= 335)
 		left += 3490
-	else if (left >= 335 && left <= 386) //335 336不确定
+	else if (left >= 336 && left <= 386)
 		left += 2265
 	else if (left >= 387 && left <= 499)
 		left += 3490
