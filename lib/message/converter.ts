@@ -43,6 +43,7 @@ export interface ConverterExt {
 /** 将消息元素转换为protobuf */
 export class Converter {
 
+	is_chain = true
 	elems: pb.Encodable[] = []
 	/** 用于最终发送 */
 	rich: pb.Encodable = { 2: this.elems, 4: null }
@@ -234,6 +235,7 @@ export class Converter {
 		const buf = Buffer.from(file.replace("protobuf://", ""), "base64")
 		this.rich[4] = buf
 		this.brief += "[语音]"
+		this.is_chain = false
 	}
 
 	private video(elem: VideoElem) {
@@ -246,6 +248,7 @@ export class Converter {
 			1: "你的QQ暂不支持查看视频短片，请期待后续版本。"
 		} })
 		this.brief += "[视频]"
+		this.is_chain = false
 	}
 
 	private location(elem: LocationElem) {
@@ -295,6 +298,7 @@ export class Converter {
 			}
 		})
 		this.brief += "[json消息]"
+		this.is_chain = false
 	}
 
 	private xml(elem: XmlElem) {
@@ -305,6 +309,7 @@ export class Converter {
 			}
 		})
 		this.brief += "[xml消息]"
+		this.is_chain = false
 	}
 
 	private poke(elem: PokeElem) {
@@ -323,6 +328,7 @@ export class Converter {
 			}
 		})
 		this.brief += "[戳一戳]"
+		this.is_chain = false
 	}
 
 	private mirai(elem: MiraiElem) {

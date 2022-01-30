@@ -4,7 +4,7 @@ import { pb, jce } from "./core"
 import { ErrorCode, drop } from "./errors"
 import { timestamp, code2uin, PB_CONTENT, NOOP, lock, hide } from "./common"
 import { Contactable } from "./internal"
-import { Sendable, GroupMessage, Image, buildMusic, MusicPlatform, Anonymous, parseGroupMessageId, Quotable } from "./message"
+import { Sendable, GroupMessage, Image, buildMusic, MusicPlatform, Anonymous, parseGroupMessageId, Quotable, Converter } from "./message"
 import { Gfs } from "./gfs"
 import { MessageRet } from "./events"
 import { GroupInfo, MemberInfo } from "./entities"
@@ -307,7 +307,7 @@ export class Group extends Discuss {
 				})
 			}
 		} catch {
-			message_id = await this._sendMsgByFrag(converter.toFragments())
+			message_id = await this._sendMsgByFrag(converter)
 		}
 		this.c.logger.info(`succeed to send: [Group(${this.gid})] ` + converter.brief)
 		{
@@ -316,9 +316,10 @@ export class Group extends Discuss {
 		}
 	}
 
-	private async _sendMsgByFrag(fragments: Uint8Array[]) {
-		if (!this.c.config.resend)
+	private async _sendMsgByFrag(converter: Converter) {
+		if (!this.c.config.resend || !converter.is_chain)
 			drop(ErrorCode.RiskMessageError)
+		const fragments = converter.toFragments()
 		this.c.logger.warn("群消息可能被风控，将尝试使用分片发送")
 		let n = 0
 		const rand = randomBytes(4).readUInt32BE()

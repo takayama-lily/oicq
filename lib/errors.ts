@@ -46,7 +46,7 @@ export function drop(code: number, message?: string): never {
 	throw new ApiRejection(code, message)
 }
 
-/** 不在内的都属于未知错误，暂时无法解决 */
+/** 可捕捉的登录错误，不在列的都属于未知错误，暂时无法解决 */
 export enum LoginErrorCode {
 	WrongPassword = 1,
 	AccountFrozen = 40,
