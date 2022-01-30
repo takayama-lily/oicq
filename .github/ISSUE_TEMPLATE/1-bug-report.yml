@@ -11,7 +11,7 @@ body:
       description: Output of `node -v`
   - type: input
     attributes:
-      label: Package Version
+      label: Package(oicq) Version
       description: Installed by npm or yarn
       placeholder: latest?
   - type: dropdown
@@ -29,7 +29,7 @@ body:
         * [x] 我已确认过官方客户端不存在此问题，库的行为存在问题。
   - type: textarea
     attributes:
-      label: Bug Description
+      label: Bug Description (最好截图说明，你的文字描述可能无法准确传达信息)
   - type: textarea
     attributes:
-      label: Log Details
+      label: Log Details (控制台日志，请提供包含前后一段时间内的)
