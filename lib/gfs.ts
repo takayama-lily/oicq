@@ -277,9 +277,9 @@ export class Gfs {
 	}
 
 	/** 上传一个文件 */
-	async upload(file: string | Buffer, pid = "/", name?: string, callback?: (percentage: string) => void) {
+	async upload(file: string | Buffer | Uint8Array, pid = "/", name?: string, callback?: (percentage: string) => void) {
 		let size, md5, sha1
-		if (file instanceof Buffer) {
+		if (file instanceof Buffer || file instanceof Uint8Array) {
 			if (!Buffer.isBuffer(file))
 				file = Buffer.from(file)
 			size = file.length
