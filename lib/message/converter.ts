@@ -443,5 +443,6 @@ export class Converter {
 				}
 			}
 		})
+		this.at({ type: "at", qq: source.user_id })
 	}
 }
