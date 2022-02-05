@@ -1,9 +1,10 @@
 import { Gender, GroupRole } from "./common"
 import { PrivateMessage, GroupMessage, DiscussMessage, Sendable } from "./message"
-import { Friend, User } from "./friend"
+import { Friend } from "./friend"
 import { Group, Discuss } from "./group"
 import { Member } from "./member"
 import { MemberInfo } from "./entities"
+import { LoginErrorCode } from "./errors"
 
 /** 发消息的返回值 */
 export interface MessageRet {
@@ -14,7 +15,10 @@ export interface MessageRet {
 }
 
 export interface MessageEvent {
-	/** 快速回复 */
+	/**
+	 * 快速回复
+	 * @param quote 引用这条消息(默认false)
+	 */
 	reply(content: Sendable, quote?: boolean): Promise<MessageRet>
 }
 
@@ -192,7 +196,7 @@ export interface EventMap<T = any> {
 	/** 设备锁验证事件 */
 	"system.login.device": (this: T, event: { url: string, phone: string }) => void
 	/** 登录遇到错误 */
-	"system.login.error": (this: T, event: { code: number, message: string}) => void
+	"system.login.error": (this: T, event: { code: LoginErrorCode | number, message: string }) => void
 	/** 上线事件 */
 	"system.online": (this: T, event: undefined) => void
 

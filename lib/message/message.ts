@@ -87,13 +87,16 @@ export abstract class Message implements Quotable, Forwardable {
 	}
 
 	post_type = "message" as "message"
+	/** 消息时间 */
 	time: number
+	/** 消息元素数组 */
 	message: MessageElem[]
+	/** 字符串形式的消息 */
 	raw_message: string
 	font: string
 	/** @cqhttp cqhttp方法用 */
 	message_id = ""
-	/** 消息编号 */
+	/** 消息编号，在群消息中是唯一的 (私聊消息建议至少使用time,seq,rand中的两个判断唯一性) */
 	seq: number
 	/** 消息随机数 */
 	rand: number
@@ -191,6 +194,7 @@ export abstract class Message implements Quotable, Forwardable {
 export class PrivateMessage extends Message {
 
 	message_type = "private" as "private"
+	/** friend:好友 group:群临时会话 self:我的设备 other:其他途径的临时会话 */
 	sub_type = "friend" as "friend" | "group" | "other" | "self"
 	from_id: number
 	to_id: number
@@ -253,6 +257,7 @@ export class PrivateMessage extends Message {
 export class GroupMessage extends Message {
 
 	message_type = "group" as "group"
+	/** anonymous:匿名 normal:通常  */
 	sub_type: "normal" | "anonymous"
 	group_id: number
 	group_name: string

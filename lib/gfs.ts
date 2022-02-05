@@ -10,7 +10,7 @@ import { FileElem } from "./message"
 
 type Client = import("./client").Client
 
-/** 共通属性 */
+/** (群文件/目录)共通属性 */
 export interface GfsBaseStat {
 	/** 文件或目录的id (目录以/开头) */
 	fid: string
@@ -42,7 +42,13 @@ function checkRsp(rsp: pb.Proto) {
 	drop(rsp[1], rsp[2])
 }
 
-/** 群文件系统 */
+/**
+ * 群文件系统
+ * fid表示一个文件或目录的id，pid表示它所在目录的id
+ * 根目录的id为"/"
+ * 只能在根目录下创建目录
+ * 删除一个目录会删除下面的全部文本
+ */
 export class Gfs {
 
 	/** `this.gid`的别名 */
@@ -74,7 +80,7 @@ export class Gfs {
 			})
 			const payload = await this.c.sendOidb("OidbSvc.0x6d8_3", body)
 			const rsp = pb.decode(payload)[4][4]
-			const total = rsp[4], used = rsp[5], free = total - used
+			const total = Number(rsp[4]), used = Number(rsp[5]), free = total - used
 			return {
 				total, used, free
 			}
@@ -88,7 +94,7 @@ export class Gfs {
 			})
 			const payload = await this.c.sendOidb("OidbSvc.0x6d8_2", body)
 			const rsp = pb.decode(payload)[4][3]
-			const file_count = rsp[4], max_file_count = rsp[6]
+			const file_count = Number(rsp[4]), max_file_count = Number(rsp[6])
 			return {
 				file_count, max_file_count
 			}
@@ -126,7 +132,7 @@ export class Gfs {
 		}
 	}
 
-	/** 列出目录下的所有文件和目录(根目录pid为`/`) */
+	/** 列出目录下的所有文件和目录(默认pid为根目录`/`) */
 	async dir(pid = "/", start = 0, limit = 100) {
 		const body = pb.encode({
 			2: {
@@ -237,7 +243,7 @@ export class Gfs {
 		checkRsp(rsp)
 	}
 
-	/** 移动文件(所有目录必须在根目录下，因此无法移动目录) */
+	/** 移动文件 */
 	async mv(fid: string, pid: string) {
 		const file = await this._resolve(fid)
 		const body = pb.encode({
@@ -276,10 +282,16 @@ export class Gfs {
 		return await this._resolve(rsp[3])
 	}
 
-	/** 上传一个文件 */
+	/**
+	 * 上传一个文件
+	 * @param file string表示从该本地文件路径上传，Buffer表示直接上传这段内容
+	 * @param pid 上传到此目录(默认根目录)
+	 * @param name 若留空则自动以md5命名
+	 * @param callback 监控上传进度的回调函数，拥有一个"百分比进度"的参数
+	 */
 	async upload(file: string | Buffer | Uint8Array, pid = "/", name?: string, callback?: (percentage: string) => void) {
 		let size, md5, sha1
-		if (file instanceof Buffer || file instanceof Uint8Array) {
+		if (file instanceof Uint8Array) {
 			if (!Buffer.isBuffer(file))
 				file = Buffer.from(file)
 			size = file.length

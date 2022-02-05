@@ -1,30 +1,40 @@
 import { ApiRejection } from "./core"
 
-/** 不包括服务器返回的其他具体错误 */
+/** 调用API时可能出现的错误 */
 export enum ErrorCode {
 
+	/** 客户端离线 */
 	ClientNotOnline = -1,
 	/** 发包超时未收到服务器回应 */
 	PacketTimeout = -2,
 
+	/** 用户不存在 */
 	UserNotExists = -10,
+	/** 群不存在(未加入) */
 	GroupNotJoined = -20,
+	/** 群员不存在 */
 	MemberNotExists = -30,
 
-	/** 传入的消息参数不正确 */
+	/** 发消息时传入的参数不正确 */
 	MessageBuilderError = -60,
-	/** 群消息被风控 */
+	/** 群消息被风控发送失败 */
 	RiskMessageError = -70,
 	/** 群消息有敏感词发送失败 */
 	SensitiveWordsError = -80,
 
+	/** 上传图片/文件/视频等数据超时 */
 	HighwayTimeout = -110,
+	/** 上传图片/文件/视频等数据遇到网络错误 */
 	HighwayNetworkError = -120,
+	/** 没有上传通道 */
 	NoUploadChannel = -130,
 
+	/** 离线(私聊)文件不存在 */
 	OfflineFileNotExists = -160,
 
+	/** 获取视频中的图片失败 */
 	FFmpegVideoThumbError = -210,
+	/** 音频转换失败 */
 	FFmpegPttTransError = -220,
 }
 
@@ -46,11 +56,16 @@ export function drop(code: number, message?: string): never {
 	throw new ApiRejection(code, message)
 }
 
-/** 可捕捉的登录错误，不在列的都属于未知错误，暂时无法解决 */
+/** 登录时可能出现的错误，不在列的都属于未知错误，暂时无法解决 */
 export enum LoginErrorCode {
+	/** 密码错误 */
 	WrongPassword = 1,
+	/** 账号被冻结 */
 	AccountFrozen = 40,
+	/** 发短信太频繁 */
 	TooManySms = 162,
+	/** 短信验证码错误 */
 	WrongSmsCode = 163,
+	/** 滑块ticket错误 */
 	WrongTicket = 237,
 }

@@ -169,7 +169,7 @@ export type ChainElem = TextElem | FaceElem | BfaceElem | MfaceElem | ImageElem 
 export type MessageElem = TextElem | FaceElem | BfaceElem | MfaceElem | ImageElem | AtElem | MiraiElem | ReplyElem |
 	FlashElem | PttElem | VideoElem | JsonElem | XmlElem | PokeElem | LocationElem | ShareElem | FileElem
 
-/** 可通过sendMsg发送的类型集合 */
+/** 可通过sendMsg发送的类型集合 (字符串、元素对象，或它们的数组) */
 export type Sendable = string | MessageElem | (string | MessageElem)[]
 
 /** 用于构造消息元素 */
