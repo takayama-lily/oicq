@@ -430,6 +430,9 @@ export class Converter {
 	/** 引用回复 */
 	quote(source: Quotable) {
 		const elems = new Converter(source.message || "", this.ext).elems
+		const tmp = this.brief
+		this.at({ type: "at", qq: source.user_id })
+		this.elems.unshift(this.elems.pop()!)
 		this.elems.unshift({
 			45: {
 				1: [source.seq],
@@ -443,6 +446,6 @@ export class Converter {
 				}
 			}
 		})
-		this.at({ type: "at", qq: source.user_id })
+		this.brief = `[回复${this.brief.replace(tmp, "")}]` + tmp
 	}
 }
