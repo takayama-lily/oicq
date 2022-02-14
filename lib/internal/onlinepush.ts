@@ -420,7 +420,9 @@ export function discussMsgListener(this: Client, payload: Buffer, seq: number) {
 		return
 	if (msg.raw_message) {
 		msg.discuss = this.pickDiscuss(msg.discuss_id)
-		msg.reply = msg.discuss.sendMsg.bind(msg.discuss)
+		msg.reply = function (content, quote = false) {
+			return msg.discuss.sendMsg(content, quote ? this : undefined)
+		}
 		this.logger.info(`recv from: [Discuss: ${msg.discuss_name}(${msg.discuss_id}), Member: ${msg.sender.card}(${msg.sender.user_id})] ` + msg)
 		this.em("message.discuss", msg)
 	}
