@@ -59,6 +59,8 @@ client.on("system.login.qrcode", function (e) {
 | Method               | Description               |
 | -------------------- | ------------------------- |
 | login()              | 登录                        |
+| logout()             | 登出                        |
+| queryQrcodeResult()  | 获取扫码结果                   |
 | submitSlider()       | 提交滑动验证码                   |
 | sendSmsCode()        | 发短信                       |
 | submitSmsCode()      | 提交短信验证码                   |
