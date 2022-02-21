@@ -344,7 +344,7 @@ client.on("system.login.qrcode", function (e) {
 
 ### Namespace: segment
 
-> const { segment } = require("oicq)
+> const { segment } = require("oicq")
 
 | Method     | Description |
 | ---------- | ----------- |
