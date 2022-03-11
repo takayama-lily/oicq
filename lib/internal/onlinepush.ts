@@ -319,6 +319,7 @@ export function onlinePushTransListener(this: Client, payload: Buffer, seq: numb
 				sub_type: "transfer",
 				operator_id, user_id
 			})
+			this.gl.get(gid)!.owner_id = user_id
 			this.gml.get(gid)!.get(user_id)!.role = "owner"
 			this.gml.get(gid)!.get(operator_id)!.role = "member"
 		}
