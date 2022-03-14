@@ -444,6 +444,10 @@ export class Converter {
 	quote(source: Quotable) {
 		const elems = new Converter(source.message || "", this.ext).elems
 		const tmp = this.brief
+		if(!this.ext?.dm){
+			this.at({ type: "at", qq: source.user_id })
+			this.elems.unshift(this.elems.pop()!)
+		}
 		this.elems.unshift({
 			45: {
 				1: [source.seq],
