@@ -188,14 +188,14 @@ export class BaseClient extends EventEmitter {
 
 	/** 使用上报的token登录 */
 	tokenLogin(token: Buffer) {
-		if (token.length !== 152)
+		if (![144, 152].includes(token.length))
 			throw new Error("bad token")
 		this.sig.session = randomBytes(4)
 		this.sig.randkey = randomBytes(16)
 		this[ECDH] = new Ecdh
 		this.sig.d2key = token.slice(0, 16)
-		this.sig.d2 = token.slice(16, 80)
-		this.sig.tgt = token.slice(80, 152)
+		this.sig.d2 = token.slice(16, token.length - 72)
+		this.sig.tgt = token.slice(token.length - 72)
 		this.sig.tgtgt = md5(this.sig.d2key)
 		const t = tlv.getPacker(this)
 		const body = new Writer()
@@ -919,7 +919,7 @@ function decodeLoginResponse(this: BaseClient, payload: Buffer): any {
 	if (type === 160) {
 		if (!t[0x204])
 			return this.emit("internal.verbose", "已向密保手机发送短信验证码", VerboseLevel.Mark)
-		let phone
+		let phone = ""
 		if (t[0x174] && t[0x178]) {
 			this.sig.t104 = t[0x104]
 			this.sig.t174 = t[0x174]

@@ -56,9 +56,13 @@ client.on("system.login.qrcode", function (e) {
 
 ### Class: Client
 
+> 使用 createClient() 或 new Client 创建实例
+
 | Method               | Description               |
 | -------------------- | ------------------------- |
 | login()              | 登录                        |
+| logout()             | 登出                        |
+| queryQrcodeResult()  | 获取扫码结果                   |
 | submitSlider()       | 提交滑动验证码                   |
 | sendSmsCode()        | 发短信                       |
 | submitSmsCode()      | 提交短信验证码                   |
@@ -148,7 +152,8 @@ client.on("system.login.qrcode", function (e) {
 
 ### Class: Group
 
-> 所有的`notice.group`和`message.group`事件的上报数据中含有此实例 (`e.group`访问)
+> 群。 `notice.group` 和 `message.group` 相关事件中含有此实例 ( `e.group` 访问)  
+> 或者使用 `client.pickGroup()` 获得群实例
 
 | Method              | Description                |
 | ------------------- | -------------------------- |
@@ -213,8 +218,9 @@ client.on("system.login.qrcode", function (e) {
 
 ### Class: Friend
 
-> 继承 [User](#class-user) 的所有方法和属性  
-> 所有的`notice.friend`和`message.private`事件中含有此实例 (`e.friend`访问)
+> 好友。继承 [User](#class-user) 的所有方法和属性  
+> `notice.friend` 和 `message.private` 相关事件中含有此实例 ( `e.friend` 访问)  
+> 或者使用 `client.pickFriend()` 获得好友实例
 
 | Method       | Description |
 | ------------ | ----------- |
@@ -236,8 +242,9 @@ client.on("system.login.qrcode", function (e) {
 
 ### Class: Member
 
-> 继承 [User](#class-user) 的所有方法和属性  
-> 所有的`message.group`事件中含有此实例 (`e.member`访问)
+> 群成员。继承 [User](#class-user) 的所有方法和属性  
+> `message.group` 相关事件中含有此实例 ( `e.member` 访问)  
+> 或者使用 `client.pickMember()` 获得群成员实例
 
 | Method      | Description |
 | ----------- | ----------- |
@@ -277,11 +284,11 @@ client.on("system.login.qrcode", function (e) {
 
 | Property | Description |
 | -------- | ----------- |
-| client   | 所在客户端对象     |
+| client   | [所在客户端对象](#class-client)     |
 
 ### Class: Gfs
 
-> 群文件系统
+> 群文件系统，通过 `group.fs` 获取
 
 | Method     | Description |
 | ---------- | ----------- |
@@ -300,11 +307,12 @@ client.on("system.login.qrcode", function (e) {
 | -------- | --------------------- |
 | group_id | 群号                    |
 | group    | [所在群对象](#class-group) |
-| client   | 所在客户端对象               |
+| client   | [所在客户端对象](#class-client)               |
 
 ### Class: Message
 
-> 拥有子类: PrivateMessage, GroupMessage, DiscussMessage
+> 拥有子类: `PrivateMessage`, `GroupMessage`, `DiscussMessage`  
+> 对应的消息事件中含有这些实例中的一个
 
 | Method      | Description |
 | ----------- | ----------- |
@@ -336,13 +344,10 @@ client.on("system.login.qrcode", function (e) {
 | font         | 字体          |
 | source       | 引用回复的消息     |
 
-### Class: ForwardMessage
-
-> 基本同 `Message`
-
 ### Namespace: segment
 
-> const { segment } = require("oicq)
+> 用于创建可发送的消息元素类型  
+> `const { segment } = require("oicq")`
 
 | Method     | Description |
 | ---------- | ----------- |
@@ -363,8 +368,8 @@ client.on("system.login.qrcode", function (e) {
 
 ### 使用密码登录
 
-首次登录建议使用扫码，因为使用密码可能需要处理滑动验证码，目前非手机环境的滑动无法通过。  
-登录几天后不会再弹出滑动验证码，此时建议改用密码登录，更加稳定。
+首次登录推荐使用扫码，但是可能会出现掉线后需要重新扫码的情况。  
+登录一段时间后，不会再弹出滑动验证码，此时建议改用密码登录，更加稳定。
 
 ```js
 const { createClient } = require("oicq")

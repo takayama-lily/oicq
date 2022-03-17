@@ -134,7 +134,7 @@ export class DownloadTransform extends stream.Transform {
 }
 
 export const PB_CONTENT = pb.encode({ 1: 1, 2: 0, 3: 0 })
-export const IS_WIN = os.platform().includes("win")
+export const IS_WIN = os.platform() === "win32"
 
 /** 系统临时目录，用于临时存放下载的图片等内容 */
 export const TMP_DIR = os.tmpdir()

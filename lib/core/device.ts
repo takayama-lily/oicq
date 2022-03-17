@@ -109,16 +109,16 @@ export type Apk = typeof mobile
 
 const mobile = {
 	id: "com.tencent.mobileqq",
-	name: "A8.8.68.7265",
-	version: "8.8.68.7265",
-	ver: "8.8.68",
+	name: "A8.8.80.7400",
+	version: "8.8.80.7400",
+	ver: "8.8.80",
 	sign: Buffer.from([166, 183, 69, 191, 36, 162, 194, 119, 82, 119, 22, 246, 243, 110, 182, 141]),
-	buildtime: 1642742430,
+	buildtime: 1640921786,
 	appid: 16,
-	subid: 537112589,
+	subid: 537113159,
 	bitmap: 184024956,
 	sigmap: 34869472,
-	sdkver: "6.0.0.2487",
+	sdkver: "6.0.0.2494",
 	display: "Android",
 }
 const watch: Apk = {

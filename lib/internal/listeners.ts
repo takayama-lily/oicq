@@ -58,7 +58,7 @@ async function eventsListener(this: Client, cmd: string, payload: Buffer, seq: n
 	try {
 		await Reflect.get(events, cmd)?.call(this, payload, seq)
 	} catch (e) {
-		this.logger.debug(e)
+		this.logger.trace(e)
 	}
 }
 
