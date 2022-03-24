@@ -129,7 +129,7 @@ export class BaseClient extends EventEmitter {
 		remote_port: 0,
 	}
 
-	constructor(public readonly uin: number, p = Platform.Android, d?: ShortDevice) {
+	constructor(public readonly uin: number, p: Platform = Platform.Android, d?: ShortDevice) {
 		super()
 		this.apk = getApkInfo(p)
 		this.device = generateFullDevice(d || uin)
