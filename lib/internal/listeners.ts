@@ -105,7 +105,7 @@ function qrcodeListener(this: Client, image: Buffer) {
 		try {
 			const qrdata = PNG.sync.read(image)
 			const qr = jsqr(new Uint8ClampedArray(qrdata.data), qrdata.width, qrdata.height)!
-			qrt.generate(qr.data, console.log as any)
+			qrt.generate(qr.data, { small: true })
 		} catch { }
 		this.logger.mark("请用手机QQ扫描二维码，若打印出错请打开：" + file)
 		this.em("system.login.qrcode", { image })
