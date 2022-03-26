@@ -1,8 +1,6 @@
 import * as fs from "fs"
 import * as path from "path"
-import jsqr from "jsqr"
 import { PNG } from "pngjs"
-import qrt from "qrcode-terminal"
 import { jce, pb } from "../core"
 import { NOOP, OnlineStatus } from "../common"
 import { getFrdSysMsg, getGrpSysMsg } from "./sysmsg"
@@ -99,15 +97,35 @@ function kickoffListener(this: Client, message: string) {
 	})
 }
 
+function logQrcode(img: Buffer) {
+	const png = PNG.sync.read(img)
+	const color_reset = "\x1b[0m"
+	const color_fg_blk = "\x1b[30m"
+	const color_bg_blk = "\x1b[40m"
+	const color_fg_wht = "\x1b[37m"
+	const color_bg_wht = "\x1b[47m"
+	for (let i = 36; i < png.height * 4 - 36; i += 24) {
+		let line = ""
+		for (let j = 36; j < png.width * 4 - 36; j += 12) {
+			let r0 = png.data[i * png.width + j]
+			let r1 = png.data[i * png.width + j + (png.width * 4 * 3)]
+			let fgcolor = (r0 == 255) ? color_fg_wht : color_fg_blk
+			let bgcolor = (r1 == 255) ? color_bg_wht : color_bg_blk
+			line += `${fgcolor + bgcolor}\u2580`
+		}
+		console.log(line + color_reset)
+	}
+	console.log(`${color_fg_blk + color_bg_wht}       请使用 手机QQ 扫描二维码        ${color_reset}`)
+	console.log(`${color_fg_blk + color_bg_wht}                                       ${color_reset}`)
+}
+
 function qrcodeListener(this: Client, image: Buffer) {
 	const file = path.join(this.dir, "qrcode.png")
 	fs.writeFile(file, image, () => {
 		try {
-			const qrdata = PNG.sync.read(image)
-			const qr = jsqr(new Uint8ClampedArray(qrdata.data), qrdata.width, qrdata.height)!
-			qrt.generate(qr.data, console.log as any)
+			logQrcode(image)
 		} catch { }
-		this.logger.mark("请用手机QQ扫描二维码，若打印出错请打开：" + file)
+		this.logger.mark("二维码图片已保存到：" + file)
 		this.em("system.login.qrcode", { image })
 	})
 }
