@@ -67,7 +67,8 @@ export abstract class Contactable {
 		}
 		const body = pb.encode({
 			1: 1,
-			2: req
+			2: req,
+			// 10: 3
 		})
 		const payload = await this.c.sendUni("LongConn.OffPicUp", body)
 		return pb.decode(payload)[2] as pb.Proto | pb.Proto[]
@@ -445,7 +446,8 @@ export abstract class Contactable {
 					},
 					14: nickname,
 					20: {
-						2: 1
+						1: 0,
+						2: rand
 					}
 				},
 				3: {
