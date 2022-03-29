@@ -545,7 +545,7 @@ export class Client extends BaseClient {
 	}
 
 	protected _msgExists(from: number, type: number, seq: number, time: number) {
-		if (timestamp() - time >= 60 || time < this.stat.start_time)
+		if (timestamp() + this.sig.time_diff - time >= 60 || time < this.stat.start_time)
 			return true
 		const id = [from, type, seq].join("-")
 		const set = this._cache.get(time)

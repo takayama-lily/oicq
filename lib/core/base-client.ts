@@ -8,7 +8,7 @@ import * as tlv from "./tlv"
 import * as tea from "./tea"
 import * as pb from "./protobuf"
 import * as jce from "./jce"
-import { BUF0, BUF16, NOOP, md5, timestamp, lock, hide, unzip, int32ip2str } from "./constants"
+import { BUF0, BUF4, BUF16, NOOP, md5, timestamp, lock, hide, unzip, int32ip2str } from "./constants"
 import { ShortDevice, Device, generateFullDevice, Platform, Apk, getApkInfo } from "./device"
 
 const FN_NEXT_SEQ = Symbol("FN_NEXT_SEQ")
@@ -72,7 +72,7 @@ export class BaseClient extends EventEmitter {
 	private [IS_ONLINE] = false
 	private [ECDH] = new Ecdh
 	private readonly [NET] = new Network
-	// 存放包的回调函数
+	// 回包的回调函数
 	private readonly [HANDLERS] = new Map<number, (buf: Buffer) => void>()
 
 	readonly apk: Apk
@@ -96,6 +96,7 @@ export class BaseClient extends EventEmitter {
 			sig_session: BUF0,
 			session_key: BUF0,
 		},
+		/** 心跳包 */
 		hb480: (() => {
 			const buf = Buffer.alloc(9)
 			buf.writeUInt32BE(this.uin)
@@ -106,7 +107,9 @@ export class BaseClient extends EventEmitter {
 				4: buf
 			})
 		})(),
+		/** 上次cookie刷新时间 */
 		emp_time: 0,
+		time_diff: 0,
 	}
 	readonly pskey: {[domain: string]: Buffer} = { }
 	/** 心跳间隔(秒) */
@@ -143,6 +146,7 @@ export class BaseClient extends EventEmitter {
 			this.statistics.remote_ip = this[NET].remoteAddress as string
 			this.statistics.remote_port = this[NET].remotePort as number
 			this.emit("internal.verbose", `${this[NET].remoteAddress}:${this[NET].remotePort} connected`, VerboseLevel.Mark)
+			syncTimeDiff.call(this)
 		})
 		this[NET].on("packet", packetListener.bind(this))
 		this[NET].on("lost", lostListener.bind(this))
@@ -676,6 +680,7 @@ async function register(this: BaseClient, logout = false) {
 		} else {
 			this[IS_ONLINE] = true
 			this[HEARTBEAT] = setInterval(async () => {
+				syncTimeDiff.call(this)
 				if (typeof this.heartbeat === "function")
 					await this.heartbeat()
 				this.sendUni("OidbSvc.0x480_9_IMCore", this.sig.hb480).catch(() => {
@@ -691,6 +696,16 @@ async function register(this: BaseClient, logout = false) {
 		if (!logout)
 			this.emit("internal.error.network", -3, "server is busy(register)")
 	}
+}
+
+function syncTimeDiff(this: BaseClient) {
+	const pkt = buildLoginPacket.call(this, "Client.CorrectTime", BUF4, 0)
+	this[FN_SEND](pkt).then(buf => {
+		try {
+			this.sig.time_diff = buf.readInt32BE() - timestamp()
+			console.log(this.sig.time_diff)
+		} catch { }
+	}).catch(NOOP)
 }
 
 async function refreshToken(this: BaseClient) {
@@ -746,7 +761,7 @@ function readTlv(r: Readable) {
 	return t
 }
 
-type LoginCmd = "wtlogin.login" | "wtlogin.exchange_emp" | "wtlogin.trans_emp" | "StatSvc.register"
+type LoginCmd = "wtlogin.login" | "wtlogin.exchange_emp" | "wtlogin.trans_emp" | "StatSvc.register" | "Client.CorrectTime"
 type LoginCmdType = 0 | 1 | 2
 
 function buildLoginPacket(this: BaseClient, cmd: LoginCmd, body: Buffer, type: LoginCmdType = 2): Buffer {
