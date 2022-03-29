@@ -703,7 +703,6 @@ function syncTimeDiff(this: BaseClient) {
 	this[FN_SEND](pkt).then(buf => {
 		try {
 			this.sig.time_diff = buf.readInt32BE() - timestamp()
-			console.log(this.sig.time_diff)
 		} catch { }
 	}).catch(NOOP)
 }
