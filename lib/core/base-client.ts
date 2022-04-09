@@ -18,6 +18,7 @@ const HANDLERS = Symbol("HANDLERS")
 const NET = Symbol("NET")
 const ECDH = Symbol("ECDH")
 const IS_ONLINE = Symbol("IS_ONLINE")
+const LOGIN_LOCK = Symbol("LOGIN_LOCK")
 const HEARTBEAT = Symbol("HEARTBEAT")
 
 export enum VerboseLevel {
@@ -70,6 +71,7 @@ export interface BaseClient {
 export class BaseClient extends EventEmitter {
 
 	private [IS_ONLINE] = false
+	private [LOGIN_LOCK] = false
 	private [ECDH] = new Ecdh
 	private readonly [NET] = new Network
 	// 回包的回调函数
@@ -483,10 +485,14 @@ export class BaseClient extends EventEmitter {
 		})
 	}
 	private async [FN_SEND_LOGIN](cmd: LoginCmd, body: Buffer) {
+		if (this[IS_ONLINE] || this[LOGIN_LOCK])
+			return
 		const pkt = buildLoginPacket.call(this, cmd, body)
 		try {
+			this[LOGIN_LOCK] = true
 			decodeLoginResponse.call(this, await this[FN_SEND](pkt))
 		} catch (e: any) {
+			this[LOGIN_LOCK] = false
 			this.emit("internal.error.network", -2, "server is busy")
 			this.emit("internal.verbose", e.message, VerboseLevel.Error)
 		}
@@ -590,12 +596,14 @@ function lostListener(this: BaseClient) {
 	}
 }
 
-async function parseSso(buf: Buffer) {
+async function parseSso(this: BaseClient, buf: Buffer) {
 	const headlen = buf.readUInt32BE()
 	const seq = buf.readInt32BE(4)
 	const retcode = buf.readInt32BE(8)
-	if (retcode !== 0)
+	if (retcode !== 0) {
+		this.emit("internal.error.token")
 		throw new Error("unsuccessful retcode: " + retcode)
+	}
 	let offset = buf.readUInt32BE(12) + 12
 	let len = buf.readUInt32BE(offset) // length of cmd
 	const cmd = String(buf.slice(offset + 4, offset + len))
@@ -619,6 +627,7 @@ async function parseSso(buf: Buffer) {
 
 async function packetListener(this: BaseClient, pkt: Buffer) {
 	this.statistics.recv_pkt_cnt++
+	this[LOGIN_LOCK] = false
 	try {
 		const flag = pkt.readUInt8(4)
 		const encrypted = pkt.slice(pkt.readUInt32BE(6) + 6)
@@ -634,9 +643,10 @@ async function packetListener(this: BaseClient, pkt: Buffer) {
 			decrypted = tea.decrypt(encrypted, BUF16)
 			break
 		default:
+			this.emit("internal.error.token")
 			throw new Error("unknown flag:" + flag)
 		}
-		const sso = await parseSso(decrypted)
+		const sso = await parseSso.call(this, decrypted)
 		this.emit("internal.verbose", `recv:${sso.cmd} seq:${sso.seq}`, VerboseLevel.Debug)
 		if (this[HANDLERS].has(sso.seq))
 			this[HANDLERS].get(sso.seq)?.(sso.payload)
