@@ -90,7 +90,7 @@ export class Group extends Discuss {
 		let group = weakmap.get(info!)
 		if (group) return group
 		group = new Group(this, Number(gid), info)
-		if (info) 
+		if (info)
 			weakmap.set(info, group)
 		return group
 	}

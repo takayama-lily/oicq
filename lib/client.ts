@@ -140,7 +140,7 @@ export class Client extends BaseClient {
 			var _ = true
 			fs.writeFile(file, JSON.stringify(device, null, 2), NOOP)
 		}
-			
+
 		super(uin, config.platform, device)
 
 		this.logger = log4js.getLogger(`[${this.apk.display}:${uin}]`)
@@ -192,14 +192,14 @@ export class Client extends BaseClient {
 
 	/**
 	 * 会优先尝试使用token登录 (token在上次登录成功后存放在`this.dir`下)
-	 * 
+	 *
 	 * 无token或token失效时：
 	 * * 传了`password`则尝试密码登录
 	 * * 不传`password`则尝试扫码登录
-	 * 
-	 * 掉线重连时也是自动调用此函数，走相同逻辑  
+	 *
+	 * 掉线重连时也是自动调用此函数，走相同逻辑
 	 * 你也可以在配置中修改`reconn_interval`，关闭掉线重连并自行处理
-	 * 
+	 *
 	 * @param password 可以为密码原文，或密码的md5值
 	 */
 	async login(password?: string | Buffer) {
@@ -373,11 +373,11 @@ export class Client extends BaseClient {
 	}
 	/** @cqhttp use friend.sendMsg() */
 	async sendPrivateMsg(user_id: number, message: Sendable, source?: Quotable) {
-		return this.pickFriend(user_id).sendMsg(message)
+		return this.pickFriend(user_id).sendMsg(message, source)
 	}
 	/** @cqhttp use group.sendMsg() */
 	async sendGroupMsg(group_id: number, message: Sendable, source?: Quotable) {
-		return this.pickGroup(group_id).sendMsg(message)
+		return this.pickGroup(group_id).sendMsg(message, source)
 	}
 	/** @cqhttp use discuss.sendMsg() */
 	async sendDiscussMsg(discuss_id: number, message: Sendable, source?: Quotable) {
