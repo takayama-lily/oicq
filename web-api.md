@@ -28,8 +28,11 @@ const bkn = client.bkn;
 |取群公告|GET|`https://web.qun.qq.com/cgi-bin/announce/get_t_list?bkn=${bkn}&qid=${群号}&ft=23&s=-1&n=20`|YES|`qun.qq.com`|
 |发群公告|POST|`https://web.qun.qq.com/cgi-bin/announce/add_qun_notice?bkn=${bkn}`<br>POST数据：`qid=${群号}&bkn=${bkn}&text=${内容}&pinned=0&type=1&settings={"is_show_edit_card":1,"tip_window_type":1,"confirm_required":1}`|YES|`qun.qq.com`
 |取群成员|GET|`https://qun.qq.com/cgi-bin/qun_mgr/search_group_members?gc=${群号}&st=${0}%end=${20}&sort=0&bkn=${bkn}`|YES|`qun.qq.com`|
-|取群头像|GET|`https://p.qlogo.cn/gh/${群号}/${群号}/${0(size)}`|NO||
-|取群历史头像|GET|`https://p.qlogo.cn/gh/${群号}/${群号}_${1}/${0(size)}`|NO||
-|取QQ头像|GET|`https://q1.qlogo.cn/g?b=qq&s=${0(size)}&nk=${QQ号}`|NO||
+|取群头像|GET|`https://p.qlogo.cn/gh/${群号}/${群号}/${40\|100\|140\|640}`|NO||
+|取群历史头像|GET|`https://p.qlogo.cn/gh/${群号}/${群号}_${1}/${40\|100\|140\|640}`|NO||
+|取QQ头像|GET|`http(s)://q1.qlogo.cn/g?b=qq&s=${40\|100\|140\|640}&nk=${QQ号}`|NO||
+|取QQ头像|GET|`http(s)://q.qlogo.cn/headimg_dl?dst_uin=${QQ号}&spec=${40\|100\|140\|640}&img_type=jpg`|NO||
+|取QQ头像|GET|`http(s)://q2.qlogo.cn/headimg_dl?dst_uin=${QQ号}&spec=${40\|100\|140\|640}`|NO||
+|取QQ头像地址|GET|`https://ptlogin2.qq.com/getface?appid=1006102&imgtype=${1\|2\|3\|4}&uin=${QQ号}`|NO||
 |换群头像|POST|`http://htdata3.qq.com/cgi-bin/httpconn?htcmd=0x6ff0072&ver=5520&ukey=${client.sig.skey}&range=0&uin=${client.uin}&seq=1&groupuin=${群号}&filetype=3&imagetype=5&userdata=0&subcmd=1&subver=101&clip=0_0_0_0&filesize=${字节数}`<br>POST数据：图片字节集|NO||
 |取资料(both)|POST|`https://find.qq.com/proxy/domain/cgi.find.qq.com/qqfind/find_v11?backver=2`<br>*※搜索QQ号和群号 且有个性签名等更多信息*<br>POST数据：`bnum=15&pagesize=15&id=0&sid=0&page=0&pageindex=0&ext=&guagua=1&gnum=12&guaguan=2&type=2&ver=4903&longitude=116.405285&latitude=39.904989&lbs_addr_country=%E4%B8%AD%E5%9B%BD&lbs_addr_province=%E5%8C%97%E4%BA%AC&lbs_addr_city=%E5%8C%97%E4%BA%AC%E5%B8%82&keyword=${QQ号}&nf=0&of=0&ldw=${bkn}`|YES|空|
