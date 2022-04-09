@@ -28,6 +28,7 @@ const bkn = client.bkn;
 |取群公告|GET|`https://web.qun.qq.com/cgi-bin/announce/get_t_list?bkn=${bkn}&qid=${群号}&ft=23&s=-1&n=20`|YES|`qun.qq.com`|
 |发群公告|POST|`https://web.qun.qq.com/cgi-bin/announce/add_qun_notice?bkn=${bkn}`<br>POST数据：`qid=${群号}&bkn=${bkn}&text=${内容}&pinned=0&type=1&settings={"is_show_edit_card":1,"tip_window_type":1,"confirm_required":1}`|YES|`qun.qq.com`
 |取群成员|GET|`https://qun.qq.com/cgi-bin/qun_mgr/search_group_members?gc=${群号}&st=${0}%end=${20}&sort=0&bkn=${bkn}`|YES|`qun.qq.com`|
+|群文件列表|GET|`https://pan.qun.qq.com/cgi-bin/group_file/get_file_list?gc=${群号}&bkn=&{bkn}&start_index=0&cnt=30&filter_code=0&folder_id=%2F&show_onlinedoc_folder=1`<br>*参数中还有关于分页信息，需要可按需修改|NO|`qun.qq.com`|
 |取群头像|GET|`https://p.qlogo.cn/gh/${群号}/${群号}/${0(size)}`|NO||
 |取群历史头像|GET|`https://p.qlogo.cn/gh/${群号}/${群号}_${1}/${0(size)}`|NO||
 |取QQ头像|GET|`https://q1.qlogo.cn/g?b=qq&s=${0(size)}&nk=${QQ号}`|NO||
