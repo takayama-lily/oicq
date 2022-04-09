@@ -213,16 +213,18 @@ export const segment = {
 			type: "dice", id
 		}
 	},
-	/** mention@提及，频道中的AT第一个参数传入对方的tiny_id */
-	at(qq: number | "all" | string, text?: string, dummy?: boolean): AtElem {
-		// 频道中的AT
-		if (Number(qq) < 0xffffffff === false) {
+	/** mention@提及
+	 * @param qq 全体成员:"all", 频道:tiny_id
+	 */
+	at(qq: number | string, text?: string, dummy?: boolean): AtElem {
+		if (Number(qq) <= 0xffffffff || qq === "all") {
 			return {
-				type: "at", qq: 0, id: String(qq), text, dummy
+				type: "at", qq: Number(qq), text, dummy
 			}
 		}
+		// 频道中的AT
 		return {
-			type: "at", qq: Number(qq), text, dummy
+			type: "at", qq: 0, id: String(qq), text, dummy
 		}
 	},
 	/** 图片(支持http://,base64://) */
