@@ -373,15 +373,15 @@ export class Client extends BaseClient {
 	}
 	/** @cqhttp use friend.sendMsg() */
 	async sendPrivateMsg(user_id: number, message: Sendable, source?: Quotable) {
-		return this.pickFriend(user_id).sendMsg(message,source)
+		return this.pickFriend(user_id).sendMsg(message, source)
 	}
 	/** @cqhttp use group.sendMsg() */
 	async sendGroupMsg(group_id: number, message: Sendable, source?: Quotable) {
-		return this.pickGroup(group_id).sendMsg(message,source)
+		return this.pickGroup(group_id).sendMsg(message, source)
 	}
 	/** @cqhttp use discuss.sendMsg() */
 	async sendDiscussMsg(discuss_id: number, message: Sendable, source?: Quotable) {
-		return this.pickDiscuss(discuss_id).sendMsg(message,source)
+		return this.pickDiscuss(discuss_id).sendMsg(message)
 	}
 	/** @cqhttp use member.sendMsg() */
 	async sendTempMsg(group_id: number, user_id: number, message: Sendable) {

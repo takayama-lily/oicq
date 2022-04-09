@@ -46,8 +46,8 @@ export class Discuss extends Contactable {
 		lock(this, "gid")
 	}
 	/** 发送一条消息 */
-	async sendMsg(content: Sendable,source?:Quotable): Promise<MessageRet> {
-		const { rich, brief } = await this._preprocess(content,source)
+	async sendMsg(content: Sendable): Promise<MessageRet> {
+		const { rich, brief } = await this._preprocess(content)
 		const body = pb.encode({
 			1: { 4: { 1: this.gid } },
 			2: PB_CONTENT,
