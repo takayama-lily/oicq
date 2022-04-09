@@ -109,9 +109,9 @@ function logQrcode(img: Buffer) {
 		for (let j = 36; j < png.width * 4 - 36; j += 12) {
 			let r0 = png.data[i * png.width + j]
 			let r1 = png.data[i * png.width + j + (png.width * 4 * 3)]
-			let fgcolor = (r0 == 255) ? color_fg_wht : color_fg_blk
-			let bgcolor = (r1 == 255) ? color_bg_wht : color_bg_blk
-			line += `${fgcolor + bgcolor}\u2580`
+			let bgcolor = (r0 == 255) ? color_bg_wht : color_bg_blk
+			let fgcolor = (r1 == 255) ? color_fg_wht : color_fg_blk
+			line += `${fgcolor + bgcolor}\u2584`
 		}
 		console.log(line + color_reset)
 	}
