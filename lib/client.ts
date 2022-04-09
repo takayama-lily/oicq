@@ -125,7 +125,7 @@ export class Client extends BaseClient {
 			ignore_self: true,
 			resend: true,
 			cache_group_member: true,
-			reconn_interval: 5,
+			reconn_interval: 8,
 			data_dir: path.join(require?.main?.path || process.cwd(), "data"),
 			...conf,
 		}
@@ -629,7 +629,7 @@ export interface Config {
 	/** 数据存储文件夹，需要可写权限，默认主模块下的data文件夹 */
 	data_dir?: string
 	/**
-	 * 触发system.offline.network事件后的重新登录间隔秒数，默认5(秒)，不建议设置低于3(秒)
+	 * 触发system.offline.network事件后的重新登录间隔秒数，默认8(秒)，不建议设置过低
 	 * 设置为0则不会自动重连，然后你可以监听此事件自己处理
 	 */
 	reconn_interval?: number
