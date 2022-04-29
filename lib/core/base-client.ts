@@ -33,7 +33,7 @@ export class ApiRejection {
 }
 
 export enum QrcodeResult {
-	OtherError = 0,
+	Success = 0,
 	Timeout = 0x11,
 	WaitingForScan = 0x30,
 	WaitingForConfirm = 0x35,
@@ -310,7 +310,7 @@ export class BaseClient extends EventEmitter {
 		this[FN_SEND_LOGIN]("wtlogin.login", body)
 	}
 	/** 获取登录二维码 */
-	fetchQrcode() {
+	async fetchQrcode() {
 		const t = tlv.getPacker(this)
 		const body = new Writer()
 			.writeU16(0)
@@ -327,95 +327,58 @@ export class BaseClient extends EventEmitter {
 			.writeBytes(t(0x35))
 			.read()
 		const pkt = buildCode2dPacket.call(this, 0x31, 0x11100, body)
-		this[FN_SEND](pkt).then(payload => {
-			payload = tea.decrypt(payload.slice(16, -1), this[ECDH].share_key)
-			const stream = Readable.from(payload, { objectMode: false })
-			stream.read(54)
-			const retcode = stream.read(1)[0]
-			const qrsig = stream.read(stream.read(2).readUInt16BE())
-			stream.read(2)
-			const t = readTlv(stream)
-			if (!retcode && t[0x17]) {
-				this.sig.qrsig = qrsig
-				this.emit("internal.qrcode", t[0x17])
-			} else {
-				this.emit("internal.error.qrcode", retcode, "获取二维码失败，请重试")
-			}
-		}).catch(() => this.emit("internal.error.network", -2, "server is busy"))
+		let payload = await this[FN_SEND](pkt)
+		payload = tea.decrypt(payload.slice(16, -1), this[ECDH].share_key)
+		const stream = Readable.from(payload, { objectMode: false })
+		stream.read(54)
+		const retcode = stream.read(1)[0]
+		const qrsig = stream.read(stream.read(2).readUInt16BE())
+		stream.read(2)
+		
+		return { retcode, qrsig, buffer: readTlv(stream)[0x17] }
 	}
 	/** 扫码后调用此方法登录 */
-	async qrcodeLogin() {
-		const { retcode, uin, t106, t16a, t318, tgtgt } = await this.queryQrcodeResult()
-		if (retcode < 0) {
-			this.emit("internal.error.network", -2, "server is busy")
-		} else if (retcode === 0 && t106 && t16a && t318 && tgtgt) {
-			this.sig.qrsig = BUF0
-			if (uin !== this.uin) {
-				this.emit("internal.error.qrcode", retcode, `扫码账号(${uin})与登录账号(${this.uin})不符`)
-				return
-			}
-			this.sig.tgtgt = tgtgt
-			const t = tlv.getPacker(this)
-			const body = new Writer()
-				.writeU16(9)
-				.writeU16(24)
-				.writeBytes(t(0x18))
-				.writeBytes(t(0x1))
-				.writeU16(0x106)
-				.writeTlv(t106)
-				.writeBytes(t(0x116))
-				.writeBytes(t(0x100))
-				.writeBytes(t(0x107))
-				.writeBytes(t(0x142))
-				.writeBytes(t(0x144))
-				.writeBytes(t(0x145))
-				.writeBytes(t(0x147))
-				.writeU16(0x16a)
-				.writeTlv(t16a)
-				.writeBytes(t(0x154))
-				.writeBytes(t(0x141))
-				.writeBytes(t(0x8))
-				.writeBytes(t(0x511))
-				.writeBytes(t(0x187))
-				.writeBytes(t(0x188))
-				.writeBytes(t(0x194))
-				.writeBytes(t(0x191))
-				.writeBytes(t(0x202))
-				.writeBytes(t(0x177))
-				.writeBytes(t(0x516))
-				.writeBytes(t(0x521))
-				.writeU16(0x318)
-				.writeTlv(t318)
-				.read()
-			this[FN_SEND_LOGIN]("wtlogin.login", body)
-		} else {
-			let message
-			switch (retcode) {
-			case QrcodeResult.Timeout:
-				message = "二维码超时，请重新获取"
-				break
-			case QrcodeResult.WaitingForScan:
-				message = "二维码尚未扫描"
-				break
-			case QrcodeResult.WaitingForConfirm:
-				message = "二维码尚未确认"
-				break
-			case QrcodeResult.Canceled:
-				message = "二维码被取消，请重新获取"
-				break
-			default:
-				message = "扫码遇到未知错误，请重新获取"
-				break
-			}
-			this.sig.qrsig = BUF0
-			this.emit("internal.error.qrcode", retcode, message)
-		}
+	async qrcodeLogin(t106: any, t16a: any, t318: any, tgtgt: any) {
+		this.sig.tgtgt = tgtgt
+        const t = tlv.getPacker(this)
+        const body = new Writer()
+            .writeU16(9)
+            .writeU16(24)
+            .writeBytes(t(0x18))
+            .writeBytes(t(0x1))
+            .writeU16(0x106)
+            .writeTlv(t106)
+            .writeBytes(t(0x116))
+            .writeBytes(t(0x100))
+            .writeBytes(t(0x107))
+            .writeBytes(t(0x142))
+            .writeBytes(t(0x144))
+            .writeBytes(t(0x145))
+            .writeBytes(t(0x147))
+            .writeU16(0x16a)
+            .writeTlv(t16a)
+            .writeBytes(t(0x154))
+            .writeBytes(t(0x141))
+            .writeBytes(t(0x8))
+            .writeBytes(t(0x511))
+            .writeBytes(t(0x187))
+            .writeBytes(t(0x188))
+            .writeBytes(t(0x194))
+            .writeBytes(t(0x191))
+            .writeBytes(t(0x202))
+            .writeBytes(t(0x177))
+            .writeBytes(t(0x516))
+            .writeBytes(t(0x521))
+            .writeU16(0x318)
+            .writeTlv(t318)
+            .read()
+        this[FN_SEND_LOGIN]('wtlogin.login', body)
 	}
+
 	/** 获取扫码结果(可定时查询，retcode为0则调用qrcodeLogin登录) */
 	async queryQrcodeResult() {
-		let retcode = -1, uin, t106, t16a, t318, tgtgt
-		if (!this.sig.qrsig.length)
-			return { retcode, uin, t106, t16a, t318, tgtgt }
+		let retcode, uin, t106, t16a, t318, tgtgt
+
 		const body = new Writer()
 			.writeU16(5)
 			.writeU8(1)
@@ -428,7 +391,7 @@ export class BaseClient extends EventEmitter {
 			.writeU16(0)
 			.read()
 		const pkt = buildCode2dPacket.call(this, 0x12, 0x6200, body)
-		try {
+		
 			let payload = await this[FN_SEND](pkt)
 			payload = tea.decrypt(payload.slice(16, -1), this[ECDH].share_key)
 			const stream = Readable.from(payload, { objectMode: false })
@@ -455,8 +418,61 @@ export class BaseClient extends EventEmitter {
 				t318 = t[0x65]
 				tgtgt = t[0x1e]
 			}
-		} catch { }
+		
 		return { retcode, uin, t106, t16a, t318, tgtgt }
+	}
+
+	async qrcodeLoginWithPolling(pollingInterval = 1000) {
+		try {
+			// 可以保证 this.sig.qrsig 仅在该函数（不包括调用的函数）中改变
+            if (this.sig.qrsig.length === 0) {
+                const { retcode, qrsig, buffer } = await this.fetchQrcode()
+
+                if (!retcode && buffer) {
+                    this.sig.qrsig = qrsig
+                    this.emit('internal.qrcode', buffer)
+                } else {
+                    this.emit('internal.error.qrcode', retcode, '获取二维码失败，请重试')
+                }
+
+                setTimeout(() => this.qrcodeLoginWithPolling(), pollingInterval)
+            } else {
+                const { retcode, uin, t106, t16a, t318, tgtgt } = await this.queryQrcodeResult()
+
+                if (
+                    retcode !== QrcodeResult.WaitingForScan &&
+                    retcode !== QrcodeResult.WaitingForConfirm
+                ) {
+                    let error
+
+                    switch (retcode) {
+                        case QrcodeResult.Success:
+                            if (uin === this.uin) {
+                                return this.qrcodeLogin(t106, t16a, t318, tgtgt)
+                            }
+
+                            error = `扫码账号(${uin})与登录账号(${this.uin})不符`
+                            break
+                        case QrcodeResult.Timeout:
+                            error = '二维码超时，请重新获取'
+                            break
+                        case QrcodeResult.Canceled:
+                            error = '二维码被取消，请重新获取'
+                            break
+                        default:
+                            error = '扫码遇到未知错误，请重新获取'
+                            break
+                    }
+
+                    this.sig.qrsig = BUF0
+                    this.emit('internal.error.qrcode', retcode, error)
+                }
+
+                setTimeout(() => this.qrcodeLoginWithPolling(), pollingInterval)
+            }
+        } catch {
+            this.emit('internal.error.network', -2, 'server is busy')
+        }
 	}
 
 	private [FN_NEXT_SEQ]() {

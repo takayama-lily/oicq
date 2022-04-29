@@ -220,7 +220,7 @@ export class Client extends BaseClient {
 			if (this.password_md5)
 				return this.passwordLogin(this.password_md5)
 			else
-				return this.sig.qrsig.length ? this.qrcodeLogin() : this.fetchQrcode()
+				return this.qrcodeLoginWithPolling()
 		}
 	}
 

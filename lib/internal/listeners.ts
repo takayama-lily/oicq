@@ -180,8 +180,10 @@ function loginErrorListener(this: Client, code: number, message: string) {
 
 function qrcodeErrorListener(this: Client, code: number, message: string) {
 	this.logger.error(`二维码扫码遇到错误: ${code} (${message})`)
-	this.logger.mark("二维码已更新")
-	this.login()
+	this.logger.mark("二维码正在更新")
+	
+	//这里注释掉的原因是想把二维码登录相关的流程都集中到 qrcodeLoginWithPolling 中，让流程更清晰
+	// this.login()
 }
 
 export function bindInternalListeners(this: Client) {
