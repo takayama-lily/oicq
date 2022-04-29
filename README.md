@@ -39,7 +39,8 @@ client.on("system.login.qrcode", function (e) {
 }).login()
 ```
 
-注意：第一次运行程序时，有可能扫描命令行中的二维码和图片中的二维码都会显示过期，只需要重新运行一次程序即可，后面不会出现这个问题。
+注意：扫码登录现在仅能在同一ip下进行，建议使用密码登录，只需验证一次设备便长期有效  
+[密码登录教程](https://github.com/takayama-lily/oicq/wiki/01.%E4%BD%BF%E7%94%A8%E5%AF%86%E7%A0%81%E7%99%BB%E5%BD%95-(%E6%BB%91%E5%8A%A8%E9%AA%8C%E8%AF%81%E7%A0%81%E6%95%99%E7%A8%8B))
 
 ## Api Reference
 
@@ -52,7 +53,6 @@ client.on("system.login.qrcode", function (e) {
 * [Class: Gfs](#class-gfs) 群文件系统
 * [Class: Message](#class-message) 消息
 * [Namespace: segment](#namespace-segment) 构造消息元素
-* [使用密码登录](#使用密码登录)
 
 ### Class: Client
 
@@ -365,19 +365,6 @@ client.on("system.login.qrcode", function (e) {
 | bface()    | 创建bface元素   |
 | sface()    | 创建sface元素   |
 | mirai()    | 创建特殊元素      |
-
-### 使用密码登录
-
-使用扫码登录后，可能会出现掉线后需要重新扫码的情况。  
-登录一段时间后，建议改用密码登录，更加稳定。
-
-```js
-const { createClient } = require("oicq")
-const client = createClient(147258369)
-
-//若弹出登录保护地址，去验证通过即可
-client.login("password")
-```
 
 ----
 
