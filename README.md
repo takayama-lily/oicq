@@ -52,7 +52,7 @@ client.on("system.login.qrcode", function (e) {
 * [Class: Contactable](#class-contactable) 群和用户的基类
 * [Class: Gfs](#class-gfs) 群文件系统
 * [Class: Message](#class-message) 消息
-* [Namespace: segment](#namespace-segment) 构造消息元素
+* [Namespace: segment](#namespace-segment) 构造消息元素/发送消息
 
 ### Class: Client
 
@@ -347,7 +347,17 @@ client.on("system.login.qrcode", function (e) {
 ### Namespace: segment
 
 > 用于创建可发送的消息元素类型  
-> `const { segment } = require("oicq")`
+
+```js
+//样例代码，文字+图片+表情+AT
+const { segment } = require("oicq")
+const message = [
+  "hello world",
+  segment.image("/tmp/abc.jpg"),
+  segment.face(104),
+  segment.at(10001),
+]
+```
 
 | Method     | Description |
 | ---------- | ----------- |
