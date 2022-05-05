@@ -97,7 +97,7 @@ export async function fetchServerList() {
 	len.writeUInt32BE(body.length + 4)
 	body = Buffer.concat([len, body])
 	body = tea.encrypt(body, key)
-	const { data } = await axios.post("https://configsvr.msf.3g.qq.com/configsvr/serverlist.jsp", body, { timeout: 10000, responseType: "arraybuffer" })
+	const { data } = await axios.post("https://configsvr.msf.3g.qq.com/configsvr/serverlist.jsp?mType=getssolist", body, { timeout: 10000, responseType: "arraybuffer" })
 	let buf = Buffer.from(data as ArrayBuffer)
 	buf = tea.decrypt(buf, key).slice(4)
 	const nested = jce.decodeWrapper(buf)
