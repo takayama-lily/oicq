@@ -310,6 +310,8 @@ export abstract class Contactable {
 		if (typeof elem.file === "string" && elem.file.startsWith("protobuf://"))
 			return elem
 		const buf = await getPttBuffer(elem.file, this.c.config.ffmpeg_path)
+		if (buf.length > 1024*1024)
+			throw new Error("语音文件过大，请不要超过 1M")
 		const hash = md5(buf)
 		const codec = String(buf.slice(0, 7)).includes("SILK") ? 1 : 0
 		const body = pb.encode({

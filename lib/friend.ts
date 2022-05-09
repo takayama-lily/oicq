@@ -159,28 +159,32 @@ export class User extends Contactable {
 	 * @param source 引用回复的消息
 	 */
 	async sendMsg(content: Sendable, source?: Quotable): Promise<MessageRet> {
-		const { rich, brief } = await this._preprocess(content, source)
-		const seq = this.c.sig.seq + 1
-		const rand = randomBytes(4).readUInt32BE()
-		const body = pb.encode({
-			1: this._getRouting(),
-			2: PB_CONTENT,
-			3: { 1: rich },
-			4: seq,
-			5: rand,
-			6: buildSyncCookie(this.c.sig.session.readUInt32BE()),
-			8: 0
-		})
-		const payload = await this.c.sendUni("MessageSvc.PbSendMsg", body)
-		const rsp = pb.decode(payload)
-		if (rsp[1] !== 0) {
-			this.c.logger.error(`failed to send: [Private: ${this.uid}] ${rsp[2]}(${rsp[1]})`)
-			drop(rsp[1], rsp[2])
+		try {
+			const { rich, brief } = await this._preprocess(content, source)
+			const seq = this.c.sig.seq + 1
+			const rand = randomBytes(4).readUInt32BE()
+			const body = pb.encode({
+				1: this._getRouting(),
+				2: PB_CONTENT,
+				3: { 1: rich },
+				4: seq,
+				5: rand,
+				6: buildSyncCookie(this.c.sig.session.readUInt32BE()),
+				8: 0
+			})
+			const payload = await this.c.sendUni("MessageSvc.PbSendMsg", body)
+			const rsp = pb.decode(payload)
+			if (rsp[1] !== 0) {
+				this.c.logger.error(`failed to send: [Private: ${this.uid}] ${rsp[2]}(${rsp[1]})`)
+				drop(rsp[1], rsp[2])
+			}
+			this.c.logger.info(`succeed to send: [Private(${this.uid})] ` + brief)
+			const time = rsp[3]
+			const message_id = genDmMessageId(this.uid, seq, rand, rsp[3], 1)
+			return { message_id, seq, rand, time }
+		} catch (e) {
+			throw e
 		}
-		this.c.logger.info(`succeed to send: [Private(${this.uid})] ` + brief)
-		const time = rsp[3]
-		const message_id = genDmMessageId(this.uid, seq, rand, rsp[3], 1)
-		return { message_id, seq, rand, time }
 	}
 
 	/** 回添双向好友 */

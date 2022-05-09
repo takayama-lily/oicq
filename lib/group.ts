@@ -47,27 +47,31 @@ export class Discuss extends Contactable {
 	}
 	/** 发送一条消息 */
 	async sendMsg(content: Sendable): Promise<MessageRet> {
-		const { rich, brief } = await this._preprocess(content)
-		const body = pb.encode({
-			1: { 4: { 1: this.gid } },
-			2: PB_CONTENT,
-			3: { 1: rich },
-			4: randomBytes(2).readUInt16BE(),
-			5: randomBytes(4).readUInt32BE(),
-			8: 0,
-		})
-		const payload = await this.c.sendUni("MessageSvc.PbSendMsg", body)
-		const rsp = pb.decode(payload)
-		if (rsp[1] !== 0) {
-			this.c.logger.error(`failed to send: [Discuss(${this.gid})] ${rsp[2]}(${rsp[1]})`)
-			drop(rsp[1], rsp[2])
-		}
-		this.c.logger.info(`succeed to send: [Discuss(${this.gid})] ` + brief)
-		return {
-			message_id: "",
-			seq: 0,
-			rand: 0,
-			time: 0,
+		try {
+			const { rich, brief } = await this._preprocess(content)
+			const body = pb.encode({
+				1: { 4: { 1: this.gid } },
+				2: PB_CONTENT,
+				3: { 1: rich },
+				4: randomBytes(2).readUInt16BE(),
+				5: randomBytes(4).readUInt32BE(),
+				8: 0,
+			})
+			const payload = await this.c.sendUni("MessageSvc.PbSendMsg", body)
+			const rsp = pb.decode(payload)
+			if (rsp[1] !== 0) {
+				this.c.logger.error(`failed to send: [Discuss(${this.gid})] ${rsp[2]}(${rsp[1]})`)
+				drop(rsp[1], rsp[2])
+			}
+			this.c.logger.info(`succeed to send: [Discuss(${this.gid})] ` + brief)
+			return {
+				message_id: "",
+				seq: 0,
+				rand: 0,
+				time: 0,
+			}
+		} catch (e) {
+			throw e
 		}
 	}
 }
@@ -262,7 +266,11 @@ export class Group extends Discuss {
 	 * @param anony 匿名
 	 */
 	async sendMsg(content: Sendable, source?: Quotable, anony: Omit<Anonymous, "flag"> | boolean = false): Promise<MessageRet> {
-		const converter = await this._preprocess(content, source)
+		try {
+			const converter = await this._preprocess(content, source)
+		} catch (e) {
+			throw e
+		}
 		if (anony) {
 			if (!(anony as Anonymous).id)
 				anony = await this.getAnonyInfo()
