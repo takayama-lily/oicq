@@ -45,6 +45,7 @@ client.on("system.login.qrcode", function (e) {
 ## Api Reference
 
 * [Class: Client](#class-client) 客户端
+  * [Events](#events) 事件
 * [Class: Group](#class-group) 群
 * [Class: User](#class-user) 用户
 * [Class: Friend](#class-friend) 好友
@@ -114,6 +115,8 @@ client.on("system.login.qrcode", function (e) {
 | bkn       | csrf-token  |
 | cookies   | cookies     |
 | tiny_id   | 我的频道账号 |
+
+### Events
 
 | Event                  | Description |
 | ---------------------- | ----------- |
