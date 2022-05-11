@@ -335,6 +335,7 @@ export abstract class Contactable {
 		})
 		const payload = await this.c.sendUni("PttStore.GroupPttUp", body)
 		const rsp = pb.decode(payload)[5]
+		rsp[2] && drop(rsp[2], rsp[3])
 		const ip = rsp[5]?.[0] || rsp[5], port = rsp[6]?.[0] || rsp[6]
 		const ukey = rsp[7].toHex(), filekey = rsp[11].toHex()
 		const params = {
