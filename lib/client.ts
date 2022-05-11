@@ -12,7 +12,7 @@ import { EventMap } from "./events"
 import { User, Friend } from "./friend"
 import { Discuss, Group } from "./group"
 import { Member } from "./member"
-import { Forwardable, Quotable, Sendable, parseDmMessageId, parseGroupMessageId, Image} from "./message"
+import { Forwardable, Quotable, Sendable, parseDmMessageId, parseGroupMessageId, Image, ImageElem} from "./message"
 
 /** 事件接口 */
 export interface Client extends BaseClient {
@@ -254,7 +254,7 @@ export class Client extends BaseClient {
 		return setSign.call(this, signature)
 	}
 	/** 设置头像 */
-	async setAvatar(file: string | Buffer | import("stream").Readable) {
+	async setAvatar(file: ImageElem["file"]) {
 		return setAvatar.call(this, new Image({ type: "image", file }))
 	}
 	/** 获取漫游表情 */
