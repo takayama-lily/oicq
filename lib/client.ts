@@ -24,6 +24,8 @@ export interface Client extends BaseClient {
 	prependListener(event: string | symbol, listener: (this: this, ...args: any[]) => void): this
 	prependOnceListener<T extends keyof EventMap>(event: T, listener: EventMap<this>[T]): this
 	prependOnceListener(event: string | symbol, listener: (this: this, ...args: any[]) => void): this
+	off<T extends keyof EventMap>(event: T, listener: EventMap<this>[T]): this
+	off<S extends string | symbol>(event: S & Exclude<S, keyof EventMap>, listener: (this: this, ...args: any[]) => void): this
 }
 
 /** 一个客户端 */
