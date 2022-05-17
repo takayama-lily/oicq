@@ -419,7 +419,7 @@ function genCqcode(content: MessageElem[]) {
 			continue
 		}
 		const tmp = { ...elem } as Partial<MessageElem>
-		tmp.type = undefined 
+		delete tmp.type
 		const str = qs.stringify(tmp as NodeJS.Dict<any>, ",", "=", { encodeURIComponent: (s) => s.replace(/&|,|\[|\]/g, escapeCQInside) })
 		cqcode += "[CQ:" + elem.type + (str ? "," : "") + str + "]"
 	}
