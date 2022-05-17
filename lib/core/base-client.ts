@@ -657,7 +657,7 @@ async function packetListener(this: BaseClient, pkt: Buffer) {
 	}
 }
 
-async function register(this: BaseClient, logout = false) {
+async function register(this: BaseClient, logout = false, reflush = false) {
 	this[IS_ONLINE] = false
 	clearInterval(this[HEARTBEAT])
 	const pb_buf = pb.encode({
@@ -681,11 +681,11 @@ async function register(this: BaseClient, logout = false) {
 	const body = jce.encodeWrapper({ SvcReqRegister }, "PushService", "SvcReqRegister")
 	const pkt = buildLoginPacket.call(this, "StatSvc.register", body, 1)
 	try {
-		const payload = await this[FN_SEND](pkt)
+		const payload = await this[FN_SEND](pkt, 10)
 		if (logout) return
 		const rsp = jce.decodeWrapper(payload)
 		const result = rsp[9] ? true : false
-		if (!result) {
+		if (!result && !reflush) {
 			this.emit("internal.error.token")
 		} else {
 			this[IS_ONLINE] = true
@@ -752,7 +752,7 @@ async function refreshToken(this: BaseClient) {
 		const t = readTlv(stream)
 		if (type === 0) {
 			const { token } = decodeT119.call(this, t[0x119])
-			await register.call(this)
+			await register.call(this, false, true)
 			if (this[IS_ONLINE])
 				this.emit("internal.token", token)
 		}
