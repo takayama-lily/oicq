@@ -136,7 +136,8 @@ function sliderListener(this: Client, url: string) {
 }
 
 function verifyListener(this: Client, url: string, phone: string) {
-	this.logger.mark("登录保护二维码验证地址：" + url.replace("verify", "qrcode"))
+	this.logger.mark("收到登录保护，只需验证一次便长期有效，可以访问URL验证或发短信验证。访问URL完成验证后调用login()可直接登录。发短信验证需要调用sendSmsCode()和submitSmsCode()方法。")
+	this.logger.mark("登录保护验证URL：" + url.replace("verify", "qrcode"))
 	this.logger.mark("密保手机号：" + phone)
 	return this.em("system.login.device", { url, phone })
 }

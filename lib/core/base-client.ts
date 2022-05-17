@@ -941,7 +941,7 @@ function decodeLoginResponse(this: BaseClient, payload: Buffer): any {
 	}
 
 	if (type === 160) {
-		if (!t[0x204])
+		if (!t[0x204] && !t[0x174])
 			return this.emit("internal.verbose", "已向密保手机发送短信验证码", VerboseLevel.Mark)
 		let phone = ""
 		if (t[0x174] && t[0x178]) {
