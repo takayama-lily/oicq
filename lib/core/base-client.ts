@@ -264,11 +264,12 @@ export class BaseClient extends EventEmitter {
 	}
 	/** 提交滑动验证码 */
 	submitSlider(ticket: string) {
+		ticket = String(ticket).trim()
 		const t = tlv.getPacker(this)
 		const body = new Writer()
 			.writeU16(2)
 			.writeU16(4)
-			.writeBytes(t(0x193, String(ticket)))
+			.writeBytes(t(0x193, ticket))
 			.writeBytes(t(0x8))
 			.writeBytes(t(0x104))
 			.writeBytes(t(0x116))
