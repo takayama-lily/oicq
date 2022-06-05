@@ -445,7 +445,7 @@ export abstract class Contactable {
 						1: this.target,
 						4: nickname,
 					},
-					14: nickname,
+					14: this.dm ? nickname : null,
 					20: {
 						1: 0,
 						2: rand
