@@ -33,7 +33,7 @@
     "probe-image-size": "^7.2.2"
   },
   "devDependencies": {
-    "@types/node": "^16.7.2",
+    "@types/node": "^17.0.38",
     "@types/pngjs": "^6.0.1",
     "@types/probe-image-size": "^7.0.1",
     "@types/ws": "^8.2.0",
