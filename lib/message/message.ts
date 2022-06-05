@@ -365,6 +365,7 @@ export class ForwardMessage implements Forwardable {
 	private parsed: Parser
 	user_id: number
 	nickname: string
+	group_id?: number
 	time: number
 	message: MessageElem[]
 	raw_message: string
@@ -380,6 +381,7 @@ export class ForwardMessage implements Forwardable {
 		this.time = head[6] || 0
 		this.user_id = head[1] || 0
 		this.nickname = head[14]?.toString() || head[9]?.[4]?.toString() || ""
+		this.group_id = head[9]?.[1]
 		this.parsed = parse(proto[3][1])
 		this.message = this.parsed.message
 		this.raw_message = this.parsed.brief

@@ -413,14 +413,21 @@ export abstract class Contactable {
 		return rsp[2].toString() as string
 	}
 
-	/** 制作一条合并转发消息以备发送(理论上传一次所有群和好友都能发) */
-	async makeForwardMsg(iterable: Forwardable[]): Promise<XmlElem> {
+	/**
+	 * 1. 制作一条合并转发消息以备发送(制作一次可以到处发)。
+	 * 2. 需要注意的是，好友图片和群图片的内部格式不一样，
+	 *    对着群制作的转发消息中的图片，发给好友可能会裂图，反过来也一样。
+	 * 3. 暂不完全支持套娃转发。
+	 */
+	async makeForwardMsg(msglist: Forwardable[] | Forwardable): Promise<XmlElem> {
+		if (!Array.isArray(msglist))
+			msglist = [msglist]
 		const nodes = []
 		const makers: Converter[] = []
 		let imgs: Image[] = []
 		let preview = ""
 		let cnt = 0
-		for (const fake of iterable) {
+		for (const fake of msglist) {
 			const maker = new Converter(fake.message, { dm: this.dm, cachedir: this.c.config.data_dir })
 			makers.push(maker)
 			const seq = randomBytes(2).readInt16BE()
