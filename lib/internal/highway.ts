@@ -16,6 +16,7 @@ export enum CmdID {
 	MultiMsg = 27,
 	GroupPtt = 29,
 	GroupFile = 71,
+	Ocr = 76,
 }
 
 /** 上传时的附加数据，必须知道流的size和md5 */
@@ -86,12 +87,12 @@ class HighwayTransform extends stream.Transform {
 }
 
 /** highway上传数据 (只能上传流) */
-export function highwayUpload(this: Client, readable: stream.Readable, obj: HighwayUploadExt, ip?: string | number, port?: number) {
+export function highwayUpload(this: Client, readable: stream.Readable, obj: HighwayUploadExt, ip?: string | number, port?: number): Promise<pb.Proto | void> {
 	ip = int32ip2str(ip || this.sig.bigdata.ip)
 	port = port || this.sig.bigdata.port
 	if (!port) throw new ApiRejection(ErrorCode.NoUploadChannel, "没有上传通道，如果你刚刚登录，请等待几秒")
 	this.logger.debug(`highway ip:${ip} port:${port}`)
-	return new Promise((resolve: (v: void) => void, reject) => {
+	return new Promise((resolve, reject) => {
 		const highway = new HighwayTransform(this, obj)
 		const socket = net.connect(
 			port as number, ip as string,
@@ -112,7 +113,7 @@ export function highwayUpload(this: Client, readable: stream.Readable, obj: High
 					obj.callback(percentage)
 				if (Number(percentage) >= 100) {
 					socket.end()
-					resolve()
+					resolve(rsp[7])
 				}
 			}
 		}

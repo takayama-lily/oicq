@@ -126,7 +126,7 @@ export abstract class Contactable {
 		while (imgs.length > n) {
 			let rsp = await (this.dm ? this._offPicUp : this._groupPicUp).call(this, imgs.slice(n, n + 20) as Image[])
 			!Array.isArray(rsp) && (rsp = [rsp])
-			const tasks: Promise<void>[] = []
+			const tasks: Promise<any>[] = []
 			for (let i = n; i < imgs.length; ++i) {
 				if (i >= n + 20) break
 				tasks.push(this._uploadImage(imgs[i] as Image, rsp[i%20]))

@@ -1,6 +1,6 @@
 import { pb, jce, Platform } from "../core"
 import { drop } from "../errors"
-import { timestamp, Gender, OnlineStatus, log } from "../common"
+import { timestamp, Gender, OnlineStatus, uuid, log } from "../common"
 import { Image } from "../message"
 import { CmdID, highwayUpload } from "./highway"
 
@@ -278,4 +278,66 @@ export async function loadBL(this: Client) {
 		protos = [protos]
 	for (let proto of protos)
 		this.blacklist.add(proto[1])
+}
+
+export class OcrResult {
+	language: string
+	wordslist: Array<{
+		words: string,
+		confidence: number,
+		polygon: Array<{
+			x: number,
+			y: number,
+		}>,
+	}> = []
+	constructor(proto: pb.Proto) {
+		this.language = proto[2]?.toString() || "unknown"
+		if (!Array.isArray(proto[1]))
+			proto[1] = [proto[1]]
+		for (let p of proto[1]) {
+			this.wordslist.push({
+				words: p[1]?.toString() || "",
+				confidence: Number(p[2]),
+				polygon: p[3][1].map((v: pb.Proto) => ({ x: Number(v[1]) || 0, y: Number(v[2]) || 0 })),
+			})
+		}
+	}
+	toString() {
+		let str = ""
+		for (const elem of this.wordslist)
+			str += elem.words
+		return str
+	}
+}
+
+export async function imageOcr(this: Client, img: Image) {
+	await img.task
+	const url = String((await highwayUpload.call(this, img.readable!, {
+		cmdid: CmdID.Ocr,
+		md5: img.md5,
+		size: img.size,
+		ext: pb.encode({
+			1: 0,
+			2: uuid(),
+		})
+	}))?.[2])
+	const body = pb.encode({
+		1: 1,
+		2: 0,
+		3: 1,
+		10: {
+			1: url,
+			10: img.md5.toString("hex"),
+			11: img.md5.toString("hex"),
+			12: img.size,
+			13: img.width,
+			14: img.height,
+			15: 0,
+		}
+	})
+	const payload = await this.sendOidb("OidbSvc.0xe07_0", body, 10)
+	const rsp = pb.decode(payload)
+	if (rsp[3] !== 0)
+		drop(rsp[3], rsp[5])
+	return new OcrResult(rsp[4][10])
 }

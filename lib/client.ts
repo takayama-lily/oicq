@@ -6,7 +6,7 @@ const pkg = require("../package.json")
 import { md5, timestamp, NOOP, lock, Gender, OnlineStatus, hide } from "./common"
 import { bindInternalListeners, parseFriendRequestFlag, parseGroupRequestFlag,
 	getSysMsg, setAvatar, setSign, setStatus, addClass, delClass, renameClass,
-	loadBL, loadFL, loadGL, loadSL, getStamp, delStamp } from "./internal"
+	loadBL, loadFL, loadGL, loadSL, getStamp, delStamp, imageOcr, OcrResult } from "./internal"
 import { StrangerInfo, FriendInfo, GroupInfo, MemberInfo } from "./entities"
 import { EventMap } from "./events"
 import { User, Friend } from "./friend"
@@ -299,20 +299,6 @@ export class Client extends BaseClient {
 	reloadBlackList() {
 		return loadBL.call(this)
 	}
-	// reloadGuildList() {
-	// 	this.writeUni("trpc.group_pro.synclogic.SyncLogic.SyncFirstView", pb.encode({ 1: 0, 2: 0, 3: 0 }))
-	// 	return new Promise<void>((resolve, reject) => {
-	// 		const id = setTimeout(() => {
-	// 			this.off("internal.loadguilds", tmp)
-	// 			reject()
-	// 		}, 5000)
-	// 		this.once("internal.loadguilds", tmp)
-	// 		function tmp() {
-	// 			clearTimeout(id)
-	// 			resolve()
-	// 		}
-	// 	})
-	// }
 	/** 清空缓存文件 fs.rm need v14.14 */
 	cleanCache() {
 		const dir = path.join(this.dir, "../image")
@@ -331,6 +317,10 @@ export class Client extends BaseClient {
 	/** 制作转发消息 */
 	makeForwardMsg(fake: Forwardable[], dm = false) {
 		return (dm ? this.pickFriend : this.pickGroup)(this.uin).makeForwardMsg(fake)
+	}
+	/** Ocr图片转文字 */
+	imageOcr(file: ImageElem["file"]) {
+		return imageOcr.call(this, new Image({ type: "image", file }))
 	}
 
 	/** @cqhttp (cqhttp遗留方法) use client.cookies[domain] */
