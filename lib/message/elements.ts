@@ -230,7 +230,7 @@ export const segment = {
 	at(qq: number | string, text?: string, dummy?: boolean): AtElem {
 		if (Number(qq) <= 0xffffffff || qq === "all") {
 			return {
-				type: "at", qq: Number(qq), text, dummy
+				type: "at", qq: qq === "all" ? "all" : Number(qq), text, dummy
 			}
 		}
 		// 频道中的AT
@@ -334,7 +334,7 @@ function unescapeCQInside(s: string) {
 	return ""
 }
 function qs(s: string, sep = ",", equal = "=") {
-	const ret: any = { }
+	const ret: any = {}
 	const split = s.split(sep)
 	for (let v of split) {
 		const i = v.indexOf(equal)
