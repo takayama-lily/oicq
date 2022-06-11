@@ -485,16 +485,14 @@ export abstract class Contactable {
 		const buf = await this._downloadMultiMsg(String(resid), 2)
 		let a = pb.decode(buf)[2]
 		if (!Array.isArray(a)) a = [a]
-		let m_default = a[0]
 		for (let b of a) {
 			const m_fileName = b[1].toString()
 			if (m_fileName === fileName) {
 				a = b
-				m_default = null
 				break
 			}
 		}
-		if (fileName === "MultiMsg" && m_default) a = m_default
+		if (Array.isArray(a)) a = a[0]
 		a = a[2][1]
 		if (!Array.isArray(a)) a = [a]
 		for (let proto of a) {
