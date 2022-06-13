@@ -7,8 +7,9 @@
 
 * QQ(安卓)协议基于Node.js的实现，支持最低node版本为 v14
 * 若你不熟悉Node.js或不会组织代码，可通过 [template](https://github.com/takayama-lily/oicq-template) 创建一个简单的应用程序
-* [API Reference](#api-reference) / [Type Docs](https://takayama-lily.github.io/oicq/) (文档仅供参考，具体类型以包内d.ts声明文件为准)
+* [API Reference](#api-reference) / [Type Docs](https://oicqjs.github.io/oicq/) (文档仅供参考，具体类型以包内d.ts声明文件为准)
 * [从v1.x升级](https://github.com/takayama-lily/oicq/projects/3#column-16638290) (v1在master分支)
+* QQ频道未来不会直接支持，请使用插件 [oicq-guild](https://github.com/takayama-lily/oicq-guild)
 
 ----
 
@@ -39,11 +40,13 @@ client.on("system.login.qrcode", function (e) {
 }).login()
 ```
 
-注意：第一次运行程序时，有可能扫描命令行中的二维码和图片中的二维码都会显示过期，只需要重新运行一次程序即可，后面不会出现这个问题。
+注意：扫码登录现在仅能在同一ip下进行，建议使用密码登录，只需验证一次设备便长期有效  
+[密码登录教程](https://github.com/takayama-lily/oicq/wiki/01.%E4%BD%BF%E7%94%A8%E5%AF%86%E7%A0%81%E7%99%BB%E5%BD%95-(%E6%BB%91%E5%8A%A8%E9%AA%8C%E8%AF%81%E7%A0%81%E6%95%99%E7%A8%8B))
 
 ## Api Reference
 
 * [Class: Client](#class-client) 客户端
+  * [Events](#events) 事件
 * [Class: Group](#class-group) 群
 * [Class: User](#class-user) 用户
 * [Class: Friend](#class-friend) 好友
@@ -51,8 +54,7 @@ client.on("system.login.qrcode", function (e) {
 * [Class: Contactable](#class-contactable) 群和用户的基类
 * [Class: Gfs](#class-gfs) 群文件系统
 * [Class: Message](#class-message) 消息
-* [Namespace: segment](#namespace-segment) 构造消息元素
-* [使用密码登录](#使用密码登录)
+* [Namespace: segment](#namespace-segment) 构造消息元素/发送消息
 
 ### Class: Client
 
@@ -114,6 +116,8 @@ client.on("system.login.qrcode", function (e) {
 | bkn       | csrf-token  |
 | cookies   | cookies     |
 | tiny_id   | 我的频道账号 |
+
+### Events
 
 | Event                  | Description |
 | ---------------------- | ----------- |
@@ -347,7 +351,17 @@ client.on("system.login.qrcode", function (e) {
 ### Namespace: segment
 
 > 用于创建可发送的消息元素类型  
-> `const { segment } = require("oicq")`
+
+```js
+//样例代码，文字+图片+表情+AT
+const { segment } = require("oicq")
+const message = [
+  "hello world",
+  segment.image("/tmp/abc.jpg"),
+  segment.face(104),
+  segment.at(10001),
+]
+```
 
 | Method     | Description |
 | ---------- | ----------- |
@@ -366,25 +380,13 @@ client.on("system.login.qrcode", function (e) {
 | sface()    | 创建sface元素   |
 | mirai()    | 创建特殊元素      |
 
-### 使用密码登录
-
-首次登录推荐使用扫码，但是可能会出现掉线后需要重新扫码的情况。  
-登录一段时间后，不会再弹出滑动验证码，此时建议改用密码登录，更加稳定。
-
-```js
-const { createClient } = require("oicq")
-const client = createClient(147258369)
-
-//若弹出登录保护地址，去验证通过即可
-client.login("password")
-```
-
 ----
 
 **其他：**
 
 * [QQWebApi](./web-api.md) QQ Web Api 收集整理 (途中)
 * [码云镜像仓库](https://gitee.com/takayama/oicq)
-* [赞助记录](./sponsors.md) 想赞助可加群给我发红包
+* [赞助记录](./sponsors.md)
+* [TXHook](https://github.com/fuqiuluo/TXHook) 抓包工具推荐
 
 [![group:236172566](https://img.shields.io/badge/group-236172566-blue)](https://qm.qq.com/cgi-bin/qm/qr?k=NXw3NEA5lzPjkRhyEpjVBqMpdg1WHRKJ&jump_from=webapi)

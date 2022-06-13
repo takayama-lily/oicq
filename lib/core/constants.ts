@@ -6,6 +6,9 @@ import * as stream from "stream"
 /** 一个0长buf */
 export const BUF0 = Buffer.alloc(0)
 
+/** 4个0的buf */
+export const BUF4 = Buffer.alloc(4)
+
 /** 16个0的buf */
 export const BUF16 = Buffer.alloc(16)
 

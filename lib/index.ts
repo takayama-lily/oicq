@@ -19,3 +19,4 @@ export { PrivateMessageEvent, GroupMessageEvent, DiscussMessageEvent, MessageRet
 	GroupAdminEvent, GroupMuteEvent, GroupTransferEvent } from "./events"
 export { ApiRejection, Device, Apk, Platform, Domain } from "./core"
 export * as core from "./core"
+export { OcrResult } from "./internal"

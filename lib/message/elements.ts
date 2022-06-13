@@ -41,7 +41,11 @@ export interface MfaceElem {
 /** 图片 */
 export interface ImageElem {
 	type: "image"
-	/** 为string时，支持 "http(s)://" "base:64//" 本地文件和收到的file */
+	/**
+	 * @type {string} filepath such as "/tmp/1.jpg"
+	 * @type {Buffer} image buffer
+	 * @type {Readable} a readable stream of image
+	 */
 	file: string | Buffer | import("stream").Readable
 	/** 网络图片是否使用缓存 */
 	cache?: boolean
@@ -64,7 +68,11 @@ export interface FlashElem extends Omit<ImageElem, "type"> {
 /** 语音 */
 export interface PttElem {
 	type: "record"
-	/** 为string时，支持 "http(s)://" "base:64//" 本地文件和收到的file */
+	/**
+	 * support for raw silk and amr file
+	 * @type {string} filepath such as "/tmp/1.slk"
+	 * @type {Buffer} ptt buffer (silk or amr)
+	 */
 	file: string | Buffer
 	url?: string
 	md5?: string
@@ -75,7 +83,10 @@ export interface PttElem {
 /** 视频 */
 export interface VideoElem {
 	type: "video"
-	/** 仅支持本地文件与收到的file */
+	/**
+	 * need ffmpeg and ffprobe
+	 * @type {string} filepath such as "/tmp/1.mp4"
+	 */
 	file: string
 	name?: string
 	fid?: string
@@ -213,16 +224,18 @@ export const segment = {
 			type: "dice", id
 		}
 	},
-	/** mention@提及，频道中的AT第一个参数传入对方的tiny_id */
-	at(qq: number | "all" | string, text?: string, dummy?: boolean): AtElem {
-		// 频道中的AT
-		if (Number(qq) < 0xffffffff === false) {
+	/** mention@提及
+	 * @param qq 全体成员:"all", 频道:tiny_id
+	 */
+	at(qq: number | string, text?: string, dummy?: boolean): AtElem {
+		if (Number(qq) <= 0xffffffff || qq === "all") {
 			return {
-				type: "at", qq: 0, id: String(qq), text, dummy
+				type: "at", qq: Number(qq), text, dummy
 			}
 		}
+		// 频道中的AT
 		return {
-			type: "at", qq: Number(qq), text, dummy
+			type: "at", qq: 0, id: String(qq), text, dummy
 		}
 	},
 	/** 图片(支持http://,base64://) */

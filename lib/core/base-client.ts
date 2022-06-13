@@ -8,7 +8,7 @@ import * as tlv from "./tlv"
 import * as tea from "./tea"
 import * as pb from "./protobuf"
 import * as jce from "./jce"
-import { BUF0, BUF16, NOOP, md5, timestamp, lock, hide, unzip, int32ip2str } from "./constants"
+import { BUF0, BUF4, BUF16, NOOP, md5, timestamp, lock, hide, unzip, int32ip2str } from "./constants"
 import { ShortDevice, Device, generateFullDevice, Platform, Apk, getApkInfo } from "./device"
 
 const FN_NEXT_SEQ = Symbol("FN_NEXT_SEQ")
@@ -18,6 +18,7 @@ const HANDLERS = Symbol("HANDLERS")
 const NET = Symbol("NET")
 const ECDH = Symbol("ECDH")
 const IS_ONLINE = Symbol("IS_ONLINE")
+const LOGIN_LOCK = Symbol("LOGIN_LOCK")
 const HEARTBEAT = Symbol("HEARTBEAT")
 
 export enum VerboseLevel {
@@ -70,9 +71,10 @@ export interface BaseClient {
 export class BaseClient extends EventEmitter {
 
 	private [IS_ONLINE] = false
+	private [LOGIN_LOCK] = false
 	private [ECDH] = new Ecdh
 	private readonly [NET] = new Network
-	// 存放包的回调函数
+	// 回包的回调函数
 	private readonly [HANDLERS] = new Map<number, (buf: Buffer) => void>()
 
 	readonly apk: Apk
@@ -96,6 +98,7 @@ export class BaseClient extends EventEmitter {
 			sig_session: BUF0,
 			session_key: BUF0,
 		},
+		/** 心跳包 */
 		hb480: (() => {
 			const buf = Buffer.alloc(9)
 			buf.writeUInt32BE(this.uin)
@@ -106,7 +109,9 @@ export class BaseClient extends EventEmitter {
 				4: buf
 			})
 		})(),
+		/** 上次cookie刷新时间 */
 		emp_time: 0,
+		time_diff: 0,
 	}
 	readonly pskey: {[domain: string]: Buffer} = { }
 	/** 心跳间隔(秒) */
@@ -129,7 +134,7 @@ export class BaseClient extends EventEmitter {
 		remote_port: 0,
 	}
 
-	constructor(public readonly uin: number, p = Platform.Android, d?: ShortDevice) {
+	constructor(public readonly uin: number, p: Platform = Platform.Android, d?: ShortDevice) {
 		super()
 		this.apk = getApkInfo(p)
 		this.device = generateFullDevice(d || uin)
@@ -143,6 +148,7 @@ export class BaseClient extends EventEmitter {
 			this.statistics.remote_ip = this[NET].remoteAddress as string
 			this.statistics.remote_port = this[NET].remotePort as number
 			this.emit("internal.verbose", `${this[NET].remoteAddress}:${this[NET].remotePort} connected`, VerboseLevel.Mark)
+			syncTimeDiff.call(this)
 		})
 		this[NET].on("packet", packetListener.bind(this))
 		this[NET].on("lost", lostListener.bind(this))
@@ -258,11 +264,12 @@ export class BaseClient extends EventEmitter {
 	}
 	/** 提交滑动验证码 */
 	submitSlider(ticket: string) {
+		ticket = String(ticket).trim()
 		const t = tlv.getPacker(this)
 		const body = new Writer()
 			.writeU16(2)
 			.writeU16(4)
-			.writeBytes(t(0x193, String(ticket)))
+			.writeBytes(t(0x193, ticket))
 			.writeBytes(t(0x8))
 			.writeBytes(t(0x104))
 			.writeBytes(t(0x116))
@@ -479,10 +486,14 @@ export class BaseClient extends EventEmitter {
 		})
 	}
 	private async [FN_SEND_LOGIN](cmd: LoginCmd, body: Buffer) {
+		if (this[IS_ONLINE] || this[LOGIN_LOCK])
+			return
 		const pkt = buildLoginPacket.call(this, cmd, body)
 		try {
+			this[LOGIN_LOCK] = true
 			decodeLoginResponse.call(this, await this[FN_SEND](pkt))
 		} catch (e: any) {
+			this[LOGIN_LOCK] = false
 			this.emit("internal.error.network", -2, "server is busy")
 			this.emit("internal.verbose", e.message, VerboseLevel.Error)
 		}
@@ -586,12 +597,14 @@ function lostListener(this: BaseClient) {
 	}
 }
 
-async function parseSso(buf: Buffer) {
+async function parseSso(this: BaseClient, buf: Buffer) {
 	const headlen = buf.readUInt32BE()
 	const seq = buf.readInt32BE(4)
 	const retcode = buf.readInt32BE(8)
-	if (retcode !== 0)
+	if (retcode !== 0) {
+		this.emit("internal.error.token")
 		throw new Error("unsuccessful retcode: " + retcode)
+	}
 	let offset = buf.readUInt32BE(12) + 12
 	let len = buf.readUInt32BE(offset) // length of cmd
 	const cmd = String(buf.slice(offset + 4, offset + len))
@@ -615,6 +628,7 @@ async function parseSso(buf: Buffer) {
 
 async function packetListener(this: BaseClient, pkt: Buffer) {
 	this.statistics.recv_pkt_cnt++
+	this[LOGIN_LOCK] = false
 	try {
 		const flag = pkt.readUInt8(4)
 		const encrypted = pkt.slice(pkt.readUInt32BE(6) + 6)
@@ -630,9 +644,10 @@ async function packetListener(this: BaseClient, pkt: Buffer) {
 			decrypted = tea.decrypt(encrypted, BUF16)
 			break
 		default:
+			this.emit("internal.error.token")
 			throw new Error("unknown flag:" + flag)
 		}
-		const sso = await parseSso(decrypted)
+		const sso = await parseSso.call(this, decrypted)
 		this.emit("internal.verbose", `recv:${sso.cmd} seq:${sso.seq}`, VerboseLevel.Debug)
 		if (this[HANDLERS].has(sso.seq))
 			this[HANDLERS].get(sso.seq)?.(sso.payload)
@@ -643,7 +658,7 @@ async function packetListener(this: BaseClient, pkt: Buffer) {
 	}
 }
 
-async function register(this: BaseClient, logout = false) {
+async function register(this: BaseClient, logout = false, reflush = false) {
 	this[IS_ONLINE] = false
 	clearInterval(this[HEARTBEAT])
 	const pb_buf = pb.encode({
@@ -667,15 +682,16 @@ async function register(this: BaseClient, logout = false) {
 	const body = jce.encodeWrapper({ SvcReqRegister }, "PushService", "SvcReqRegister")
 	const pkt = buildLoginPacket.call(this, "StatSvc.register", body, 1)
 	try {
-		const payload = await this[FN_SEND](pkt)
+		const payload = await this[FN_SEND](pkt, 10)
 		if (logout) return
 		const rsp = jce.decodeWrapper(payload)
 		const result = rsp[9] ? true : false
-		if (!result) {
+		if (!result && !reflush) {
 			this.emit("internal.error.token")
 		} else {
 			this[IS_ONLINE] = true
 			this[HEARTBEAT] = setInterval(async () => {
+				syncTimeDiff.call(this)
 				if (typeof this.heartbeat === "function")
 					await this.heartbeat()
 				this.sendUni("OidbSvc.0x480_9_IMCore", this.sig.hb480).catch(() => {
@@ -691,6 +707,15 @@ async function register(this: BaseClient, logout = false) {
 		if (!logout)
 			this.emit("internal.error.network", -3, "server is busy(register)")
 	}
+}
+
+function syncTimeDiff(this: BaseClient) {
+	const pkt = buildLoginPacket.call(this, "Client.CorrectTime", BUF4, 0)
+	this[FN_SEND](pkt).then(buf => {
+		try {
+			this.sig.time_diff = buf.readInt32BE() - timestamp()
+		} catch { }
+	}).catch(NOOP)
 }
 
 async function refreshToken(this: BaseClient) {
@@ -728,7 +753,7 @@ async function refreshToken(this: BaseClient) {
 		const t = readTlv(stream)
 		if (type === 0) {
 			const { token } = decodeT119.call(this, t[0x119])
-			await register.call(this)
+			await register.call(this, false, true)
 			if (this[IS_ONLINE])
 				this.emit("internal.token", token)
 		}
@@ -746,7 +771,7 @@ function readTlv(r: Readable) {
 	return t
 }
 
-type LoginCmd = "wtlogin.login" | "wtlogin.exchange_emp" | "wtlogin.trans_emp" | "StatSvc.register"
+type LoginCmd = "wtlogin.login" | "wtlogin.exchange_emp" | "wtlogin.trans_emp" | "StatSvc.register" | "Client.CorrectTime"
 type LoginCmdType = 0 | 1 | 2
 
 function buildLoginPacket(this: BaseClient, cmd: LoginCmd, body: Buffer, type: LoginCmdType = 2): Buffer {
@@ -917,7 +942,7 @@ function decodeLoginResponse(this: BaseClient, payload: Buffer): any {
 	}
 
 	if (type === 160) {
-		if (!t[0x204])
+		if (!t[0x204] && !t[0x174])
 			return this.emit("internal.verbose", "已向密保手机发送短信验证码", VerboseLevel.Mark)
 		let phone = ""
 		if (t[0x174] && t[0x178]) {

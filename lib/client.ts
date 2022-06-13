@@ -6,13 +6,13 @@ const pkg = require("../package.json")
 import { md5, timestamp, NOOP, lock, Gender, OnlineStatus, hide } from "./common"
 import { bindInternalListeners, parseFriendRequestFlag, parseGroupRequestFlag,
 	getSysMsg, setAvatar, setSign, setStatus, addClass, delClass, renameClass,
-	loadBL, loadFL, loadGL, loadSL, getStamp, delStamp } from "./internal"
+	loadBL, loadFL, loadGL, loadSL, getStamp, delStamp, imageOcr, OcrResult } from "./internal"
 import { StrangerInfo, FriendInfo, GroupInfo, MemberInfo } from "./entities"
 import { EventMap } from "./events"
 import { User, Friend } from "./friend"
 import { Discuss, Group } from "./group"
 import { Member } from "./member"
-import { Forwardable, Quotable, Sendable, parseDmMessageId, parseGroupMessageId, Image} from "./message"
+import { Forwardable, Quotable, Sendable, parseDmMessageId, parseGroupMessageId, Image, ImageElem} from "./message"
 
 /** 事件接口 */
 export interface Client extends BaseClient {
@@ -24,6 +24,8 @@ export interface Client extends BaseClient {
 	prependListener(event: string | symbol, listener: (this: this, ...args: any[]) => void): this
 	prependOnceListener<T extends keyof EventMap>(event: T, listener: EventMap<this>[T]): this
 	prependOnceListener(event: string | symbol, listener: (this: this, ...args: any[]) => void): this
+	off<T extends keyof EventMap>(event: T, listener: EventMap<this>[T]): this
+	off<S extends string | symbol>(event: S & Exclude<S, keyof EventMap>, listener: (this: this, ...args: any[]) => void): this
 }
 
 /** 一个客户端 */
@@ -254,7 +256,7 @@ export class Client extends BaseClient {
 		return setSign.call(this, signature)
 	}
 	/** 设置头像 */
-	async setAvatar(file: string | Buffer | import("stream").Readable) {
+	async setAvatar(file: ImageElem["file"]) {
 		return setAvatar.call(this, new Image({ type: "image", file }))
 	}
 	/** 获取漫游表情 */
@@ -297,20 +299,6 @@ export class Client extends BaseClient {
 	reloadBlackList() {
 		return loadBL.call(this)
 	}
-	// reloadGuildList() {
-	// 	this.writeUni("trpc.group_pro.synclogic.SyncLogic.SyncFirstView", pb.encode({ 1: 0, 2: 0, 3: 0 }))
-	// 	return new Promise<void>((resolve, reject) => {
-	// 		const id = setTimeout(() => {
-	// 			this.off("internal.loadguilds", tmp)
-	// 			reject()
-	// 		}, 5000)
-	// 		this.once("internal.loadguilds", tmp)
-	// 		function tmp() {
-	// 			clearTimeout(id)
-	// 			resolve()
-	// 		}
-	// 	})
-	// }
 	/** 清空缓存文件 fs.rm need v14.14 */
 	cleanCache() {
 		const dir = path.join(this.dir, "../image")
@@ -329,6 +317,10 @@ export class Client extends BaseClient {
 	/** 制作转发消息 */
 	makeForwardMsg(fake: Forwardable[], dm = false) {
 		return (dm ? this.pickFriend : this.pickGroup)(this.uin).makeForwardMsg(fake)
+	}
+	/** Ocr图片转文字 */
+	imageOcr(file: ImageElem["file"]) {
+		return imageOcr.call(this, new Image({ type: "image", file }))
 	}
 
 	/** @cqhttp (cqhttp遗留方法) use client.cookies[domain] */
@@ -545,7 +537,7 @@ export class Client extends BaseClient {
 	}
 
 	protected _msgExists(from: number, type: number, seq: number, time: number) {
-		if (timestamp() - time >= 60 || time < this.stat.start_time)
+		if (timestamp() + this.sig.time_diff - time >= 60 || time < this.stat.start_time)
 			return true
 		const id = [from, type, seq].join("-")
 		const set = this._cache.get(time)
@@ -629,7 +621,7 @@ export interface Config {
 	/** 数据存储文件夹，需要可写权限，默认主模块下的data文件夹 */
 	data_dir?: string
 	/**
-	 * 触发system.offline.network事件后的重新登录间隔秒数，默认5(秒)，不建议设置低于3(秒)
+	 * 触发system.offline.network事件后的重新登录间隔秒数，默认5(秒)，不建议设置过低
 	 * 设置为0则不会自动重连，然后你可以监听此事件自己处理
 	 */
 	reconn_interval?: number

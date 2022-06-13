@@ -1,7 +1,7 @@
 {
   "name": "oicq",
-  "version": "2.2.1",
-  "upday": "2021/3/16",
+  "version": "2.2.3",
+  "upday": "2021/5/17",
   "description": "QQ protocol!",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
@@ -27,18 +27,15 @@
   "changelogs": "https://github.com/takayama-lily/oicq/releases",
   "dependencies": {
     "axios": "^0.24.0",
-    "jsqr": "^1.4.0",
     "log4js": "^6.3.0",
     "long": "^4.0.0",
     "pngjs": "^6.0.0",
-    "probe-image-size": "^7.2.2",
-    "qrcode-terminal": "^0.12.0"
+    "probe-image-size": "^7.2.2"
   },
   "devDependencies": {
     "@types/node": "^16.7.2",
     "@types/pngjs": "^6.0.1",
     "@types/probe-image-size": "^7.0.1",
-    "@types/qrcode-terminal": "^0.12.0",
     "@types/ws": "^8.2.0",
     "protobufjs": "^6.11.2",
     "ws": "^8.2.3"

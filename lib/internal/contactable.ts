@@ -67,7 +67,8 @@ export abstract class Contactable {
 		}
 		const body = pb.encode({
 			1: 1,
-			2: req
+			2: req,
+			// 10: 3
 		})
 		const payload = await this.c.sendUni("LongConn.OffPicUp", body)
 		return pb.decode(payload)[2] as pb.Proto | pb.Proto[]
@@ -125,7 +126,7 @@ export abstract class Contactable {
 		while (imgs.length > n) {
 			let rsp = await (this.dm ? this._offPicUp : this._groupPicUp).call(this, imgs.slice(n, n + 20) as Image[])
 			!Array.isArray(rsp) && (rsp = [rsp])
-			const tasks: Promise<void>[] = []
+			const tasks: Promise<any>[] = []
 			for (let i = n; i < imgs.length; ++i) {
 				if (i >= n + 20) break
 				tasks.push(this._uploadImage(imgs[i] as Image, rsp[i%20]))
@@ -334,6 +335,7 @@ export abstract class Contactable {
 		})
 		const payload = await this.c.sendUni("PttStore.GroupPttUp", body)
 		const rsp = pb.decode(payload)[5]
+		rsp[2] && drop(rsp[2], rsp[3])
 		const ip = rsp[5]?.[0] || rsp[5], port = rsp[6]?.[0] || rsp[6]
 		const ukey = rsp[7].toHex(), filekey = rsp[11].toHex()
 		const params = {
@@ -443,9 +445,10 @@ export abstract class Contactable {
 						1: this.target,
 						4: nickname,
 					},
-					14: nickname,
+					14: this.dm ? nickname : null,
 					20: {
-						2: 1
+						1: 0,
+						2: rand
 					}
 				},
 				3: {

@@ -4,7 +4,7 @@ import { pb, jce } from "./core"
 import { ErrorCode, drop } from "./errors"
 import { timestamp, code2uin, PB_CONTENT, NOOP, lock, hide } from "./common"
 import { Contactable } from "./internal"
-import { Sendable, GroupMessage, Image, buildMusic, MusicPlatform, Anonymous, parseGroupMessageId, Quotable, Converter } from "./message"
+import { Sendable, GroupMessage, Image, ImageElem, buildMusic, MusicPlatform, Anonymous, parseGroupMessageId, Quotable, Converter } from "./message"
 import { Gfs } from "./gfs"
 import { MessageRet } from "./events"
 import { GroupInfo, MemberInfo } from "./entities"
@@ -549,7 +549,7 @@ export class Group extends Discuss {
 	}
 
 	/** 设置群头像 */
-	async setAvatar(file: string | Buffer | import("stream").Readable) {
+	async setAvatar(file: ImageElem["file"]) {
 		const img = new Image({ type: "image", file })
 		await img.task
 		const url = `http://htdata3.qq.com/cgi-bin/httpconn?htcmd=0x6ff0072&ver=5520&ukey=${this.c.sig.skey}&range=0&uin=${this.c.uin}&seq=1&groupuin=${this.gid}&filetype=3&imagetype=5&userdata=0&subcmd=1&subver=101&clip=0_0_0_0&filesize=` + img.size
