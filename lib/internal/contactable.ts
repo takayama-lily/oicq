@@ -10,11 +10,12 @@ import { ErrorCode, drop } from "../errors"
 import { escapeXml, md5, NOOP, timestamp, uuid, md5Stream, IS_WIN, TMP_DIR, gzip, unzip, int32ip2str, lock, pipeline, DownloadTransform, log } from "../common"
 import { Sendable, PrivateMessage, MessageElem, ForwardMessage, Forwardable, Quotable, Image, ImageElem, VideoElem, PttElem, Converter, XmlElem, rand2uuid } from "../message"
 import { CmdID, highwayUpload } from "./highway"
+import {EventEmitter} from "events";
 
 type Client = import("../client").Client
 
 /** 所有用户和群的基类 */
-export abstract class Contactable {
+export abstract class Contactable extends EventEmitter{
 
 	/** 对方QQ号 */
 	protected uid?: number
@@ -37,6 +38,7 @@ export abstract class Contactable {
 	}
 
 	protected constructor(protected readonly c: Client) {
+		super()
 		lock(this, "c")
 	}
 
