@@ -487,10 +487,18 @@ export abstract class Contactable {
 	}
 
 	/** 下载并解析合并转发 */
-	async getForwardMsg(resid: string) {
+	async getForwardMsg(resid: string, fileName: string = "MultiMsg") {
 		const ret = []
 		const buf = await this._downloadMultiMsg(String(resid), 2)
 		let a = pb.decode(buf)[2]
+		if (!Array.isArray(a)) a = [a]
+		for (let b of a) {
+			const m_fileName = b[1].toString()
+			if (m_fileName === fileName) {
+				a = b
+				break
+			}
+		}
 		if (Array.isArray(a)) a = a[0]
 		a = a[2][1]
 		if (!Array.isArray(a)) a = [a]
