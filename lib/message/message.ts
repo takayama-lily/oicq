@@ -222,6 +222,8 @@ export class PrivateMessage extends Message {
 		case 529:
 			if (head[4] === 4) {
 				const trans = body[2][1]
+				if (trans[1] !== 0)
+					throw new Error("unsupported message (ignore ok)")
 				const elem = {
 					type: "file",
 					name: String(trans[5]),

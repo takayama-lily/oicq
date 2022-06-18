@@ -286,7 +286,7 @@ export class Gfs {
 	 * 上传一个文件
 	 * @param file string表示从该本地文件路径上传，Buffer表示直接上传这段内容
 	 * @param pid 上传到此目录(默认根目录)
-	 * @param name 若留空则自动以md5命名
+	 * @param name file为Buffer时，若留空则自动以md5命名
 	 * @param callback 监控上传进度的回调函数，拥有一个"百分比进度"的参数
 	 */
 	async upload(file: string | Buffer | Uint8Array, pid = "/", name?: string, callback?: (percentage: string) => void) {
