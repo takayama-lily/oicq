@@ -128,9 +128,13 @@ export function highwayUpload(this: Client, readable: stream.Readable, obj: High
 					if (buf.length >= len + 10) {
 						handleRspHeader(buf.slice(9, len + 9))
 						buf = buf.slice(len + 10)
+					} else {
+						break
 					}
 				}
-			} catch { }
+			} catch (err) {
+				this.logger.error(err)
+			}
 		})
 		socket.on("close", () => {
 			reject(new ApiRejection(ErrorCode.HighwayNetworkError, "上传遇到网络错误"))
