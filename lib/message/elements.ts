@@ -228,7 +228,7 @@ export const segment = {
 	 * @param qq 全体成员:"all", 频道:tiny_id
 	 */
 	at(qq: number | string, text?: string, dummy?: boolean): AtElem {
-		if (Number(qq) <= 0xffffffff || qq === "all") {
+		if (Number(qq) <= 0xffffffff) {
 			return {
 				type: "at", qq: Number(qq), text, dummy
 			}
