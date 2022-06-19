@@ -230,7 +230,7 @@ export const segment = {
 	at(qq: number | string, text?: string, dummy?: boolean): AtElem {
 		if (Number(qq) <= 0xffffffff) {
 			return {
-				type: "at", qq: Number(qq), text, dummy
+				type: "at", qq: qq === "all" ? "all" : Number(qq), text, dummy
 			}
 		}
 		// 频道中的AT
