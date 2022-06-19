@@ -334,7 +334,7 @@ function unescapeCQInside(s: string) {
 	return ""
 }
 function qs(s: string, sep = ",", equal = "=") {
-	const ret: any = {}
+	const ret: any = { }
 	const split = s.split(sep)
 	for (let v of split) {
 		const i = v.indexOf(equal)
