@@ -93,6 +93,7 @@ client.on("system.login.qrcode", function (e) {
 | getForwardMsg()      | 解析合并转发                    |
 | makeForwardMsg()     | 制作合并转发                    |
 | getVideoUrl()        | 获取视频地址                    |
+| imageOcr()           | ocr                    |
 | cleanCache()         | 清空缓存文件                    |
 
 | Property  | Description |
@@ -234,6 +235,8 @@ client.on("system.login.qrcode", function (e) {
 | thumbUp()    | 点赞          |
 | poke()       | 戳一戳         |
 | delete()     | 删除          |
+| sendFile()   | 发送文件          |
+| recallFile() | 撤回文件          |
 
 | Property   | Description |
 | ---------- | ----------- |
