@@ -403,7 +403,7 @@ export class Friend extends User {
 	 * @param callback 监控上传进度的回调函数，拥有一个"百分比进度"的参数
 	 * @returns 文件id(撤回时使用)
 	 */
-	 async sendFile(file: string | Buffer, filename?: string, callback?: (percentage: string) => void) {
+	async sendFile(file: string | Buffer, filename?: string, callback?: (percentage: string) => void) {
 		let filesize: number, filemd5: Buffer, filesha: Buffer, filestream: Readable
 		if (file instanceof Buffer) {
 			filesize = file.length
