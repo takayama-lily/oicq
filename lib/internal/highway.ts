@@ -230,7 +230,7 @@ export async function highwayHttpUpload(this: Client, readable: stream.Readable,
 					if (typeof obj.callback === "function" && percentage)
 						obj.callback(percentage)
 					resolve(undefined)
-				})
+				}).catch(reject)
 			})
 			tasks.push(task)
 		}
