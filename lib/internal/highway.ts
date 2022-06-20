@@ -93,6 +93,7 @@ export function highwayUpload(this: Client, readable: stream.Readable, obj: High
 	ip = int32ip2str(ip || this.sig.bigdata.ip)
 	port = port || this.sig.bigdata.port
 	if (!port) throw new ApiRejection(ErrorCode.NoUploadChannel, "没有上传通道，如果你刚刚登录，请等待几秒")
+	if (!readable) throw new ApiRejection(ErrorCode.HighwayFileTypeError, "不支持的file类型")
 	this.logger.debug(`highway ip:${ip} port:${port}`)
 	return new Promise((resolve, reject) => {
 		const highway = new HighwayTransform(this, obj)
