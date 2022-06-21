@@ -9,8 +9,9 @@
 <ul>
 <li>QQ(安卓)协议基于Node.js的实现，支持最低node版本为 v14</li>
 <li>若你不熟悉Node.js或不会组织代码，可通过 <a href="https://github.com/takayama-lily/oicq-template">template</a> 创建一个简单的应用程序</li>
-<li><a href="#api-reference">API Reference</a> / <a href="https://takayama-lily.github.io/oicq/">Type Docs</a> (文档仅供参考，具体类型以包内d.ts声明文件为准)</li>
+<li><a href="#api-reference">API Reference</a> / <a href="https://oicqjs.github.io/oicq/">Type Docs</a> (文档仅供参考，具体类型以包内d.ts声明文件为准)</li>
 <li><a href="https://github.com/takayama-lily/oicq/projects/3#column-16638290">从v1.x升级</a> (v1在master分支)</li>
+<li>QQ频道未来不会直接支持，请使用插件 <a href="https://github.com/takayama-lily/oicq-guild">oicq-guild</a></li>
 </ul>
 <hr>
 <p><strong>Install:</strong></p>
@@ -19,13 +20,16 @@
 <p><strong>Usage:</strong></p>
 <pre><code class="language-js"><span class="hl-2">const</span><span class="hl-0"> { </span><span class="hl-3">createClient</span><span class="hl-0"> } = </span><span class="hl-4">require</span><span class="hl-0">(</span><span class="hl-5">&quot;oicq&quot;</span><span class="hl-0">)</span><br/><span class="hl-2">const</span><span class="hl-0"> </span><span class="hl-3">account</span><span class="hl-0"> = </span><span class="hl-6">147258369</span><br/><span class="hl-2">const</span><span class="hl-0"> </span><span class="hl-3">client</span><span class="hl-0"> = </span><span class="hl-4">createClient</span><span class="hl-0">(</span><span class="hl-7">account</span><span class="hl-0">)</span><br/><br/><span class="hl-7">client</span><span class="hl-0">.</span><span class="hl-4">on</span><span class="hl-0">(</span><span class="hl-5">&quot;system.online&quot;</span><span class="hl-0">, () </span><span class="hl-2">=&gt;</span><span class="hl-0"> </span><span class="hl-7">console</span><span class="hl-0">.</span><span class="hl-4">log</span><span class="hl-0">(</span><span class="hl-5">&quot;Logged in!&quot;</span><span class="hl-0">))</span><br/><span class="hl-7">client</span><span class="hl-0">.</span><span class="hl-4">on</span><span class="hl-0">(</span><span class="hl-5">&quot;message&quot;</span><span class="hl-0">, </span><span class="hl-7">e</span><span class="hl-0"> </span><span class="hl-2">=&gt;</span><span class="hl-0"> {</span><br/><span class="hl-0">  </span><span class="hl-7">console</span><span class="hl-0">.</span><span class="hl-4">log</span><span class="hl-0">(</span><span class="hl-7">e</span><span class="hl-0">)</span><br/><span class="hl-0">  </span><span class="hl-7">e</span><span class="hl-0">.</span><span class="hl-4">reply</span><span class="hl-0">(</span><span class="hl-5">&quot;hello world&quot;</span><span class="hl-0">, </span><span class="hl-2">true</span><span class="hl-0">) </span><span class="hl-1">//true表示引用对方的消息</span><br/><span class="hl-0">})</span><br/><br/><span class="hl-7">client</span><span class="hl-0">.</span><span class="hl-4">on</span><span class="hl-0">(</span><span class="hl-5">&quot;system.login.qrcode&quot;</span><span class="hl-0">, </span><span class="hl-2">function</span><span class="hl-0"> (</span><span class="hl-7">e</span><span class="hl-0">) {</span><br/><span class="hl-0">  </span><span class="hl-1">//扫码后按回车登录</span><br/><span class="hl-0">  </span><span class="hl-7">process</span><span class="hl-0">.</span><span class="hl-7">stdin</span><span class="hl-0">.</span><span class="hl-4">once</span><span class="hl-0">(</span><span class="hl-5">&quot;data&quot;</span><span class="hl-0">, () </span><span class="hl-2">=&gt;</span><span class="hl-0"> {</span><br/><span class="hl-0">    </span><span class="hl-2">this</span><span class="hl-0">.</span><span class="hl-4">login</span><span class="hl-0">()</span><br/><span class="hl-0">  })</span><br/><span class="hl-0">}).</span><span class="hl-4">login</span><span class="hl-0">()</span>
 </code></pre>
-<p>注意：第一次运行程序时，有可能扫描命令行中的二维码和图片中的二维码都会显示过期，只需要重新运行一次程序即可，后面不会出现这个问题。</p>
+<p>注意：扫码登录现在仅能在同一ip下进行，建议使用密码登录，只需验证一次设备便长期有效<br><a href="https://github.com/takayama-lily/oicq/wiki/01.%E4%BD%BF%E7%94%A8%E5%AF%86%E7%A0%81%E7%99%BB%E5%BD%95-(%E6%BB%91%E5%8A%A8%E9%AA%8C%E8%AF%81%E7%A0%81%E6%95%99%E7%A8%8B)">密码登录教程</a></p>
 
 <a href="#api-reference" id="api-reference" style="color: inherit; text-decoration: none;">
   <h2>Api Reference</h2>
 </a>
 <ul>
-<li><a href="#class-client">Class: Client</a> 客户端</li>
+<li><a href="#class-client">Class: Client</a> 客户端<ul>
+<li><a href="#events">Events</a> 事件</li>
+</ul>
+</li>
 <li><a href="#class-group">Class: Group</a> 群</li>
 <li><a href="#class-user">Class: User</a> 用户</li>
 <li><a href="#class-friend">Class: Friend</a> 好友</li>
@@ -33,13 +37,15 @@
 <li><a href="#class-contactable">Class: Contactable</a> 群和用户的基类</li>
 <li><a href="#class-gfs">Class: Gfs</a> 群文件系统</li>
 <li><a href="#class-message">Class: Message</a> 消息</li>
-<li><a href="#namespace-segment">Namespace: segment</a> 构造消息元素</li>
-<li><a href="#%E4%BD%BF%E7%94%A8%E5%AF%86%E7%A0%81%E7%99%BB%E5%BD%95">使用密码登录</a></li>
+<li><a href="#namespace-segment">Namespace: segment</a> 构造消息元素/发送消息</li>
 </ul>
 
 <a href="#class-client" id="class-client" style="color: inherit; text-decoration: none;">
   <h3>Class: Client</h3>
 </a>
+<blockquote>
+<p>使用 createClient() 或 new Client 创建实例</p>
+</blockquote>
 <table>
 <thead>
 <tr>
@@ -50,6 +56,14 @@
 <tbody><tr>
 <td>login()</td>
 <td>登录</td>
+</tr>
+<tr>
+<td>logout()</td>
+<td>登出</td>
+</tr>
+<tr>
+<td>queryQrcodeResult()</td>
+<td>获取扫码结果</td>
 </tr>
 <tr>
 <td>submitSlider()</td>
@@ -164,6 +178,10 @@
 <td>获取视频地址</td>
 </tr>
 <tr>
+<td>imageOcr()</td>
+<td>ocr</td>
+</tr>
+<tr>
 <td>cleanCache()</td>
 <td>清空缓存文件</td>
 </tr>
@@ -252,6 +270,10 @@
 <td>我的频道账号</td>
 </tr>
 </tbody></table>
+
+<a href="#events" id="events" style="color: inherit; text-decoration: none;">
+  <h3>Events</h3>
+</a>
 <table>
 <thead>
 <tr>
@@ -393,7 +415,7 @@
   <h3>Class: Group</h3>
 </a>
 <blockquote>
-<p>所有的<code>notice.group</code>和<code>message.group</code>事件的上报数据中含有此实例 (<code>e.group</code>访问)</p>
+<p>群。 <code>notice.group</code> 和 <code>message.group</code> 相关事件中含有此实例 ( <code>e.group</code> 访问)<br>或者使用 <code>client.pickGroup()</code> 获得群实例</p>
 </blockquote>
 <table>
 <thead>
@@ -624,7 +646,7 @@
   <h3>Class: Friend</h3>
 </a>
 <blockquote>
-<p>继承 <a href="#class-user">User</a> 的所有方法和属性<br>所有的<code>notice.friend</code>和<code>message.private</code>事件中含有此实例 (<code>e.friend</code>访问)</p>
+<p>好友。继承 <a href="#class-user">User</a> 的所有方法和属性<br><code>notice.friend</code> 和 <code>message.private</code> 相关事件中含有此实例 ( <code>e.friend</code> 访问)<br>或者使用 <code>client.pickFriend()</code> 获得好友实例</p>
 </blockquote>
 <table>
 <thead>
@@ -656,6 +678,14 @@
 <tr>
 <td>delete()</td>
 <td>删除</td>
+</tr>
+<tr>
+<td>sendFile()</td>
+<td>发送文件</td>
+</tr>
+<tr>
+<td>recallFile()</td>
+<td>撤回文件</td>
 </tr>
 </tbody></table>
 <table>
@@ -695,7 +725,7 @@
   <h3>Class: Member</h3>
 </a>
 <blockquote>
-<p>继承 <a href="#class-user">User</a> 的所有方法和属性<br>所有的<code>message.group</code>事件中含有此实例 (<code>e.member</code>访问)</p>
+<p>群成员。继承 <a href="#class-user">User</a> 的所有方法和属性<br><code>message.group</code> 相关事件中含有此实例 ( <code>e.member</code> 访问)<br>或者使用 <code>client.pickMember()</code> 获得群成员实例</p>
 </blockquote>
 <table>
 <thead>
@@ -829,7 +859,7 @@
 </thead>
 <tbody><tr>
 <td>client</td>
-<td>所在客户端对象</td>
+<td><a href="#class-client">所在客户端对象</a></td>
 </tr>
 </tbody></table>
 
@@ -837,7 +867,7 @@
   <h3>Class: Gfs</h3>
 </a>
 <blockquote>
-<p>群文件系统</p>
+<p>群文件系统，通过 <code>group.fs</code> 获取</p>
 </blockquote>
 <table>
 <thead>
@@ -904,7 +934,7 @@
 </tr>
 <tr>
 <td>client</td>
-<td>所在客户端对象</td>
+<td><a href="#class-client">所在客户端对象</a></td>
 </tr>
 </tbody></table>
 
@@ -912,7 +942,7 @@
   <h3>Class: Message</h3>
 </a>
 <blockquote>
-<p>拥有子类: PrivateMessage, GroupMessage, DiscussMessage</p>
+<p>拥有子类: <code>PrivateMessage</code>, <code>GroupMessage</code>, <code>DiscussMessage</code><br>对应的消息事件中含有这些实例中的一个</p>
 </blockquote>
 <table>
 <thead>
@@ -1023,19 +1053,14 @@
 </tr>
 </tbody></table>
 
-<a href="#class-forwardmessage" id="class-forwardmessage" style="color: inherit; text-decoration: none;">
-  <h3>Class: ForwardMessage</h3>
-</a>
-<blockquote>
-<p>基本同 <code>Message</code></p>
-</blockquote>
-
 <a href="#namespace-segment" id="namespace-segment" style="color: inherit; text-decoration: none;">
   <h3>Namespace: segment</h3>
 </a>
 <blockquote>
-<p>const { segment } = require(&quot;oicq)</p>
+<p>用于创建可发送的消息元素类型  </p>
 </blockquote>
+<pre><code class="language-js"><span class="hl-1">//样例代码，文字+图片+表情+AT</span><br/><span class="hl-2">const</span><span class="hl-0"> { </span><span class="hl-3">segment</span><span class="hl-0"> } = </span><span class="hl-4">require</span><span class="hl-0">(</span><span class="hl-5">&quot;oicq&quot;</span><span class="hl-0">)</span><br/><span class="hl-2">const</span><span class="hl-0"> </span><span class="hl-3">message</span><span class="hl-0"> = [</span><br/><span class="hl-0">  </span><span class="hl-5">&quot;hello world&quot;</span><span class="hl-0">,</span><br/><span class="hl-0">  </span><span class="hl-7">segment</span><span class="hl-0">.</span><span class="hl-4">image</span><span class="hl-0">(</span><span class="hl-5">&quot;/tmp/abc.jpg&quot;</span><span class="hl-0">),</span><br/><span class="hl-0">  </span><span class="hl-7">segment</span><span class="hl-0">.</span><span class="hl-4">face</span><span class="hl-0">(</span><span class="hl-6">104</span><span class="hl-0">),</span><br/><span class="hl-0">  </span><span class="hl-7">segment</span><span class="hl-0">.</span><span class="hl-4">at</span><span class="hl-0">(</span><span class="hl-6">10001</span><span class="hl-0">),</span><br/><span class="hl-0">]</span>
+</code></pre>
 <table>
 <thead>
 <tr>
@@ -1100,19 +1125,13 @@
 <td>创建特殊元素</td>
 </tr>
 </tbody></table>
-
-<a href="#使用密码登录" id="使用密码登录" style="color: inherit; text-decoration: none;">
-  <h3>使用密码登录</h3>
-</a>
-<p>首次登录建议使用扫码，因为使用密码可能需要处理滑动验证码，目前非手机环境的滑动无法通过。<br>登录几天后不会再弹出滑动验证码，此时建议改用密码登录，更加稳定。</p>
-<pre><code class="language-js"><span class="hl-2">const</span><span class="hl-0"> { </span><span class="hl-3">createClient</span><span class="hl-0"> } = </span><span class="hl-4">require</span><span class="hl-0">(</span><span class="hl-5">&quot;oicq&quot;</span><span class="hl-0">)</span><br/><span class="hl-2">const</span><span class="hl-0"> </span><span class="hl-3">client</span><span class="hl-0"> = </span><span class="hl-4">createClient</span><span class="hl-0">(</span><span class="hl-6">147258369</span><span class="hl-0">)</span><br/><br/><span class="hl-1">//若弹出登录保护地址，去验证通过即可</span><br/><span class="hl-7">client</span><span class="hl-0">.</span><span class="hl-4">login</span><span class="hl-0">(</span><span class="hl-5">&quot;password&quot;</span><span class="hl-0">)</span>
-</code></pre>
 <hr>
 <p><strong>其他：</strong></p>
 <ul>
 <li><a href="./web-api.md">QQWebApi</a> QQ Web Api 收集整理 (途中)</li>
 <li><a href="https://gitee.com/takayama/oicq">码云镜像仓库</a></li>
-<li><a href="./sponsors.md">赞助记录</a> 想赞助可加群给我发红包</li>
+<li><a href="./sponsors.md">赞助记录</a></li>
+<li><a href="https://github.com/fuqiuluo/TXHook">TXHook</a> 抓包工具推荐</li>
 </ul>
 <p><a href="https://qm.qq.com/cgi-bin/qm/qr?k=NXw3NEA5lzPjkRhyEpjVBqMpdg1WHRKJ&amp;jump_from=webapi"><img src="https://img.shields.io/badge/group-236172566-blue" alt="group:236172566"></a></p>
-</div></div><div class="col-4 col-menu menu-sticky-wrap menu-highlight"><nav class="tsd-navigation primary"><ul><li class="current"><a href="modules.html">Exports</a></li><li class=" tsd-kind-namespace"><a href="modules/core.html">core</a></li></ul></nav><nav class="tsd-navigation secondary menu-sticky"><ul><li class="tsd-kind-enum"><a href="enums/ErrorCode.html" class="tsd-kind-icon">Error<wbr/>Code</a></li><li class="tsd-kind-enum"><a href="enums/LoginErrorCode.html" class="tsd-kind-icon">Login<wbr/>Error<wbr/>Code</a></li><li class="tsd-kind-enum"><a href="enums/OnlineStatus.html" class="tsd-kind-icon">Online<wbr/>Status</a></li><li class="tsd-kind-enum"><a href="enums/Platform.html" class="tsd-kind-icon">Platform</a></li><li class="tsd-kind-class"><a href="classes/ApiRejection.html" class="tsd-kind-icon">Api<wbr/>Rejection</a></li><li class="tsd-kind-class"><a href="classes/Client.html" class="tsd-kind-icon">Client</a></li><li class="tsd-kind-class"><a href="classes/Discuss.html" class="tsd-kind-icon">Discuss</a></li><li class="tsd-kind-class"><a href="classes/DiscussMessage.html" class="tsd-kind-icon">Discuss<wbr/>Message</a></li><li class="tsd-kind-class"><a href="classes/ForwardMessage.html" class="tsd-kind-icon">Forward<wbr/>Message</a></li><li class="tsd-kind-class"><a href="classes/Friend.html" class="tsd-kind-icon">Friend</a></li><li class="tsd-kind-class"><a href="classes/Gfs.html" class="tsd-kind-icon">Gfs</a></li><li class="tsd-kind-class"><a href="classes/Group.html" class="tsd-kind-icon">Group</a></li><li class="tsd-kind-class"><a href="classes/GroupMessage.html" class="tsd-kind-icon">Group<wbr/>Message</a></li><li class="tsd-kind-class"><a href="classes/Member.html" class="tsd-kind-icon">Member</a></li><li class="tsd-kind-class"><a href="classes/Message.html" class="tsd-kind-icon">Message</a></li><li class="tsd-kind-class"><a href="classes/PrivateMessage.html" class="tsd-kind-icon">Private<wbr/>Message</a></li><li class="tsd-kind-class"><a href="classes/User.html" class="tsd-kind-icon">User</a></li><li class="tsd-kind-interface"><a href="interfaces/Anonymous.html" class="tsd-kind-icon">Anonymous</a></li><li class="tsd-kind-interface"><a href="interfaces/AtElem.html" class="tsd-kind-icon">At<wbr/>Elem</a></li><li class="tsd-kind-interface"><a href="interfaces/BfaceElem.html" class="tsd-kind-icon">Bface<wbr/>Elem</a></li><li class="tsd-kind-interface"><a href="interfaces/Config.html" class="tsd-kind-icon">Config</a></li><li class="tsd-kind-interface"><a href="interfaces/DiscussMessageEvent.html" class="tsd-kind-icon">Discuss<wbr/>Message<wbr/>Event</a></li><li class="tsd-kind-interface tsd-has-type-parameter"><a href="interfaces/EventMap.html" class="tsd-kind-icon">Event<wbr/>Map</a></li><li class="tsd-kind-interface"><a href="interfaces/FaceElem.html" class="tsd-kind-icon">Face<wbr/>Elem</a></li><li class="tsd-kind-interface"><a href="interfaces/FileElem.html" class="tsd-kind-icon">File<wbr/>Elem</a></li><li class="tsd-kind-interface"><a href="interfaces/FlashElem.html" class="tsd-kind-icon">Flash<wbr/>Elem</a></li><li class="tsd-kind-interface"><a href="interfaces/Forwardable.html" class="tsd-kind-icon">Forwardable</a></li><li class="tsd-kind-interface"><a href="interfaces/FriendDecreaseEvent.html" class="tsd-kind-icon">Friend<wbr/>Decrease<wbr/>Event</a></li><li class="tsd-kind-interface"><a href="interfaces/FriendIncreaseEvent.html" class="tsd-kind-icon">Friend<wbr/>Increase<wbr/>Event</a></li><li class="tsd-kind-interface"><a href="interfaces/FriendInfo.html" class="tsd-kind-icon">Friend<wbr/>Info</a></li><li class="tsd-kind-interface"><a href="interfaces/FriendNoticeEvent.html" class="tsd-kind-icon">Friend<wbr/>Notice<wbr/>Event</a></li><li class="tsd-kind-interface"><a href="interfaces/FriendPokeEvent.html" class="tsd-kind-icon">Friend<wbr/>Poke<wbr/>Event</a></li><li class="tsd-kind-interface"><a href="interfaces/FriendRecallEvent.html" class="tsd-kind-icon">Friend<wbr/>Recall<wbr/>Event</a></li><li class="tsd-kind-interface"><a href="interfaces/FriendRequestEvent.html" class="tsd-kind-icon">Friend<wbr/>Request<wbr/>Event</a></li><li class="tsd-kind-interface"><a href="interfaces/GfsDirStat.html" class="tsd-kind-icon">Gfs<wbr/>Dir<wbr/>Stat</a></li><li class="tsd-kind-interface"><a href="interfaces/GfsFileStat.html" class="tsd-kind-icon">Gfs<wbr/>File<wbr/>Stat</a></li><li class="tsd-kind-interface"><a href="interfaces/GroupAdminEvent.html" class="tsd-kind-icon">Group<wbr/>Admin<wbr/>Event</a></li><li class="tsd-kind-interface"><a href="interfaces/GroupInfo.html" class="tsd-kind-icon">Group<wbr/>Info</a></li><li class="tsd-kind-interface"><a href="interfaces/GroupInviteEvent.html" class="tsd-kind-icon">Group<wbr/>Invite<wbr/>Event</a></li><li class="tsd-kind-interface"><a href="interfaces/GroupMessageEvent.html" class="tsd-kind-icon">Group<wbr/>Message<wbr/>Event</a></li><li class="tsd-kind-interface"><a href="interfaces/GroupMuteEvent.html" class="tsd-kind-icon">Group<wbr/>Mute<wbr/>Event</a></li><li class="tsd-kind-interface"><a href="interfaces/GroupNoticeEvent.html" class="tsd-kind-icon">Group<wbr/>Notice<wbr/>Event</a></li><li class="tsd-kind-interface"><a href="interfaces/GroupPokeEvent.html" class="tsd-kind-icon">Group<wbr/>Poke<wbr/>Event</a></li><li class="tsd-kind-interface"><a href="interfaces/GroupRecallEvent.html" class="tsd-kind-icon">Group<wbr/>Recall<wbr/>Event</a></li><li class="tsd-kind-interface"><a href="interfaces/GroupRequestEvent.html" class="tsd-kind-icon">Group<wbr/>Request<wbr/>Event</a></li><li class="tsd-kind-interface"><a href="interfaces/GroupTransferEvent.html" class="tsd-kind-icon">Group<wbr/>Transfer<wbr/>Event</a></li><li class="tsd-kind-interface"><a href="interfaces/ImageElem.html" class="tsd-kind-icon">Image<wbr/>Elem</a></li><li class="tsd-kind-interface"><a href="interfaces/JsonElem.html" class="tsd-kind-icon">Json<wbr/>Elem</a></li><li class="tsd-kind-interface"><a href="interfaces/LocationElem.html" class="tsd-kind-icon">Location<wbr/>Elem</a></li><li class="tsd-kind-interface"><a href="interfaces/Logger.html" class="tsd-kind-icon">Logger</a></li><li class="tsd-kind-interface"><a href="interfaces/MemberDecreaseEvent.html" class="tsd-kind-icon">Member<wbr/>Decrease<wbr/>Event</a></li><li class="tsd-kind-interface"><a href="interfaces/MemberIncreaseEvent.html" class="tsd-kind-icon">Member<wbr/>Increase<wbr/>Event</a></li><li class="tsd-kind-interface"><a href="interfaces/MemberInfo.html" class="tsd-kind-icon">Member<wbr/>Info</a></li><li class="tsd-kind-interface"><a href="interfaces/MessageEvent.html" class="tsd-kind-icon">Message<wbr/>Event</a></li><li class="tsd-kind-interface"><a href="interfaces/MessageRet.html" class="tsd-kind-icon">Message<wbr/>Ret</a></li><li class="tsd-kind-interface"><a href="interfaces/MfaceElem.html" class="tsd-kind-icon">Mface<wbr/>Elem</a></li><li class="tsd-kind-interface"><a href="interfaces/MiraiElem.html" class="tsd-kind-icon">Mirai<wbr/>Elem</a></li><li class="tsd-kind-interface"><a href="interfaces/PokeElem.html" class="tsd-kind-icon">Poke<wbr/>Elem</a></li><li class="tsd-kind-interface"><a href="interfaces/PrivateMessageEvent.html" class="tsd-kind-icon">Private<wbr/>Message<wbr/>Event</a></li><li class="tsd-kind-interface"><a href="interfaces/PttElem.html" class="tsd-kind-icon">Ptt<wbr/>Elem</a></li><li class="tsd-kind-interface"><a href="interfaces/Quotable.html" class="tsd-kind-icon">Quotable</a></li><li class="tsd-kind-interface"><a href="interfaces/ReplyElem.html" class="tsd-kind-icon">Reply<wbr/>Elem</a></li><li class="tsd-kind-interface"><a href="interfaces/RequestEvent.html" class="tsd-kind-icon">Request<wbr/>Event</a></li><li class="tsd-kind-interface"><a href="interfaces/ShareElem.html" class="tsd-kind-icon">Share<wbr/>Elem</a></li><li class="tsd-kind-interface"><a href="interfaces/StrangerInfo.html" class="tsd-kind-icon">Stranger<wbr/>Info</a></li><li class="tsd-kind-interface"><a href="interfaces/TextElem.html" class="tsd-kind-icon">Text<wbr/>Elem</a></li><li class="tsd-kind-interface"><a href="interfaces/VideoElem.html" class="tsd-kind-icon">Video<wbr/>Elem</a></li><li class="tsd-kind-interface"><a href="interfaces/XmlElem.html" class="tsd-kind-icon">Xml<wbr/>Elem</a></li><li class="tsd-kind-type-alias"><a href="modules.html#Apk" class="tsd-kind-icon">Apk</a></li><li class="tsd-kind-type-alias"><a href="modules.html#Device" class="tsd-kind-icon">Device</a></li><li class="tsd-kind-type-alias"><a href="modules.html#Domain" class="tsd-kind-icon">Domain</a></li><li class="tsd-kind-type-alias"><a href="modules.html#Gender" class="tsd-kind-icon">Gender</a></li><li class="tsd-kind-type-alias"><a href="modules.html#GroupRole" class="tsd-kind-icon">Group<wbr/>Role</a></li><li class="tsd-kind-type-alias"><a href="modules.html#LogLevel" class="tsd-kind-icon">Log<wbr/>Level</a></li><li class="tsd-kind-type-alias"><a href="modules.html#MessageElem" class="tsd-kind-icon">Message<wbr/>Elem</a></li><li class="tsd-kind-type-alias"><a href="modules.html#MusicPlatform" class="tsd-kind-icon">Music<wbr/>Platform</a></li><li class="tsd-kind-type-alias"><a href="modules.html#Sendable" class="tsd-kind-icon">Sendable</a></li><li class="tsd-kind-type-alias"><a href="modules.html#Statistics" class="tsd-kind-icon">Statistics</a></li><li class="tsd-kind-variable"><a href="modules.html#segment" class="tsd-kind-icon">segment</a></li><li class="tsd-kind-function"><a href="modules.html#createClient" class="tsd-kind-icon">create<wbr/>Client</a></li><li class="tsd-kind-function"><a href="modules.html#getGroupImageUrl" class="tsd-kind-icon">get<wbr/>Group<wbr/>Image<wbr/>Url</a></li><li class="tsd-kind-function"><a href="modules.html#parseDmMessageId" class="tsd-kind-icon">parse<wbr/>Dm<wbr/>Message<wbr/>Id</a></li><li class="tsd-kind-function"><a href="modules.html#parseGroupMessageId" class="tsd-kind-icon">parse<wbr/>Group<wbr/>Message<wbr/>Id</a></li><li class="tsd-kind-function"><a href="modules.html#parseImageFileParam" class="tsd-kind-icon">parse<wbr/>Image<wbr/>File<wbr/>Param</a></li></ul></nav></div></div></div><footer class="with-border-bottom"><div class="container"><h2>Legend</h2><div class="tsd-legend-group"><ul class="tsd-legend"><li class="tsd-kind-constructor tsd-parent-kind-class"><span class="tsd-kind-icon">Constructor</span></li><li class="tsd-kind-property tsd-parent-kind-class"><span class="tsd-kind-icon">Property</span></li><li class="tsd-kind-method tsd-parent-kind-class"><span class="tsd-kind-icon">Method</span></li></ul><ul class="tsd-legend"><li class="tsd-kind-constructor tsd-parent-kind-class tsd-is-inherited"><span class="tsd-kind-icon">Inherited constructor</span></li><li class="tsd-kind-property tsd-parent-kind-class tsd-is-inherited"><span class="tsd-kind-icon">Inherited property</span></li><li class="tsd-kind-method tsd-parent-kind-class tsd-is-inherited"><span class="tsd-kind-icon">Inherited method</span></li></ul><ul class="tsd-legend"><li class="tsd-kind-property tsd-parent-kind-interface"><span class="tsd-kind-icon">Property</span></li><li class="tsd-kind-method tsd-parent-kind-interface"><span class="tsd-kind-icon">Method</span></li></ul><ul class="tsd-legend"><li class="tsd-kind-property tsd-parent-kind-class tsd-is-protected"><span class="tsd-kind-icon">Protected property</span></li><li class="tsd-kind-method tsd-parent-kind-class tsd-is-protected"><span class="tsd-kind-icon">Protected method</span></li></ul><ul class="tsd-legend"><li class="tsd-kind-property tsd-parent-kind-class tsd-is-private"><span class="tsd-kind-icon">Private property</span></li><li class="tsd-kind-method tsd-parent-kind-class tsd-is-private"><span class="tsd-kind-icon">Private method</span></li></ul><ul class="tsd-legend"><li class="tsd-kind-method tsd-parent-kind-class tsd-is-static"><span class="tsd-kind-icon">Static method</span></li></ul></div><h2>Settings</h2><p>Theme <select id="theme"><option value="os">OS</option><option value="light">Light</option><option value="dark">Dark</option></select></p></div></footer><div class="container tsd-generator"><p>Generated using <a href="https://typedoc.org/" target="_blank">TypeDoc</a></p></div><div class="overlay"></div><script src="assets/main.js"></script></body></html>
+</div></div><div class="col-4 col-menu menu-sticky-wrap menu-highlight"><nav class="tsd-navigation primary"><ul><li class="current"><a href="modules.html">Exports</a></li><li class=" tsd-kind-namespace"><a href="modules/core.html">core</a></li></ul></nav><nav class="tsd-navigation secondary menu-sticky"><ul><li class="tsd-kind-enum"><a href="enums/ErrorCode.html" class="tsd-kind-icon">Error<wbr/>Code</a></li><li class="tsd-kind-enum"><a href="enums/LoginErrorCode.html" class="tsd-kind-icon">Login<wbr/>Error<wbr/>Code</a></li><li class="tsd-kind-enum"><a href="enums/OnlineStatus.html" class="tsd-kind-icon">Online<wbr/>Status</a></li><li class="tsd-kind-enum"><a href="enums/Platform.html" class="tsd-kind-icon">Platform</a></li><li class="tsd-kind-class"><a href="classes/ApiRejection.html" class="tsd-kind-icon">Api<wbr/>Rejection</a></li><li class="tsd-kind-class"><a href="classes/Client.html" class="tsd-kind-icon">Client</a></li><li class="tsd-kind-class"><a href="classes/Discuss.html" class="tsd-kind-icon">Discuss</a></li><li class="tsd-kind-class"><a href="classes/DiscussMessage.html" class="tsd-kind-icon">Discuss<wbr/>Message</a></li><li class="tsd-kind-class"><a href="classes/ForwardMessage.html" class="tsd-kind-icon">Forward<wbr/>Message</a></li><li class="tsd-kind-class"><a href="classes/Friend.html" class="tsd-kind-icon">Friend</a></li><li class="tsd-kind-class"><a href="classes/Gfs.html" class="tsd-kind-icon">Gfs</a></li><li class="tsd-kind-class"><a href="classes/Group.html" class="tsd-kind-icon">Group</a></li><li class="tsd-kind-class"><a href="classes/GroupMessage.html" class="tsd-kind-icon">Group<wbr/>Message</a></li><li class="tsd-kind-class"><a href="classes/Member.html" class="tsd-kind-icon">Member</a></li><li class="tsd-kind-class"><a href="classes/Message.html" class="tsd-kind-icon">Message</a></li><li class="tsd-kind-class"><a href="classes/OcrResult.html" class="tsd-kind-icon">Ocr<wbr/>Result</a></li><li class="tsd-kind-class"><a href="classes/PrivateMessage.html" class="tsd-kind-icon">Private<wbr/>Message</a></li><li class="tsd-kind-class"><a href="classes/User.html" class="tsd-kind-icon">User</a></li><li class="tsd-kind-interface"><a href="interfaces/Anonymous.html" class="tsd-kind-icon">Anonymous</a></li><li class="tsd-kind-interface"><a href="interfaces/AtElem.html" class="tsd-kind-icon">At<wbr/>Elem</a></li><li class="tsd-kind-interface"><a href="interfaces/BfaceElem.html" class="tsd-kind-icon">Bface<wbr/>Elem</a></li><li class="tsd-kind-interface"><a href="interfaces/Config.html" class="tsd-kind-icon">Config</a></li><li class="tsd-kind-interface"><a href="interfaces/DiscussMessageEvent.html" class="tsd-kind-icon">Discuss<wbr/>Message<wbr/>Event</a></li><li class="tsd-kind-interface tsd-has-type-parameter"><a href="interfaces/EventMap.html" class="tsd-kind-icon">Event<wbr/>Map</a></li><li class="tsd-kind-interface"><a href="interfaces/FaceElem.html" class="tsd-kind-icon">Face<wbr/>Elem</a></li><li class="tsd-kind-interface"><a href="interfaces/FileElem.html" class="tsd-kind-icon">File<wbr/>Elem</a></li><li class="tsd-kind-interface"><a href="interfaces/FlashElem.html" class="tsd-kind-icon">Flash<wbr/>Elem</a></li><li class="tsd-kind-interface"><a href="interfaces/Forwardable.html" class="tsd-kind-icon">Forwardable</a></li><li class="tsd-kind-interface"><a href="interfaces/FriendDecreaseEvent.html" class="tsd-kind-icon">Friend<wbr/>Decrease<wbr/>Event</a></li><li class="tsd-kind-interface"><a href="interfaces/FriendIncreaseEvent.html" class="tsd-kind-icon">Friend<wbr/>Increase<wbr/>Event</a></li><li class="tsd-kind-interface"><a href="interfaces/FriendInfo.html" class="tsd-kind-icon">Friend<wbr/>Info</a></li><li class="tsd-kind-interface"><a href="interfaces/FriendNoticeEvent.html" class="tsd-kind-icon">Friend<wbr/>Notice<wbr/>Event</a></li><li class="tsd-kind-interface"><a href="interfaces/FriendPokeEvent.html" class="tsd-kind-icon">Friend<wbr/>Poke<wbr/>Event</a></li><li class="tsd-kind-interface"><a href="interfaces/FriendRecallEvent.html" class="tsd-kind-icon">Friend<wbr/>Recall<wbr/>Event</a></li><li class="tsd-kind-interface"><a href="interfaces/FriendRequestEvent.html" class="tsd-kind-icon">Friend<wbr/>Request<wbr/>Event</a></li><li class="tsd-kind-interface"><a href="interfaces/GfsDirStat.html" class="tsd-kind-icon">Gfs<wbr/>Dir<wbr/>Stat</a></li><li class="tsd-kind-interface"><a href="interfaces/GfsFileStat.html" class="tsd-kind-icon">Gfs<wbr/>File<wbr/>Stat</a></li><li class="tsd-kind-interface"><a href="interfaces/GroupAdminEvent.html" class="tsd-kind-icon">Group<wbr/>Admin<wbr/>Event</a></li><li class="tsd-kind-interface"><a href="interfaces/GroupInfo.html" class="tsd-kind-icon">Group<wbr/>Info</a></li><li class="tsd-kind-interface"><a href="interfaces/GroupInviteEvent.html" class="tsd-kind-icon">Group<wbr/>Invite<wbr/>Event</a></li><li class="tsd-kind-interface"><a href="interfaces/GroupMessageEvent.html" class="tsd-kind-icon">Group<wbr/>Message<wbr/>Event</a></li><li class="tsd-kind-interface"><a href="interfaces/GroupMuteEvent.html" class="tsd-kind-icon">Group<wbr/>Mute<wbr/>Event</a></li><li class="tsd-kind-interface"><a href="interfaces/GroupNoticeEvent.html" class="tsd-kind-icon">Group<wbr/>Notice<wbr/>Event</a></li><li class="tsd-kind-interface"><a href="interfaces/GroupPokeEvent.html" class="tsd-kind-icon">Group<wbr/>Poke<wbr/>Event</a></li><li class="tsd-kind-interface"><a href="interfaces/GroupRecallEvent.html" class="tsd-kind-icon">Group<wbr/>Recall<wbr/>Event</a></li><li class="tsd-kind-interface"><a href="interfaces/GroupRequestEvent.html" class="tsd-kind-icon">Group<wbr/>Request<wbr/>Event</a></li><li class="tsd-kind-interface"><a href="interfaces/GroupTransferEvent.html" class="tsd-kind-icon">Group<wbr/>Transfer<wbr/>Event</a></li><li class="tsd-kind-interface"><a href="interfaces/ImageElem.html" class="tsd-kind-icon">Image<wbr/>Elem</a></li><li class="tsd-kind-interface"><a href="interfaces/JsonElem.html" class="tsd-kind-icon">Json<wbr/>Elem</a></li><li class="tsd-kind-interface"><a href="interfaces/LocationElem.html" class="tsd-kind-icon">Location<wbr/>Elem</a></li><li class="tsd-kind-interface"><a href="interfaces/Logger.html" class="tsd-kind-icon">Logger</a></li><li class="tsd-kind-interface"><a href="interfaces/MemberDecreaseEvent.html" class="tsd-kind-icon">Member<wbr/>Decrease<wbr/>Event</a></li><li class="tsd-kind-interface"><a href="interfaces/MemberIncreaseEvent.html" class="tsd-kind-icon">Member<wbr/>Increase<wbr/>Event</a></li><li class="tsd-kind-interface"><a href="interfaces/MemberInfo.html" class="tsd-kind-icon">Member<wbr/>Info</a></li><li class="tsd-kind-interface"><a href="interfaces/MessageEvent.html" class="tsd-kind-icon">Message<wbr/>Event</a></li><li class="tsd-kind-interface"><a href="interfaces/MessageRet.html" class="tsd-kind-icon">Message<wbr/>Ret</a></li><li class="tsd-kind-interface"><a href="interfaces/MfaceElem.html" class="tsd-kind-icon">Mface<wbr/>Elem</a></li><li class="tsd-kind-interface"><a href="interfaces/MiraiElem.html" class="tsd-kind-icon">Mirai<wbr/>Elem</a></li><li class="tsd-kind-interface"><a href="interfaces/PokeElem.html" class="tsd-kind-icon">Poke<wbr/>Elem</a></li><li class="tsd-kind-interface"><a href="interfaces/PrivateMessageEvent.html" class="tsd-kind-icon">Private<wbr/>Message<wbr/>Event</a></li><li class="tsd-kind-interface"><a href="interfaces/PttElem.html" class="tsd-kind-icon">Ptt<wbr/>Elem</a></li><li class="tsd-kind-interface"><a href="interfaces/Quotable.html" class="tsd-kind-icon">Quotable</a></li><li class="tsd-kind-interface"><a href="interfaces/ReplyElem.html" class="tsd-kind-icon">Reply<wbr/>Elem</a></li><li class="tsd-kind-interface"><a href="interfaces/RequestEvent.html" class="tsd-kind-icon">Request<wbr/>Event</a></li><li class="tsd-kind-interface"><a href="interfaces/ShareElem.html" class="tsd-kind-icon">Share<wbr/>Elem</a></li><li class="tsd-kind-interface"><a href="interfaces/StrangerInfo.html" class="tsd-kind-icon">Stranger<wbr/>Info</a></li><li class="tsd-kind-interface"><a href="interfaces/TextElem.html" class="tsd-kind-icon">Text<wbr/>Elem</a></li><li class="tsd-kind-interface"><a href="interfaces/VideoElem.html" class="tsd-kind-icon">Video<wbr/>Elem</a></li><li class="tsd-kind-interface"><a href="interfaces/XmlElem.html" class="tsd-kind-icon">Xml<wbr/>Elem</a></li><li class="tsd-kind-type-alias"><a href="modules.html#Apk" class="tsd-kind-icon">Apk</a></li><li class="tsd-kind-type-alias"><a href="modules.html#Device" class="tsd-kind-icon">Device</a></li><li class="tsd-kind-type-alias"><a href="modules.html#Domain" class="tsd-kind-icon">Domain</a></li><li class="tsd-kind-type-alias"><a href="modules.html#Gender" class="tsd-kind-icon">Gender</a></li><li class="tsd-kind-type-alias"><a href="modules.html#GroupRole" class="tsd-kind-icon">Group<wbr/>Role</a></li><li class="tsd-kind-type-alias"><a href="modules.html#LogLevel" class="tsd-kind-icon">Log<wbr/>Level</a></li><li class="tsd-kind-type-alias"><a href="modules.html#MessageElem" class="tsd-kind-icon">Message<wbr/>Elem</a></li><li class="tsd-kind-type-alias"><a href="modules.html#MusicPlatform" class="tsd-kind-icon">Music<wbr/>Platform</a></li><li class="tsd-kind-type-alias"><a href="modules.html#Sendable" class="tsd-kind-icon">Sendable</a></li><li class="tsd-kind-type-alias"><a href="modules.html#Statistics" class="tsd-kind-icon">Statistics</a></li><li class="tsd-kind-variable"><a href="modules.html#segment" class="tsd-kind-icon">segment</a></li><li class="tsd-kind-function"><a href="modules.html#createClient" class="tsd-kind-icon">create<wbr/>Client</a></li><li class="tsd-kind-function"><a href="modules.html#getGroupImageUrl" class="tsd-kind-icon">get<wbr/>Group<wbr/>Image<wbr/>Url</a></li><li class="tsd-kind-function"><a href="modules.html#parseDmMessageId" class="tsd-kind-icon">parse<wbr/>Dm<wbr/>Message<wbr/>Id</a></li><li class="tsd-kind-function"><a href="modules.html#parseGroupMessageId" class="tsd-kind-icon">parse<wbr/>Group<wbr/>Message<wbr/>Id</a></li><li class="tsd-kind-function"><a href="modules.html#parseImageFileParam" class="tsd-kind-icon">parse<wbr/>Image<wbr/>File<wbr/>Param</a></li></ul></nav></div></div></div><footer class="with-border-bottom"><div class="container"><h2>Legend</h2><div class="tsd-legend-group"><ul class="tsd-legend"><li class="tsd-kind-constructor tsd-parent-kind-class"><span class="tsd-kind-icon">Constructor</span></li><li class="tsd-kind-property tsd-parent-kind-class"><span class="tsd-kind-icon">Property</span></li><li class="tsd-kind-method tsd-parent-kind-class"><span class="tsd-kind-icon">Method</span></li></ul><ul class="tsd-legend"><li class="tsd-kind-constructor tsd-parent-kind-class tsd-is-inherited"><span class="tsd-kind-icon">Inherited constructor</span></li><li class="tsd-kind-property tsd-parent-kind-class tsd-is-inherited"><span class="tsd-kind-icon">Inherited property</span></li><li class="tsd-kind-method tsd-parent-kind-class tsd-is-inherited"><span class="tsd-kind-icon">Inherited method</span></li></ul><ul class="tsd-legend"><li class="tsd-kind-property tsd-parent-kind-interface"><span class="tsd-kind-icon">Property</span></li><li class="tsd-kind-method tsd-parent-kind-interface"><span class="tsd-kind-icon">Method</span></li></ul><ul class="tsd-legend"><li class="tsd-kind-property tsd-parent-kind-class tsd-is-protected"><span class="tsd-kind-icon">Protected property</span></li><li class="tsd-kind-method tsd-parent-kind-class tsd-is-protected"><span class="tsd-kind-icon">Protected method</span></li></ul><ul class="tsd-legend"><li class="tsd-kind-property tsd-parent-kind-class tsd-is-private"><span class="tsd-kind-icon">Private property</span></li><li class="tsd-kind-method tsd-parent-kind-class tsd-is-private"><span class="tsd-kind-icon">Private method</span></li></ul><ul class="tsd-legend"><li class="tsd-kind-method tsd-parent-kind-class tsd-is-static"><span class="tsd-kind-icon">Static method</span></li></ul></div><h2>Settings</h2><p>Theme <select id="theme"><option value="os">OS</option><option value="light">Light</option><option value="dark">Dark</option></select></p></div></footer><div class="container tsd-generator"><p>Generated using <a href="https://typedoc.org/" target="_blank">TypeDoc</a></p></div><div class="overlay"></div><script src="assets/main.js"></script></body></html>

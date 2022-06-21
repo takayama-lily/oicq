@@ -177,7 +177,6 @@ export class Image {
 		}
 		const readable = (await axios.get(url, {
 				headers,
-				maxRedirects: 3,
 				responseType: "stream",
 			}
 		)).data as Readable

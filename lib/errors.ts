@@ -28,6 +28,8 @@ export enum ErrorCode {
 	HighwayNetworkError = -120,
 	/** 没有上传通道 */
 	NoUploadChannel = -130,
+	/** 不支持的file类型(没有流) */
+	HighwayFileTypeError = -140,
 
 	/** 离线(私聊)文件不存在 */
 	OfflineFileNotExists = -160,

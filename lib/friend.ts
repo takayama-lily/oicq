@@ -1,9 +1,12 @@
 import { randomBytes } from "crypto"
+import { Readable } from "stream"
+import fs from "fs"
+import path from "path"
 import { pb, jce } from "./core"
 import { ErrorCode, drop } from "./errors"
-import { Gender, PB_CONTENT, code2uin, timestamp, lock, hide } from "./common"
-import { Sendable, PrivateMessage, buildMusic, MusicPlatform, Quotable, rand2uuid, genDmMessageId, parseDmMessageId } from "./message"
-import { buildSyncCookie, Contactable } from "./internal"
+import { Gender, PB_CONTENT, code2uin, timestamp, lock, hide, fileHash, md5, sha, log } from "./common"
+import { Sendable, PrivateMessage, buildMusic, MusicPlatform, Quotable, rand2uuid, genDmMessageId, parseDmMessageId, FileElem } from "./message"
+import { buildSyncCookie, Contactable, highwayHttpUpload, CmdID } from "./internal"
 import { MessageRet } from "./events"
 import { FriendInfo } from "./entities"
 
@@ -145,13 +148,13 @@ export class User extends Contactable {
 		return pb.decode(payload)[1][1] <= 2
 	}
 
-	private _getRouting(): pb.Encodable {
+	private _getRouting(file = false): pb.Encodable {
 		if (Reflect.has(this, "gid"))
 			return { 3: {
 				1: code2uin(Reflect.get(this, "gid")),
 				2: this.uid,
 			} }
-		return { 1: { 1: this.uid } }
+		return file ? { 15: { 1: this.uid, 2: 4 } } : { 1: { 1: this.uid } }
 	}
 
 	/**
@@ -160,16 +163,19 @@ export class User extends Contactable {
 	 */
 	async sendMsg(content: Sendable, source?: Quotable): Promise<MessageRet> {
 		const { rich, brief } = await this._preprocess(content, source)
+		return this._sendMsg({ 1: rich }, brief)
+	}
+
+	protected async _sendMsg(proto3: pb.Encodable, brief: string, file = false) {
 		const seq = this.c.sig.seq + 1
 		const rand = randomBytes(4).readUInt32BE()
 		const body = pb.encode({
-			1: this._getRouting(),
+			1: this._getRouting(file),
 			2: PB_CONTENT,
-			3: { 1: rich },
+			3: proto3,
 			4: seq,
 			5: rand,
 			6: buildSyncCookie(this.c.sig.session.readUInt32BE()),
-			8: 0
 		})
 		const payload = await this.c.sendUni("MessageSvc.PbSendMsg", body)
 		const rsp = pb.decode(payload)
@@ -262,8 +268,7 @@ export class User extends Contactable {
 		return pb.decode(payload)[1][1] === 0
 	}
 
-	/** 获取离线文件下载地址 */
-	async getFileUrl(fid: string) {
+	async getFileInfo(fid: string) {
 		const body = pb.encode({
 			1: 1200,
 			14: {
@@ -283,7 +288,19 @@ export class User extends Contactable {
 		let url = String(obj[50])
 		if (!url.startsWith("http"))
 			url = `http://${obj[30]}:${obj[40]}` + url
-		return url
+		return {
+			name: String(rsp[40][7]),
+			fid: String(rsp[40][6]),
+			md5: rsp[40][100].toHex(),
+			size: rsp[40][3] as number,
+			duration: rsp[40][4] as number,
+			url,
+		} as Omit<FileElem, "type"> & Record<"url", string>
+	}
+
+	/** 获取离线文件下载地址 */
+	async getFileUrl(fid: string) {
+		return (await this.getFileInfo(fid)).url
 	}
 }
 
@@ -388,5 +405,180 @@ export class Friend extends User {
 		const payload = await this.c.sendUni("friendlist.delFriend", body)
 		this.c.sl.delete(this.uid)
 		return jce.decodeWrapper(payload)[2] === 0
+	}
+
+	/**
+	 * 发送离线文件
+	 * @param file 一个文件路径，或者一块Buffer
+	 * @param filename 对方看到的文件名(file为Buffer时，若留空则自动以md5命名)
+	 * @param callback 监控上传进度的回调函数，拥有一个"百分比进度"的参数
+	 * @returns 文件id(撤回时使用)
+	 */
+	async sendFile(file: string | Buffer, filename?: string, callback?: (percentage: string) => void) {
+		let filesize: number, filemd5: Buffer, filesha: Buffer, filestream: Readable
+		if (file instanceof Buffer) {
+			filesize = file.length
+			filemd5 = md5(file), filesha = sha(file)
+			filename = filename ? String(filename) : ("file" + filemd5.toString("hex"))
+			filestream = Readable.from(file, { objectMode: false, highWaterMark: 524288 })
+		} else {
+			file = String(file)
+			filesize = (await fs.promises.stat(file)).size
+			;[filemd5, filesha] = await fileHash(file)
+			filename = filename ? String(filename) : path.basename(file)
+			filestream = fs.createReadStream(file, { highWaterMark: 524288 })
+		}
+		const body1700 = pb.encode({
+			1: 1700,
+			2: 6,
+			19: {
+				10: this.c.uin,
+				20: this.uid,
+				30: filesize,
+				40: filename,
+				50: filemd5,
+				60: filesha,
+				70: "/storage/emulated/0/Android/data/com.tencent.mobileqq/Tencent/QQfile_recv/" + filename,
+				80: 0,
+				90: 0,
+				100: 0,
+				110: filemd5,
+			},
+			101: 3,
+			102: 104,
+			200: 1,
+		})
+		const payload = await this.c.sendUni("OfflineFilleHandleSvr.pb_ftn_CMD_REQ_APPLY_UPLOAD_V3-1700", body1700)
+		const rsp1700 = pb.decode(payload)[19]
+
+		if (rsp1700[10] !== 0)
+			drop(rsp1700[10], rsp1700[20])
+
+		const fid = rsp1700[90].toBuffer() as Buffer
+
+		const ext = pb.encode({
+			1: 100,
+			2: 2,
+			100: {
+				100: {
+					1: 3,
+					100: this.c.uin,
+					200: this.uid,
+					400: 0,
+					700: payload,
+				},
+				200: {
+					100: filesize,
+					200: filemd5,
+					300: filesha,
+					400: filemd5,
+					600: fid,
+					700: rsp1700[220].toBuffer(),
+				},
+				300: {
+					100: 2,
+					200: String(this.c.apk.subid),
+					300: 2,
+					400: "d92615c5",
+					600: 4,
+				},
+				400: {
+					100: filename,
+				},
+			},
+			200: 1
+		})
+		await highwayHttpUpload.call(this.c, filestream, {
+			md5: filemd5,
+			size: filesize,
+			cmdid: CmdID.OfflineFile,
+			ext, callback
+		})
+
+		const body800 = pb.encode({
+			1: 800,
+			2: 7,
+			10: {
+				10: this.c.uin,
+				20: this.uid,
+				30: fid,
+			},
+			101: 3,
+			102: 104,
+		})
+		await this.c.sendUni("OfflineFilleHandleSvr.pb_ftn_CMD_REQ_UPLOAD_SUCC-800", body800)
+		const proto3 = {
+			2: {
+				1: {
+					1: 0,
+					3: fid,
+					4: filemd5,
+					5: filename,
+					6: filesize,
+					9: 1,
+				}
+			}
+		}
+		await this._sendMsg(proto3, `[文件：${filename}]`, true)
+		return String(fid)
+	}
+
+	/** 撤回离线文件 */
+	async recallFile(fid: string) {
+		const body = pb.encode({
+			1: 400,
+			2: 0,
+			6: {
+				1: this.c.uin,
+				2: fid
+			},
+			101: 3,
+			102: 104,
+			200: 1,
+		})
+		const payload = await this.c.sendUni("OfflineFilleHandleSvr.pb_ftn_CMD_REQ_RECALL-400", body)
+		const rsp = pb.decode(payload)[6]
+		return rsp[1] === 0
+	}
+
+	/** 转发离线文件 */
+	async forwardFile(fid: string) {
+		const body = pb.encode({
+			1: 700,
+			2: 0,
+			9: {
+				10: this.c.uin,
+				20: this.uid,
+				30: fid
+			},
+			101: 3,
+			102: 104,
+			200: 1,
+		})
+		const payload = await this.c.sendUni("OfflineFilleHandleSvr.pb_ftn_CMD_REQ_APPLY_FORWARD_FILE-700", body)
+		const rsp = pb.decode(payload)[9]
+		const new_fid = rsp[50]
+		const ticket = rsp[60]
+
+		if (rsp[10] !== 0)
+			drop(rsp[10], rsp[20])
+
+		const info = await this.getFileInfo(fid)
+
+		const proto3 = {
+			2: {
+				1: {
+					1: 0,
+					3: new_fid,
+					4: Buffer.from(info.md5, "hex"),
+					5: info.name,
+					6: info.size,
+					9: 1,
+					57: ticket
+				}
+			}
+		}
+		await this._sendMsg(proto3, `[文件：${info.name}]`, true)
+		return String(new_fid)
 	}
 }

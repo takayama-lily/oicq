@@ -227,10 +227,10 @@ export const segment = {
 	/** mention@提及
 	 * @param qq 全体成员:"all", 频道:tiny_id
 	 */
-	at(qq: number | string, text?: string, dummy?: boolean): AtElem {
-		if (Number(qq) <= 0xffffffff || qq === "all") {
+	at(qq: number | "all" | string, text?: string, dummy?: boolean): AtElem {
+		if (typeof qq === "number" || qq === "all") {
 			return {
-				type: "at", qq: Number(qq), text, dummy
+				type: "at", qq, text, dummy
 			}
 		}
 		// 频道中的AT

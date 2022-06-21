@@ -174,10 +174,12 @@ export class BaseClient extends EventEmitter {
 			this[NET].auto_search = true
 		}
 	}
+
 	/** 是否为在线状态 (可以收发业务包的状态) */
 	isOnline() {
 		return this[IS_ONLINE]
 	}
+
 	/** 下线 (keepalive: 是否保持tcp连接) */
 	async logout(keepalive = false) {
 		await register.call(this, true)
@@ -186,13 +188,14 @@ export class BaseClient extends EventEmitter {
 			await new Promise(resolve => this[NET].once("close", resolve))
 		}
 	}
-	/** 直接关闭连接 */
+
+	/** 关闭连接 */
 	terminate() {
 		this[IS_ONLINE] = false
 		this[NET].destroy()
 	}
 
-	/** 使用上报的token登录 */
+	/** 使用接收到的token登录 */
 	tokenLogin(token: Buffer) {
 		if (![144, 152].includes(token.length))
 			throw new Error("bad token")
@@ -226,7 +229,10 @@ export class BaseClient extends EventEmitter {
 			.read()
 		this[FN_SEND_LOGIN]("wtlogin.exchange_emp", body)
 	}
-	/** 使用密码登录 */
+	/**
+	 * 使用密码登录
+	 * @param md5pass 密码的md5值
+	 */
 	passwordLogin(md5pass: Buffer) {
 		this.sig.session = randomBytes(4)
 		this.sig.randkey = randomBytes(16)
@@ -262,7 +268,8 @@ export class BaseClient extends EventEmitter {
 			.read()
 		this[FN_SEND_LOGIN]("wtlogin.login", body)
 	}
-	/** 提交滑动验证码 */
+
+	/** 收到滑动验证码后，用于提交滑动验证码 */
 	submitSlider(ticket: string) {
 		ticket = String(ticket).trim()
 		const t = tlv.getPacker(this)
@@ -276,7 +283,8 @@ export class BaseClient extends EventEmitter {
 			.read()
 		this[FN_SEND_LOGIN]("wtlogin.login", body)
 	}
-	/** 发短信 */
+
+	/** 收到设备锁验证请求后，用于发短信 */
 	sendSmsCode() {
 		const t = tlv.getPacker(this)
 		const body = new Writer()
@@ -291,6 +299,7 @@ export class BaseClient extends EventEmitter {
 			.read()
 		this[FN_SEND_LOGIN]("wtlogin.login", body)
 	}
+
 	/** 提交短信验证码 */
 	submitSmsCode(code: string) {
 		code = String(code).trim()
@@ -310,7 +319,8 @@ export class BaseClient extends EventEmitter {
 			.read()
 		this[FN_SEND_LOGIN]("wtlogin.login", body)
 	}
-	/** 获取登录二维码 */
+
+	/** 获取登录二维码(模拟手表协议扫码登录) */
 	fetchQrcode() {
 		const t = tlv.getPacker(this)
 		const body = new Writer()
@@ -344,6 +354,7 @@ export class BaseClient extends EventEmitter {
 			}
 		}).catch(() => this.emit("internal.error.network", -2, "server is busy"))
 	}
+
 	/** 扫码后调用此方法登录 */
 	async qrcodeLogin() {
 		const { retcode, uin, t106, t16a, t318, tgtgt } = await this.queryQrcodeResult()
@@ -412,6 +423,7 @@ export class BaseClient extends EventEmitter {
 			this.emit("internal.error.qrcode", retcode, message)
 		}
 	}
+
 	/** 获取扫码结果(可定时查询，retcode为0则调用qrcodeLogin登录) */
 	async queryQrcodeResult() {
 		let retcode = -1, uin, t106, t16a, t318, tgtgt
@@ -950,7 +962,7 @@ function decodeLoginResponse(this: BaseClient, payload: Buffer): any {
 			this.sig.t174 = t[0x174]
 			phone = String(t[0x178]).substr(t[0x178].indexOf("\x0b") + 1, 11)
 		}
-		return this.emit("internal.verify", String(t[0x204]), phone)
+		return this.emit("internal.verify", t[0x204]?.toString() || "", phone)
 	}
 
 	if (t[0x149]) {

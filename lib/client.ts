@@ -311,8 +311,8 @@ export class Client extends BaseClient {
 		return this.pickFriend(this.uin).getVideoUrl(fid, md5)
 	}
 	/** 获取转发消息 */
-	getForwardMsg(resid: string) {
-		return this.pickFriend(this.uin).getForwardMsg(resid)
+	getForwardMsg(resid: string, fileName?: string) {
+		return this.pickFriend(this.uin).getForwardMsg(resid, fileName)
 	}
 	/** 制作转发消息 */
 	makeForwardMsg(fake: Forwardable[], dm = false) {
