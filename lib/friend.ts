@@ -5,7 +5,7 @@ import path from "path"
 import { pb, jce } from "./core"
 import { ErrorCode, drop } from "./errors"
 import { Gender, PB_CONTENT, code2uin, timestamp, lock, hide, fileHash, md5, sha, log } from "./common"
-import { Sendable, PrivateMessage, buildMusic, MusicPlatform, Quotable, rand2uuid, genDmMessageId, parseDmMessageId } from "./message"
+import { Sendable, PrivateMessage, buildMusic, MusicPlatform, Quotable, rand2uuid, genDmMessageId, parseDmMessageId, FileElem } from "./message"
 import { buildSyncCookie, Contactable, highwayHttpUpload, CmdID } from "./internal"
 import { MessageRet } from "./events"
 import { FriendInfo } from "./entities"
@@ -268,8 +268,7 @@ export class User extends Contactable {
 		return pb.decode(payload)[1][1] === 0
 	}
 
-	/** 获取离线文件下载地址 */
-	async getFileUrl(fid: string) {
+	async getFileInfo(fid: string) {
 		const body = pb.encode({
 			1: 1200,
 			14: {
@@ -289,7 +288,19 @@ export class User extends Contactable {
 		let url = String(obj[50])
 		if (!url.startsWith("http"))
 			url = `http://${obj[30]}:${obj[40]}` + url
-		return url
+		return {
+			name: String(rsp[40][7]),
+			fid: String(rsp[40][6]),
+			md5: rsp[40][100].toHex(),
+			size: rsp[40][3] as number,
+			duration: rsp[40][4] as number,
+			url,
+		} as Omit<FileElem, "type"> & Record<"url", string>
+	}
+
+	/** 获取离线文件下载地址 */
+	async getFileUrl(fid: string) {
+		return (await this.getFileInfo(fid)).url
 	}
 }
 
@@ -439,6 +450,10 @@ export class Friend extends User {
 		})
 		const payload = await this.c.sendUni("OfflineFilleHandleSvr.pb_ftn_CMD_REQ_APPLY_UPLOAD_V3-1700", body1700)
 		const rsp1700 = pb.decode(payload)[19]
+
+		if (rsp1700[10] !== 0)
+			drop(rsp1700[10], rsp1700[20])
+
 		const fid = rsp1700[90].toBuffer() as Buffer
 
 		const ext = pb.encode({
@@ -524,5 +539,46 @@ export class Friend extends User {
 		const payload = await this.c.sendUni("OfflineFilleHandleSvr.pb_ftn_CMD_REQ_RECALL-400", body)
 		const rsp = pb.decode(payload)[6]
 		return rsp[1] === 0
+	}
+
+	/** 转发离线文件 */
+	async forwardFile(fid: string) {
+		const body = pb.encode({
+			1: 700,
+			2: 0,
+			9: {
+				10: this.c.uin,
+				20: this.uid,
+				30: fid
+			},
+			101: 3,
+			102: 104,
+			200: 1,
+		})
+		const payload = await this.c.sendUni("OfflineFilleHandleSvr.pb_ftn_CMD_REQ_APPLY_FORWARD_FILE-700", body)
+		const rsp = pb.decode(payload)[9]
+		const new_fid = rsp[50]
+		const ticket = rsp[60]
+
+		if (rsp[10] !== 0)
+			drop(rsp[10], rsp[20])
+
+		const info = await this.getFileInfo(fid)
+
+		const proto3 = {
+			2: {
+				1: {
+					1: 0,
+					3: new_fid,
+					4: Buffer.from(info.md5, "hex"),
+					5: info.name,
+					6: info.size,
+					9: 1,
+					57: ticket
+				}
+			}
+		}
+		await this._sendMsg(proto3, `[文件：${info.name}]`, true)
+		return String(new_fid)
 	}
 }
