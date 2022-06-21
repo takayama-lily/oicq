@@ -458,44 +458,46 @@ export class Friend extends User {
 
 		const fid = rsp1700[90].toBuffer() as Buffer
 
-		const ext = pb.encode({
-			1: 100,
-			2: 2,
-			100: {
+		if (!rsp1700[110]) {
+			const ext = pb.encode({
+				1: 100,
+				2: 2,
 				100: {
-					1: 3,
-					100: this.c.uin,
-					200: this.uid,
-					400: 0,
-					700: payload,
+					100: {
+						1: 3,
+						100: this.c.uin,
+						200: this.uid,
+						400: 0,
+						700: payload,
+					},
+					200: {
+						100: filesize,
+						200: filemd5,
+						300: filesha,
+						400: filemd5,
+						600: fid,
+						700: rsp1700[220].toBuffer(),
+					},
+					300: {
+						100: 2,
+						200: String(this.c.apk.subid),
+						300: 2,
+						400: "d92615c5",
+						600: 4,
+					},
+					400: {
+						100: filename,
+					},
 				},
-				200: {
-					100: filesize,
-					200: filemd5,
-					300: filesha,
-					400: filemd5,
-					600: fid,
-					700: rsp1700[220].toBuffer(),
-				},
-				300: {
-					100: 2,
-					200: String(this.c.apk.subid),
-					300: 2,
-					400: "d92615c5",
-					600: 4,
-				},
-				400: {
-					100: filename,
-				},
-			},
-			200: 1
-		})
-		await highwayHttpUpload.call(this.c, filestream, {
-			md5: filemd5,
-			size: filesize,
-			cmdid: CmdID.OfflineFile,
-			ext, callback
-		})
+				200: 1
+			})
+			await highwayHttpUpload.call(this.c, filestream, {
+				md5: filemd5,
+				size: filesize,
+				cmdid: CmdID.OfflineFile,
+				ext, callback
+			})
+		}
 
 		const body800 = pb.encode({
 			1: 800,

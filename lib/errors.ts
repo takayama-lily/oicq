@@ -31,6 +31,9 @@ export enum ErrorCode {
 	/** 不支持的file类型(没有流) */
 	HighwayFileTypeError = -140,
 
+	/** 文件安全校验未通过不存在 */
+	UnsafeFile = -150,
+
 	/** 离线(私聊)文件不存在 */
 	OfflineFileNotExists = -160,
 
