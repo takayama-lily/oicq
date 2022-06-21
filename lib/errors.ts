@@ -34,6 +34,9 @@ export enum ErrorCode {
 	/** 离线(私聊)文件不存在 */
 	OfflineFileNotExists = -160,
 
+	/** 群文件不存在(无法转发) */
+	GroupFileNotExists = -170,
+
 	/** 获取视频中的图片失败 */
 	FFmpegVideoThumbError = -210,
 	/** 音频转换失败 */
