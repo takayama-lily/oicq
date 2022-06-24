@@ -236,6 +236,7 @@ client.on("system.login.qrcode", function (e) {
 | poke()       | 戳一戳         |
 | delete()     | 删除          |
 | sendFile()   | 发送文件          |
+| forwardFile()| 转发文件          |
 | recallFile() | 撤回文件          |
 
 | Property   | Description |
@@ -308,6 +309,7 @@ client.on("system.login.qrcode", function (e) {
 | rename()   | 重命名文件或目录    |
 | mv()       | 移动文件        |
 | upload()   | 上传文件        |
+| forward()  | 转发文件        |
 | download() | 获取下载链接      |
 
 | Property | Description           |

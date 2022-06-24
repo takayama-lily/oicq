@@ -1,7 +1,8 @@
 import * as stream from "stream"
 import * as net from "net"
 import { randomBytes } from "crypto"
-import axios from "axios"
+import http from "http"
+import axios, { CancelTokenSource } from "axios"
 import { tea, pb, ApiRejection } from "../core"
 import { ErrorCode } from "../errors"
 import { md5, NOOP, BUF0, int32ip2str, log } from "../common"
@@ -156,7 +157,9 @@ export function highwayUpload(this: Client, readable: stream.Readable, obj: High
 	})
 }
 
-export async function highwayHttpUpload(this: Client, readable: stream.Readable, obj: HighwayUploadExt) {
+const agent = new http.Agent({ maxSockets: 10 })
+
+export function highwayHttpUpload(this: Client, readable: stream.Readable, obj: HighwayUploadExt) {
 	const ip = this.sig.bigdata.ip
 	const port = this.sig.bigdata.port
 	if (!port) throw new ApiRejection(ErrorCode.NoUploadChannel, "没有上传通道，如果你刚刚登录，请等待几秒")
@@ -167,7 +170,8 @@ export async function highwayHttpUpload(this: Client, readable: stream.Readable,
 	let offset = 0, limit = 524288
 	obj.ticket = this.sig.bigdata.sig_session
 
-	const tasks: Promise<any>[] = []
+	const tasks = new Set<Promise<any>>()
+	const cancels = new Set<CancelTokenSource>()
 	let finished = 0
 
 	readable.on("data", data => {
@@ -205,8 +209,12 @@ export async function highwayHttpUpload(this: Client, readable: stream.Readable,
 			_.writeUInt32BE(chunk.length, 5)
 			const buf = Buffer.concat([_, head, chunk, __])
 			const task = new Promise((resolve, reject) => {
+				const c = axios.CancelToken.source()
+				cancels.add(c)
 				axios.post(url, buf, {
 					responseType: "arraybuffer",
+					httpAgent: agent,
+					cancelToken: c.token,
 					headers: {
 						"Content-Length": String(buf.length)
 					}
@@ -226,20 +234,34 @@ export async function highwayHttpUpload(this: Client, readable: stream.Readable,
 						return
 					}
 					++finished
-					percentage = (finished / tasks.length * 100).toFixed(2)
+					percentage = (finished / tasks.size * 100).toFixed(2)
 					this.logger.debug(`highway(http) chunk uploaded (${percentage}%)`)
 					if (typeof obj.callback === "function" && percentage)
 						obj.callback(percentage)
+					if (finished < tasks.size && rsp[7]?.toBuffer().length > 0) {
+						cancels.forEach(c => c.cancel())
+						this.logger.debug(`highway(http) chunk uploaded (100.00%)`)
+						if (typeof obj.callback === "function")
+							obj.callback("100.00")
+					}
+					if (finished >= tasks.size && !rsp[7]?.toBuffer().length)
+						reject(new ApiRejection(ErrorCode.UnsafeFile, "文件校验未通过，上传失败"))
 					resolve(undefined)
 				}).catch(reject)
 			})
-			tasks.push(task)
+			tasks.add(task)
 		}
 		offset += data.length
 	})
 
 	return new Promise((resolve, reject) => {
 		readable.on("err", reject)
-		.on("end", () => resolve(Promise.all(tasks)))
+		.on("end", () => {
+			Promise.all(tasks).then(resolve).catch(err => {
+				if (err instanceof axios.Cancel === false)
+					reject(err)
+				resolve(undefined)
+			})
+		})
 	})
 }

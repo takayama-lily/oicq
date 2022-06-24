@@ -3,7 +3,7 @@ import path from "path"
 import { randomBytes } from "crypto"
 import { Readable } from "stream"
 import { pb } from "./core"
-import { drop } from "./errors"
+import { drop, ErrorCode } from "./errors"
 import * as common from "./common"
 import { highwayUpload } from "./internal"
 import { FileElem } from "./message"
@@ -370,6 +370,36 @@ export class Gfs {
 				}
 			)
 		}
+		return await this._feed(String(rsp[7]), rsp[6])
+	}
+
+	/**
+	 * 将文件转发到当前群
+	 * @param stat 另一个群中的文件属性()
+	 * @param pid 转发后的目录(默认根目录)
+	 * @param name 转发后的文件名(默认不变)
+	 */
+	async forward(stat: GfsFileStat, pid = "/", name?: string) {
+		const body = pb.encode({
+			1: {
+				1: this.gid,
+				2: 3,
+				3: 102,
+				4: 5,
+				5: String(pid),
+				6: String(name || stat.name),
+				7: "/storage/emulated/0/Pictures/files/s/" + (name || stat.name),
+				8: Number(stat.size),
+				9: Buffer.from(stat.sha1, "hex"),
+				11: Buffer.from(stat.md5, "hex"),
+				15: 1,
+			}
+		})
+		const payload = await this.c.sendOidb("OidbSvc.0x6d6_0", body)
+		const rsp = pb.decode(payload)[4][1]
+		checkRsp(rsp)
+		if (!rsp[10])
+			drop(ErrorCode.GroupFileNotExists, "文件不存在，无法被转发")
 		return await this._feed(String(rsp[7]), rsp[6])
 	}
 
