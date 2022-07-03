@@ -646,7 +646,7 @@ function createDataDir(dir: string, uin: number) {
 		fs.mkdirSync(img_path)
 	if (!fs.existsSync(uin_path))
 		fs.mkdirSync(uin_path, { mode: 0o755 })
-	return uin_path
+	return path.isAbsolute(uin_path) ? uin_path : path.join(process.cwd(), uin_path)
 }
 
 /** 创建一个客户端 (=new Client) */
