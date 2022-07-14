@@ -24,7 +24,7 @@ const bkn = client.bkn;
 |取QQ资料|GET|`https://cgi.find.qq.com/qqfind/buddy/search_v3?keyword=${QQ号}`|YES|空
 |开关匿名|GET|`https://qqweb.qq.com/c/anonymoustalk/set_anony_switch?bkn=${bkn}&value=${1或0}&group_code=${群号}`|YES|`qqweb.qq.com`
 |取群荣誉|GET|`https://qun.qq.com/interactive/qunhonor?gc=${群号}`|YES|`qun.qq.com`
-|精华消息|GET|`https://qun.qq.com/essence/index?gc=${群号}`|YES|`qun.qq.com`
+|精华消息|GET|`https://qun.qq.com/cgi-bin/group_digest/digest_list?bkn=${bkn}&bkn=${bkn}&group_code=${群号}&page_start=${页数}&page_limit=${每页数量}`<br>*※必须是群成员，每页的数量不能超过50*|YES|`qun.qq.com`
 |取群公告|GET|`https://web.qun.qq.com/cgi-bin/announce/get_t_list?bkn=${bkn}&qid=${群号}&ft=23&s=-1&n=20`|YES|`qun.qq.com`|
 |发群公告|POST|`https://web.qun.qq.com/cgi-bin/announce/add_qun_notice?bkn=${bkn}`<br>POST数据：`qid=${群号}&bkn=${bkn}&text=${内容}&pinned=0&type=1&settings={"is_show_edit_card":1,"tip_window_type":1,"confirm_required":1}`|YES|`qun.qq.com`
 |取群成员|GET|`https://qun.qq.com/cgi-bin/qun_mgr/search_group_members?gc=${群号}&st=${0}%end=${20}&sort=0&bkn=${bkn}`|YES|`qun.qq.com`|
