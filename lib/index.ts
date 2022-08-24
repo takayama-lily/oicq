@@ -10,7 +10,7 @@ export { Message, PrivateMessage, GroupMessage, DiscussMessage, ForwardMessage, 
 	MusicPlatform, Sendable, Anonymous, MessageElem, FileElem, ReplyElem,
 	TextElem, AtElem, FaceElem, BfaceElem, MfaceElem, ImageElem, MiraiElem,
 	FlashElem, PttElem, VideoElem, XmlElem, JsonElem, ShareElem, LocationElem, PokeElem,
-	parseDmMessageId, parseGroupMessageId, parseImageFileParam, getGroupImageUrl, segment } from "./message"
+	parseDmMessageId, parseGroupMessageId, parseImageFileParam, getGroupImageUrl, segment, genGroupMessageId, genDmMessageId } from "./message"
 export { PrivateMessageEvent, GroupMessageEvent, DiscussMessageEvent, MessageRet,
 	MessageEvent, RequestEvent, FriendNoticeEvent, GroupNoticeEvent,
 	FriendRequestEvent, GroupRequestEvent, GroupInviteEvent, EventMap,
