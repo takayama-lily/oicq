@@ -265,6 +265,7 @@ export const facemap: {[k: number]: string} = {
 	337: "/花朵脸",
 	338: "/我想开了",
 	339: "/舔屏",
+	340: "/热化了",
 }
 
 export const pokemap: {[k: number]: string} = {
