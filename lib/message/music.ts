@@ -35,7 +35,7 @@ async function getMiGuSong(id: string) {
 		let a: any = await axios.get(`https://music.migu.cn/v3/api/music/audioPlayer/getSongPic?songId=${rsp.songId}`, { responseType: "json", headers: { referer: "https://music.migu.cn/v3/music/player/audio" } })
 		preview = a.data.smallPic || ""
 	} catch { }
-	let url: any = await axios.get(`https://app.c.nf.migu.cn/MIGUM2.0/v1.0/content/shareInfo.do?contentId=${rsp.contentId}&contentName=${rsp.songName}&resourceType=2&targetUserName=${rsp.singer}`, { responseType: "json" })
+	let url: any = await axios.get(`https://app.c.nf.migu.cn/MIGUM2.0/v1.0/content/shareInfo.do?contentId=${rsp.contentId}&contentName=${encodeURIComponent(rsp.songName)}&resourceType=2&targetUserName=${encodeURIComponent(rsp.singer)}`, { responseType: "json" })
 	let jumpUrl = url.data.url || "http://c.migu.cn/"
 	return {
 		title: rsp.songName,
@@ -65,12 +65,13 @@ async function getKuGouSong(id: string) {
 async function getKuwoSong(id: string) {
 	let rsp: any = await axios.get(`http://yinyue.kuwo.cn/api/www/music/musicInfo?mid=${id}&httpsStatus=1`, { responseType: "json", headers: { csrf: id, cookie: " kw_token=" + id } })
 	rsp = rsp.data.data
-	let url: any = await axios.get(`http://yinyue.kuwo.cn/url?format=mp3&rid=${id}&response=url&type=convert_url3&from=web&t=${+new Date()}`, { responseType: "json" })
+	// let url: any = await axios.get(`http://yinyue.kuwo.cn/url?format=mp3&rid=${id}&response=url&type=convert_url3&from=web&t=${+new Date()}`, { responseType: "json" })
+	let url: any = await axios.get(`http://www.kuwo.cn/api/v1/www/music/playUrl?mid=${id}&type=music&httpsStatus=1`)
 	return {
 		title: rsp.name,
 		singer: rsp.artist,
 		jumpUrl: "http://yinyue.kuwo.cn/play_detail/" + id,
-		musicUrl: url.data.url || "https://win-web-ra01-sycdn.kuwo.cn",
+		musicUrl: url.data.data.url || "https://win-web-ra01-sycdn.kuwo.cn",
 		preview: rsp.pic,
 	} as any
 }
