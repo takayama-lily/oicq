@@ -9,6 +9,7 @@ import { Sendable, PrivateMessage, buildMusic, MusicPlatform, Quotable, rand2uui
 import { buildSyncCookie, Contactable, highwayHttpUpload, CmdID } from "./internal"
 import { MessageRet } from "./events"
 import { FriendInfo } from "./entities"
+import { buildShare,type ShareConfig, type ShareContent } from "./message/share"
 
 type Client = import("./client").Client
 
@@ -150,10 +151,12 @@ export class User extends Contactable {
 
 	private _getRouting(file = false): pb.Encodable {
 		if (Reflect.has(this, "gid"))
-			return { 3: {
-				1: code2uin(Reflect.get(this, "gid")),
-				2: this.uid,
-			} }
+			return {
+				3: {
+					1: code2uin(<number>Reflect.get(this, "gid")),
+					2: this.uid,
+				}
+			}
 		return file ? { 15: { 1: this.uid, 2: 4 } } : { 1: { 1: this.uid } }
 	}
 
@@ -314,7 +317,7 @@ export class Friend extends User {
 		let friend = weakmap.get(info!)
 		if (friend) return friend
 		friend = new Friend(this, Number(uid), info)
-		if (info) 
+		if (info)
 			weakmap.set(info, friend)
 		return friend
 	}
@@ -351,9 +354,15 @@ export class Friend extends User {
 		await this.c.sendOidb("OidbSvc.0xb77_9", pb.encode(body))
 	}
 
+	/** 发送网址分享 */
+	async shareUrl(content: ShareContent, config: ShareConfig) {
+		const body = buildShare(this.uid, 0, content, config)
+		await this.c.sendOidb("OidbSvc.0xb77_9", pb.encode(body))
+	}
+
 	/** 设置备注 */
 	async setRemark(remark: string) {
-		const req = jce.encodeStruct([ this.uid, String(remark || "") ])
+		const req = jce.encodeStruct([this.uid, String(remark || "")])
 		const body = jce.encodeWrapper({ req }, "KQQ.ProfileService.ProfileServantObj", "ChangeFriendName")
 		await this.c.sendUni("ProfileService.ChangeFriendName", body)
 	}
@@ -426,7 +435,7 @@ export class Friend extends User {
 		} else {
 			file = String(file)
 			filesize = (await fs.promises.stat(file)).size
-			;[filemd5, filesha] = await fileHash(file)
+				;[filemd5, filesha] = await fileHash(file)
 			filename = filename ? String(filename) : path.basename(file)
 			filestream = fs.createReadStream(file, { highWaterMark: 524288 })
 		}

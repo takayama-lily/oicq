@@ -119,7 +119,7 @@ export class BaseClient extends EventEmitter {
 	/** 随心跳一起触发的函数，可以随意设定 */
 	protected heartbeat = NOOP
 	// 心跳定时器
-	private [HEARTBEAT]: NodeJS.Timeout
+	private [HEARTBEAT]?: NodeJS.Timeout
 	/** 数据统计 */
 	protected readonly statistics = {
 		start_time: timestamp(),
