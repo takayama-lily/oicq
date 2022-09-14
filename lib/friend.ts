@@ -183,6 +183,7 @@ export class User extends Contactable {
 			this.c.logger.error(`failed to send: [Private: ${this.uid}] ${rsp[2]}(${rsp[1]})`)
 			drop(rsp[1], rsp[2])
 		}
+		this.c.stat.sent_msg_cnt++;
 		this.c.logger.info(`succeed to send: [Private(${this.uid})] ` + brief)
 		const time = rsp[3]
 		const message_id = genDmMessageId(this.uid, seq, rand, rsp[3], 1)
