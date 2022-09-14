@@ -371,6 +371,7 @@ export class ForwardMessage implements Forwardable {
 	time: number
 	message: MessageElem[]
 	raw_message: string
+	source?: Quotable
 
 	/** 反序列化一条转发消息 */
 	static deserialize(serialized: Buffer) {
@@ -387,6 +388,16 @@ export class ForwardMessage implements Forwardable {
 		this.parsed = parse(proto[3][1])
 		this.message = this.parsed.message
 		this.raw_message = this.parsed.brief
+		if (this.parsed.quotation) {
+			const q = this.parsed.quotation
+			this.source = {
+				user_id: q[2],
+				time: q[3],
+				seq: q[1]?.[0] || q[1],
+				rand: uuid2rand(q[8]?.[3] || 0),
+				message: parse(Array.isArray(q[5]) ? q[5] : [q[5]]).brief,
+			}
+		}
 		lock(this, "proto")
 		lock(this, "parsed")
 	}
