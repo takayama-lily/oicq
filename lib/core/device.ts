@@ -158,7 +158,7 @@ const apklist: {[platform in Platform]: Apk} = {
 	[Platform.iPad]: { ...hd },
 }
 
-apklist[Platform.iMac].subid = 537064315
+apklist[Platform.iMac].subid = 537128930
 apklist[Platform.iMac].display = "iMac"
 apklist[Platform.iPad].subid = 537118796
 apklist[Platform.iPad].display = "iPad"

@@ -258,8 +258,10 @@ export function highwayHttpUpload(this: Client, readable: stream.Readable, obj: 
 		readable.on("err", reject)
 		.on("end", () => {
 			Promise.all(tasks).then(resolve).catch(err => {
-				if (err instanceof axios.Cancel === false)
+				if (err instanceof axios.Cancel === false) {
+					cancels.forEach(c => c.cancel())
 					reject(err)
+				}
 				resolve(undefined)
 			})
 		})
