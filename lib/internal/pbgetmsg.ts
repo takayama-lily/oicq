@@ -119,8 +119,7 @@ async function handleSyncMsg(this: Client, proto: pb.Proto) {
 		this.stat.recv_msg_cnt++
 		const msg = new PrivateMessage(proto, this.uin) as PrivateMessageEvent
 		if (msg.raw_message) {
-			const f=this.pickFriend(msg.from_id)
-			msg.friend = f
+			msg.friend = this.pickFriend(msg.from_id)
 			if (msg.sub_type === "friend")
 				msg.sender.nickname = msg.friend.info?.nickname || this.sl.get(msg.from_id)?.nickname || ""
 			else if (msg.sub_type === "self")
@@ -131,7 +130,6 @@ async function handleSyncMsg(this: Client, proto: pb.Proto) {
 				return this.friend.sendMsg(content, quote ? this : undefined)
 			}
 			this.logger.info(`recv from: [Private: ${msg.from_id}(${msg.sub_type})] ` + msg)
-			f.emit("message", msg)
 			this.em("message.private." + msg.sub_type, msg)
 		}
 	}

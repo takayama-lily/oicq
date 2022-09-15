@@ -253,26 +253,22 @@ const push732: {[k: number]: (this: Client, gid: number, buf: Buffer) => OnlineP
 function emitFriendNoticeEvent(c: Client, uid: number, e: OnlinePushEvent | void) {
 	if (!e) return
 	const name = "notice.friend." + e.sub_type
-	const f= c.pickFriend(uid)
-	f.emit('notice',e)
 	c.em(name, Object.assign({
 		post_type: "notice",
 		notice_type: "friend",
 		user_id: uid,
-		friend: f
+		friend: c.pickFriend(uid)
 	}, e))
 }
 
 export function emitGroupNoticeEvent(c: Client, gid: number, e: OnlinePushEvent | void) {
 	if (!e) return
 	const name = "notice.group." + e.sub_type
-	const g=c.pickGroup(gid)
-	g.emit('notice',e)
 	c.em(name, Object.assign({
 		post_type: "notice",
 		notice_type: "group",
 		group_id: gid,
-		group: g
+		group: c.pickGroup(gid)
 	}, e))
 }
 
@@ -389,15 +385,13 @@ export function groupMsgListener(this: Client, payload: Buffer) {
 	}
 
 	if (msg.raw_message) {
-		const g=this.pickGroup(msg.group_id)
-		const m=g.pickMember(msg.user_id)
-		msg.group = g
-		msg.member = m
+		msg.group = this.pickGroup(msg.group_id)
+		msg.member = msg.group.pickMember(msg.user_id)
 		msg.reply = function (content, quote = false) {
-			return g.sendMsg(content, quote ? this : undefined)
+			return this.group.sendMsg(content, quote ? this : undefined)
 		}
 		msg.recall = function () {
-			return g.recallMsg(this)
+			return this.group.recallMsg(this)
 		}
 		const sender = msg.sender
 		if (msg.member.info) {
@@ -412,8 +406,6 @@ export function groupMsgListener(this: Client, payload: Buffer) {
 			info.last_sent_time = timestamp()
 		}
 		this.logger.info(`recv from: [Group: ${msg.group_name}(${msg.group_id}), Member: ${sender.card || sender.nickname}(${sender.user_id})] ` + msg)
-		g.emit('message', msg)
-		m.emit('message', msg)
 		this.em("message.group." + msg.sub_type, msg)
 		msg.group.info!.last_sent_time = timestamp()
 	}
@@ -428,11 +420,9 @@ export function discussMsgListener(this: Client, payload: Buffer, seq: number) {
 	if (msg.user_id === this.uin && this.config.ignore_self)
 		return
 	if (msg.raw_message) {
-		const d=this.pickDiscuss(msg.discuss_id)
-		msg.discuss = d
+		msg.discuss = this.pickDiscuss(msg.discuss_id)
 		msg.reply = msg.discuss.sendMsg.bind(msg.discuss)
 		this.logger.info(`recv from: [Discuss: ${msg.discuss_name}(${msg.discuss_id}), Member: ${msg.sender.card}(${msg.sender.user_id})] ` + msg)
-		d.emit('message', msg)
 		this.em("message.discuss", msg)
 	}
 }
