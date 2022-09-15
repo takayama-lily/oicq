@@ -35,15 +35,15 @@ export class Client extends BaseClient {
 	 * 得到一个群对象, 通常不会重复创建，调用
 	 * @param strict 严格模式，若群不存在会抛出异常
 	 */
-	readonly pickGroup = Group.as.bind(this) as (group_id: number, strict?: boolean) => Group
+	readonly pickGroup = Group.as.bind(this)
 	/** 得到一个好友对象, 通常不会重复创建 */
-	readonly pickFriend = Friend.as.bind(this) as (user_id: number, strict?: boolean) => Friend
+	readonly pickFriend = Friend.as.bind(this)
 	/** 得到一个群员对象, 通常不会重复创建 */
-	readonly pickMember = Member.as.bind(this) as (group_id:number,user_id: number, strict?: boolean) => Member
+	readonly pickMember = Member.as.bind(this)
 	/** 创建一个用户对象 */
-	readonly pickUser = User.as.bind(this) as (user_id: number, strict?: boolean) => User
+	readonly pickUser = User.as.bind(this)
 	/** 创建一个讨论组对象 */
-	readonly pickDiscuss = Discuss.as.bind(this) as (discuss_id: number, strict?: boolean) => Discuss
+	readonly pickDiscuss = Discuss.as.bind(this)
 
 	/** 日志记录器，初始情况下是`log4js.Logger` */
 	logger: Logger | log4js.Logger
