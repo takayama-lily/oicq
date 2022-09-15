@@ -151,9 +151,9 @@ export class User extends Contactable {
 	private _getRouting(file = false): pb.Encodable {
 		if (Reflect.has(this, "gid"))
 			return { 3: {
-				1: code2uin(Reflect.get(this, "gid")),
-				2: this.uid,
-			} }
+					1: code2uin(Reflect.get(this, "gid")),
+					2: this.uid,
+				} }
 		return file ? { 15: { 1: this.uid, 2: 4 } } : { 1: { 1: this.uid } }
 	}
 
@@ -183,6 +183,7 @@ export class User extends Contactable {
 			this.c.logger.error(`failed to send: [Private: ${this.uid}] ${rsp[2]}(${rsp[1]})`)
 			drop(rsp[1], rsp[2])
 		}
+		this.c.stat.sent_msg_cnt++;
 		this.c.logger.info(`succeed to send: [Private(${this.uid})] ` + brief)
 		const time = rsp[3]
 		const message_id = genDmMessageId(this.uid, seq, rand, rsp[3], 1)
@@ -314,7 +315,7 @@ export class Friend extends User {
 		let friend = weakmap.get(info!)
 		if (friend) return friend
 		friend = new Friend(this, Number(uid), info)
-		if (info) 
+		if (info)
 			weakmap.set(info, friend)
 		return friend
 	}

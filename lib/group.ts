@@ -62,6 +62,7 @@ export class Discuss extends Contactable {
 			this.c.logger.error(`failed to send: [Discuss(${this.gid})] ${rsp[2]}(${rsp[1]})`)
 			drop(rsp[1], rsp[2])
 		}
+		this.c.stat.sent_msg_cnt++;
 		this.c.logger.info(`succeed to send: [Discuss(${this.gid})] ` + brief)
 		return {
 			message_id: "",
@@ -309,6 +310,7 @@ export class Group extends Discuss {
 		} catch {
 			message_id = await this._sendMsgByFrag(converter)
 		}
+		this.c.stat.sent_msg_cnt++;
 		this.c.logger.info(`succeed to send: [Group(${this.gid})] ` + converter.brief)
 		{
 			const { seq, rand, time } = parseGroupMessageId(message_id)
