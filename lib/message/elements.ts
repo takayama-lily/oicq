@@ -174,6 +174,7 @@ export interface Forwardable {
 	message: Sendable,
 	nickname?: string,
 	time?: number,
+	source?: Quotable
 }
 
 /** 可组合发送的元素 */

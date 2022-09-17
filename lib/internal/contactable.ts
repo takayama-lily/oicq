@@ -429,6 +429,7 @@ export abstract class Contactable {
 		let cnt = 0
 		for (const fake of msglist) {
 			const maker = new Converter(fake.message, { dm: this.dm, cachedir: this.c.config.data_dir })
+			if (fake.source) maker.quote(fake.source)
 			makers.push(maker)
 			const seq = randomBytes(2).readInt16BE()
 			const rand = randomBytes(4).readInt32BE()
