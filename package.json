@@ -26,7 +26,7 @@
   "homepage": "https://github.com/takayama-lily/oicq#readme",
   "changelogs": "https://github.com/takayama-lily/oicq/releases",
   "dependencies": {
-    "axios": "^0.27.2",
+    "axios": "^1.1.2",
     "log4js": "^6.3.0",
     "long": "^4.0.0",
     "pngjs": "^6.0.0",
