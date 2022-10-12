@@ -369,6 +369,8 @@ export class ForwardMessage implements Forwardable {
 	nickname: string
 	group_id?: number
 	time: number
+	seq: number
+	rand: number
 	message: MessageElem[]
 	raw_message: string
 	source?: Quotable
@@ -382,6 +384,8 @@ export class ForwardMessage implements Forwardable {
 		this.proto = proto
 		const head = proto[1]
 		this.time = head[6] || 0
+		this.seq = head[5]
+		this.rand = proto[3]?.[1]?.[1]?.[3] || uuid2rand(head[7])
 		this.user_id = head[1] || 0
 		this.nickname = head[14]?.toString() || head[9]?.[4]?.toString() || ""
 		this.group_id = head[9]?.[1]
