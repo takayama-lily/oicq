@@ -384,7 +384,8 @@ export class ForwardMessage implements Forwardable {
 		this.proto = proto
 		const head = proto[1]
 		this.time = head[6] || 0
-		this.seq = head[5]
+		// TODO: seq不确定这样处理合适不合适
+		this.seq = (head[5] >>> 16) === 0xffff? head[5] & 0xffff: head[5]
 		this.rand = proto[3]?.[1]?.[1]?.[3] || uuid2rand(head[7])
 		this.user_id = head[1] || 0
 		this.nickname = head[14]?.toString() || head[9]?.[4]?.toString() || ""
