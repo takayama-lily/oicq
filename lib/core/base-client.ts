@@ -88,6 +88,7 @@ export class BaseClient extends EventEmitter {
 		skey: BUF0,
 		d2: BUF0,
 		d2key: BUF0,
+		t103: BUF0,
 		t104: BUF0,
 		t174: BUF0,
 		qrsig: BUF0,
@@ -882,6 +883,7 @@ function decodeT119(this: BaseClient, t119: Buffer) {
 	const r = Readable.from(tea.decrypt(t119, this.sig.tgtgt), { objectMode: false })
 	r.read(2)
 	const t = readTlv(r)
+	this.sig.t103 = t[0x103]
 	this.sig.tgt = t[0x10a]
 	this.sig.skey = t[0x120]
 	this.sig.d2 = t[0x143]
