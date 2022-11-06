@@ -371,16 +371,28 @@ export class Friend extends User {
 		await this.c.sendUni("friendlist.MovGroupMemReq", body)
 	}
 
-	/** 点赞，默认一次 */
+	/** 点赞，默认一次 
+	 * 支持陌生人点赞
+	*/
 	async thumbUp(times = 1) {
 		if (times > 20) times = 20
-		const ReqFavorite = jce.encodeStruct([
-			jce.encodeNested([
-				this.c.uin, 1, this.c.sig.seq + 1, 1, 0, Buffer.from("0C180001060131160131", "hex")
-			]),
-			this.uid, 0, 1, Number(times)
-		])
-		const body = jce.encodeWrapper({ ReqFavorite }, "VisitorSvc", "ReqFavorite")
+		let ReqFavorite
+		if (this.c.fl.get(this.uid)) {
+			ReqFavorite = jce.encodeStruct([
+				jce.encodeNested([
+					this.c.uin, 1, this.c.sig.seq + 1, 1, 0, Buffer.from("0C180001060131160131", "hex")
+				]),
+				this.uid, 0, 1, Number(times)
+			])
+		} else {
+			ReqFavorite = jce.encodeStruct([
+				jce.encodeNested([
+					this.c.uin, 1, this.c.sig.seq + 1, 1, 0, Buffer.from("0C180001060131160135", "hex")
+				]),
+				this.uid, 0, 5, Number(times)
+			])
+		}
+		const body = jce.encodeWrapper({ ReqFavorite }, "VisitorSvc", "ReqFavorite", this.c.sig.seq + 1)
 		const payload = await this.c.sendUni("VisitorSvc.ReqFavorite", body)
 		return jce.decodeWrapper(payload)[0][3] === 0
 	}
