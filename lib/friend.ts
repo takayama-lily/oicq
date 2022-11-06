@@ -150,10 +150,12 @@ export class User extends Contactable {
 
 	private _getRouting(file = false): pb.Encodable {
 		if (Reflect.has(this, "gid"))
-			return { 3: {
-				1: code2uin(Reflect.get(this, "gid")),
-				2: this.uid,
-			} }
+			return {
+				3: {
+					1: code2uin(Reflect.get(this, "gid")),
+					2: this.uid,
+				}
+			}
 		return file ? { 15: { 1: this.uid, 2: 4 } } : { 1: { 1: this.uid } }
 	}
 
@@ -314,7 +316,7 @@ export class Friend extends User {
 		let friend = weakmap.get(info!)
 		if (friend) return friend
 		friend = new Friend(this, Number(uid), info)
-		if (info) 
+		if (info)
 			weakmap.set(info, friend)
 		return friend
 	}
@@ -353,7 +355,7 @@ export class Friend extends User {
 
 	/** 设置备注 */
 	async setRemark(remark: string) {
-		const req = jce.encodeStruct([ this.uid, String(remark || "") ])
+		const req = jce.encodeStruct([this.uid, String(remark || "")])
 		const body = jce.encodeWrapper({ req }, "KQQ.ProfileService.ProfileServantObj", "ChangeFriendName")
 		await this.c.sendUni("ProfileService.ChangeFriendName", body)
 	}
@@ -371,16 +373,28 @@ export class Friend extends User {
 		await this.c.sendUni("friendlist.MovGroupMemReq", body)
 	}
 
-	/** 点赞，默认一次 */
+	/** 点赞，默认一次 
+	 * 支持陌生人点赞
+	*/
 	async thumbUp(times = 1) {
 		if (times > 20) times = 20
-		const ReqFavorite = jce.encodeStruct([
-			jce.encodeNested([
-				this.c.uin, 1, this.c.sig.seq + 1, 1, 0, Buffer.from("0C180001060131160131", "hex")
-			]),
-			this.uid, 0, 1, Number(times)
-		])
-		const body = jce.encodeWrapper({ ReqFavorite }, "VisitorSvc", "ReqFavorite")
+		let ReqFavorite
+		if (this.c.fl.get(this.uid)) {
+			ReqFavorite = jce.encodeStruct([
+				jce.encodeNested([
+					this.c.uin, 1, this.c.sig.seq + 1, 1, 0, Buffer.from("0C180001060131160131", "hex")
+				]),
+				this.uid, 0, 1, Number(times)
+			])
+		} else {
+			ReqFavorite = jce.encodeStruct([
+				jce.encodeNested([
+					this.c.uin, 1, this.c.sig.seq + 1, 1, 0, Buffer.from("0C180001060131160135", "hex")
+				]),
+				this.uid, 0, 5, Number(times)
+			])
+		}
+		const body = jce.encodeWrapper({ ReqFavorite }, "VisitorSvc", "ReqFavorite", this.c.sig.seq + 1)
 		const payload = await this.c.sendUni("VisitorSvc.ReqFavorite", body)
 		return jce.decodeWrapper(payload)[0][3] === 0
 	}
@@ -426,7 +440,7 @@ export class Friend extends User {
 		} else {
 			file = String(file)
 			filesize = (await fs.promises.stat(file)).size
-			;[filemd5, filesha] = await fileHash(file)
+				;[filemd5, filesha] = await fileHash(file)
 			filename = filename ? String(filename) : path.basename(file)
 			filestream = fs.createReadStream(file, { highWaterMark: 524288 })
 		}
