@@ -428,9 +428,16 @@ export abstract class Contactable {
 		let preview = ""
 		let cnt = 0
 		let MultiMsg = []
+		let brief
 		for (const fake of msglist) {
 			if (fake.message?.type == 'xml' && fake.message?.data) {
 				let data = fake.message.data
+				let brief_reg = /brief\=\"(.*?)\"/gm.exec(data)
+
+				if (brief_reg && brief_reg.length > 0) {
+					brief = brief_reg[1]
+				}
+
 				let resid_reg = /m_resid\=\"(.*?)\"/gm.exec(data)
 				let fileName_reg = /m_fileName\=\"(.*?)\"/gm.exec(data)
 				if (resid_reg && resid_reg.length > 1 && fileName_reg && fileName_reg.length > 1) {
@@ -451,8 +458,16 @@ export abstract class Contactable {
 						}
 					}
 				}
+			} else if (fake.message?.type == 'json' && fake.message?.data) {
+				let json = fake.message.data
+				if (json) {
+					brief = json.prompt
+				}
 			}
 			const maker = new Converter(fake.message, { dm: this.dm, cachedir: this.c.config.data_dir })
+			if (maker?.brief && brief) {
+				maker.brief = brief
+			}
 			makers.push(maker)
 			const seq = randomBytes(2).readInt16BE()
 			const rand = randomBytes(4).readInt32BE()
