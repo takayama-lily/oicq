@@ -430,38 +430,40 @@ export abstract class Contactable {
 		let MultiMsg = []
 		let brief
 		for (const fake of msglist) {
-			if (fake.message?.type == 'xml' && fake.message?.data) {
-				let data = fake.message.data
-				let brief_reg = /brief\=\"(.*?)\"/gm.exec(data)
+			if (typeof (fake.message) == 'object' && !Array.isArray(fake.message)) {
+				if (fake.message.type == 'xml' && fake.message.data) {
+					let data = fake.message.data
+					let brief_reg = /brief\=\"(.*?)\"/gm.exec(data)
 
-				if (brief_reg && brief_reg.length > 0) {
-					brief = brief_reg[1]
-				}
-
-				let resid_reg = /m_resid\=\"(.*?)\"/gm.exec(data)
-				let fileName_reg = /m_fileName\=\"(.*?)\"/gm.exec(data)
-				if (resid_reg && resid_reg.length > 1 && fileName_reg && fileName_reg.length > 1) {
-					const buf = await this._downloadMultiMsg(String(resid_reg[1]), 2)
-					let a = pb.decode(buf)[2];
-					if (!Array.isArray(a)) {
-						a = [a]
+					if (brief_reg && brief_reg.length > 0) {
+						brief = brief_reg[1]
 					}
-					for (let b of a) {
-						let m_fileName = b[1].toString();
-						if (m_fileName === 'MultiMsg') {
-							MultiMsg.push({
-								1: fileName_reg[1],
-								2: b[2]
-							});
-						} else {
-							MultiMsg.push(b)
+
+					let resid_reg = /m_resid\=\"(.*?)\"/gm.exec(data)
+					let fileName_reg = /m_fileName\=\"(.*?)\"/gm.exec(data)
+					if (resid_reg && resid_reg.length > 1 && fileName_reg && fileName_reg.length > 1) {
+						const buf = await this._downloadMultiMsg(String(resid_reg[1]), 2)
+						let a = pb.decode(buf)[2];
+						if (!Array.isArray(a)) {
+							a = [a]
+						}
+						for (let b of a) {
+							let m_fileName = b[1].toString();
+							if (m_fileName === 'MultiMsg') {
+								MultiMsg.push({
+									1: fileName_reg[1],
+									2: b[2]
+								});
+							} else {
+								MultiMsg.push(b)
+							}
 						}
 					}
-				}
-			} else if (fake.message?.type == 'json' && fake.message?.data) {
-				let json = fake.message.data
-				if (json) {
-					brief = json.prompt
+				} else if (fake.message.type == 'json' && fake.message.data) {
+					let json = fake.message.data
+					if (json) {
+						brief = json.prompt
+					}
 				}
 			}
 			const maker = new Converter(fake.message, { dm: this.dm, cachedir: this.c.config.data_dir })
