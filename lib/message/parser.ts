@@ -315,7 +315,9 @@ export class Parser {
 				file: buildImageFileParam(proto[7].toHex(), proto[2], proto[9], proto[8], proto[5]),
 				url: "",
 			}
-			if (proto[15])
+			if (proto[29] && proto[29][30])
+				elem.url = `https://c2cpicdw.qpic.cn${proto[29][30]}&spec=0&rf=naio`
+			else if (proto[15])
 				elem.url = `https://c2cpicdw.qpic.cn${proto[15]}`
 			else if (proto[10])
 				elem.url = `https://c2cpicdw.qpic.cn/offpic_new/0/${proto[10]}/0`
