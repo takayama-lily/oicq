@@ -90,6 +90,8 @@ export class Group extends Discuss {
 		let group = weakmap.get(info!)
 		if (group) return group
 		group = new Group(this, Number(gid), info)
+		// 将群员列表缓存进Client的gml
+		group._fetchMembers()
 		if (info)
 			weakmap.set(info, group)
 		return group
