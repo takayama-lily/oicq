@@ -419,7 +419,7 @@ export class Gfs {
 		checkRsp(rsp)
 		return {
 			name: file.name,
-			url: `http://${rsp[4]}/ftn_handler/${rsp[6].toHex()}/?fname=${file.name}`,
+			url: encodeURI(`http://${rsp[4]}/ftn_handler/${rsp[6].toHex()}/?fname=${file.name}`),
 			size: file.size,
 			md5: file.md5,
 			duration: file.duration,
