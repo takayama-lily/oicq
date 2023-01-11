@@ -30,7 +30,8 @@
     "log4js": "^6.3.0",
     "long": "^4.0.0",
     "pngjs": "^6.0.0",
-    "probe-image-size": "^7.2.2"
+    "probe-image-size": "^7.2.2",
+    "silk-sdk": "^0.2.2"
   },
   "devDependencies": {
     "@types/node": "^16.7.2",

@@ -3,6 +3,7 @@ import path from "path"
 import querystring from "querystring"
 import axios from "axios"
 import { Readable } from "stream"
+import silkSDK from 'silk-sdk'
 import { randomBytes } from "crypto"
 import { exec } from "child_process"
 import { tea, pb, ApiRejection } from "../core"
@@ -120,7 +121,7 @@ export abstract class Contactable {
 		const res1 = await Promise.allSettled(tasks) as PromiseRejectedResult[]
 		for (let i = 0; i < res1.length; i++) {
 			if (res1[i].status === "rejected")
-				this.c.logger.warn(`图片${i+1}失败, reason: ` + res1[i].reason?.message)
+				this.c.logger.warn(`图片${i + 1}失败, reason: ` + res1[i].reason?.message)
 		}
 		let n = 0
 		while (imgs.length > n) {
@@ -129,13 +130,13 @@ export abstract class Contactable {
 			const tasks: Promise<any>[] = []
 			for (let i = n; i < imgs.length; ++i) {
 				if (i >= n + 20) break
-				tasks.push(this._uploadImage(imgs[i] as Image, rsp[i%20]))
+				tasks.push(this._uploadImage(imgs[i] as Image, rsp[i % 20]))
 			}
 			const res2 = await Promise.allSettled(tasks) as PromiseRejectedResult[]
 			for (let i = 0; i < res2.length; i++) {
 				if (res2[i].status === "rejected") {
-					res1[n+i] = res2[i]
-					this.c.logger.warn(`图片${n+i+1}上传失败, reason: ` + res2[i].reason?.message)
+					res1[n + i] = res2[i]
+					this.c.logger.warn(`图片${n + i + 1}上传失败, reason: ` + res2[i].reason?.message)
 				}
 			}
 			n += 20
@@ -146,10 +147,10 @@ export abstract class Contactable {
 
 	private async _uploadImage(img: Image, rsp: pb.Proto) {
 		const j = this.dm ? 1 : 0
-		if (rsp[2+j] !== 0)
-			throw new Error(String(rsp[3+j]))
-		img.fid = rsp[9+j].toBuffer?.() || rsp[9+j]
-		if (rsp[4+j]) {
+		if (rsp[2 + j] !== 0)
+			throw new Error(String(rsp[3 + j]))
+		img.fid = rsp[9 + j].toBuffer?.() || rsp[9 + j]
+		if (rsp[4 + j]) {
 			img.deleteTmpFile()
 			return
 		}
@@ -157,8 +158,8 @@ export abstract class Contactable {
 			img.deleteCacheFile()
 			return
 		}
-		const ip = rsp[6+j]?.[0] || rsp[6+j]
-		const port = rsp[7+j]?.[0] || rsp[7+j]
+		const ip = rsp[6 + j]?.[0] || rsp[6 + j]
+		const port = rsp[7 + j]?.[0] || rsp[7 + j]
 		return highwayUpload.call(
 			this.c,
 			img.readable,
@@ -166,7 +167,7 @@ export abstract class Contactable {
 				cmdid: j ? CmdID.DmImage : CmdID.GroupImage,
 				md5: img.md5,
 				size: img.size,
-				ticket: rsp[8+j].toBuffer()
+				ticket: rsp[8 + j].toBuffer()
 			},
 			ip, port
 		).finally(img.deleteTmpFile.bind(img))
@@ -329,7 +330,7 @@ export abstract class Contactable {
 				10: this.c.apk.version,
 				12: 1,
 				13: 1,
-				14: codec,
+				14: 0,
 				15: 1,
 			},
 		})
@@ -464,7 +465,7 @@ export abstract class Contactable {
 			})
 		}
 		for (const maker of makers)
-			imgs = [ ...imgs, ...maker.imgs ]
+			imgs = [...imgs, ...maker.imgs]
 		if (imgs.length)
 			await this.uploadImages(imgs)
 		const compressed = await gzip(pb.encode({
@@ -530,12 +531,14 @@ export abstract class Contactable {
 		const port = rsp[5]?.[0] || rsp[5]
 		let url = port == 443 ? "https://ssl.htdata.qq.com" : `http://${ip}:${port}`
 		url += rsp[2]
-		let { data, headers } = await axios.get(url, { headers: {
-			"User-Agent": `QQ/${this.c.apk.version} CFNetwork/1126`,
-			"Net-Type": "Wifi"
-		}, responseType: "arraybuffer"})
+		let { data, headers } = await axios.get(url, {
+			headers: {
+				"User-Agent": `QQ/${this.c.apk.version} CFNetwork/1126`,
+				"Net-Type": "Wifi"
+			}, responseType: "arraybuffer"
+		})
 		data = Buffer.from(data as ArrayBuffer)
-		let buf = headers["accept-encoding"]?.includes("gzip") ?  await unzip(data as Buffer) : data as Buffer
+		let buf = headers["accept-encoding"]?.includes("gzip") ? await unzip(data as Buffer) : data as Buffer
 		const head_len = buf.readUInt32BE(1)
 		const body_len = buf.readUInt32BE(5)
 		buf = tea.decrypt(buf.slice(head_len + 9, head_len + 9 + body_len), rsp[3].toBuffer())
@@ -628,10 +631,9 @@ async function getPttBuffer(file: string | Buffer, ffmpeg = "ffmpeg"): Promise<B
 function audioTrans(file: string, ffmpeg = "ffmpeg"): Promise<Buffer> {
 	return new Promise((resolve, reject) => {
 		const tmpfile = path.join(TMP_DIR, uuid())
-		exec(`${ffmpeg} -y -i "${file}" -ac 1 -ar 8000 -f amr "${tmpfile}"`, async (error, stdout, stderr) => {
+		exec(`${ffmpeg} -i "${file}" -f s16le -ac 1 -ar 24000 "${tmpfile}"`, async (error, stdout, stderr) => {
 			try {
-				const amr = await fs.promises.readFile(tmpfile)
-				resolve(amr)
+				resolve(silkSDK.encode(tmpfile, { tencent: true }))
 			} catch {
 				reject(new ApiRejection(ErrorCode.FFmpegPttTransError, "音频转码到amr失败，请确认你的ffmpeg可以处理此转换"))
 			} finally {
