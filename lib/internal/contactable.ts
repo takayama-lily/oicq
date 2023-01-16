@@ -635,7 +635,7 @@ function audioTrans(file: string, ffmpeg = "ffmpeg"): Promise<Buffer> {
 			try {
 				resolve(silkSDK.encode(tmpfile, { tencent: true }))
 			} catch {
-				reject(new ApiRejection(ErrorCode.FFmpegPttTransError, "音频转码到amr失败，请确认你的ffmpeg可以处理此转换"))
+				reject(new ApiRejection(ErrorCode.FFmpegPttTransError, "音频转码到pcm失败，请确认你的ffmpeg可以处理此转换"))
 			} finally {
 				fs.unlink(tmpfile, NOOP)
 			}
