@@ -135,7 +135,7 @@ export class Client extends BaseClient {
 		const dir = createDataDir(config.data_dir, uin)
 		const file = path.join(dir, `device-${uin}.json`)
 		try {
-			var device = require(file) as ShortDevice
+			var device = JSON.parse(fs.readFileSync(file)) as ShortDevice
 			var _ = false
 		} catch {
 			var device = generateShortDevice(uin)
