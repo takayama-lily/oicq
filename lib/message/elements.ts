@@ -24,6 +24,13 @@ export interface FaceElem {
 	text?: string
 }
 
+/**	超级表情 */
+export interface LottieElem{
+	type: "lottie"
+	id: number
+	text?: string
+}
+
 /** 原创表情 */
 export interface BfaceElem {
 	type: "bface"
@@ -181,7 +188,7 @@ export type ChainElem = TextElem | FaceElem | BfaceElem | MfaceElem | ImageElem 
 
 /** 注意：只有`ChainElem`中的元素可以组合发送，其他元素只能单独发送 */
 export type MessageElem = TextElem | FaceElem | BfaceElem | MfaceElem | ImageElem | AtElem | MiraiElem | ReplyElem |
-	FlashElem | PttElem | VideoElem | JsonElem | XmlElem | PokeElem | LocationElem | ShareElem | FileElem
+	FlashElem | PttElem | VideoElem | JsonElem | XmlElem | PokeElem | LocationElem | ShareElem | FileElem | LottieElem;
 
 /** 可通过sendMsg发送的类型集合 (字符串、元素对象，或它们的数组) */
 export type Sendable = string | MessageElem | (string | MessageElem)[]
@@ -205,6 +212,11 @@ export const segment = {
 		return {
 			type: "sface", id, text
 		}
+	},
+	lottie(id: number, text?: string | undefined): LottieElem{
+		return {
+            type: "lottie", id, text
+        }
 	},
 	/** 原创表情(file规则不明) */
 	bface(file: string, text: string): BfaceElem {
@@ -334,7 +346,7 @@ function unescapeCQInside(s: string) {
 	return ""
 }
 function qs(s: string, sep = ",", equal = "=") {
-	const ret: any = { }
+	const ret: any = {}
 	const split = s.split(sep)
 	for (let v of split) {
 		const i = v.indexOf(equal)

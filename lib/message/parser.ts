@@ -52,78 +52,89 @@ export class Parser {
 		let elem: T.MessageElem
 		let brief: string
 		switch (type) {
-		case 12: //xml
-		case 51: //json
-			const buf = proto[1].toBuffer() as Buffer
-			elem = {
-				type: type === 12 ? "xml" : "json",
-				data: String(buf[0] > 0 ? unzipSync(buf.slice(1)) : buf.slice(1)),
-				id: proto[2]
-			} as T.XmlElem
-			brief = elem.type + "消息"
-			this.content = elem.data
-			break
-		case 3: //flash
-			elem = this.parseImgElem(proto, "flash") as T.FlashElem
-			brief = "闪照"
-			this.content = `{flash:${(elem.file as string).slice(0, 32).toUpperCase()}}`
-			break
-		case 0: //ptt
-			elem = {
-				type: "record",
-				file: "protobuf://" + proto.toBase64(),
-				url: "",
-				md5: proto[4].toHex(),
-				size: proto[6] || 0,
-				seconds: proto[19] || 0,
-			}
-			if (proto[20]) {
-				const url = String(proto[20])
-				elem.url = url.startsWith("http") ? url : "https://grouptalk.c2c.qq.com" + url
-			}
-			brief = "语音"
-			this.content = `{ptt:${elem.url}}`
-			break
-		case 19: //video
-			elem = {
-				type: "video",
-				file: "protobuf://" + proto.toBase64(),
-				name: proto[3]?.toString() || "",
-				fid: String(proto[1]),
-				md5: proto[2].toBase64(),
-				size: proto[6] || 0,
-				seconds: proto[5] || 0,
-			}
-			brief = "视频"
-			this.content = `{video:${elem.fid}}`
-			break
-		case 5: //transElem
-			const trans = pb.decode(proto[2].toBuffer().slice(3))[7][2]
-			elem = {
-				type: "file",
-				name: String(trans[4]),
-				fid: String(trans[2]).replace("/", ""),
-				md5: String(trans[8]),
-				size: trans[3],
-				duration: trans[5],
-			}
-			brief = "群文件"
-			this.content = `{file:${elem.fid}}`
-			break
-		case 126: //poke
-			if (!proto[3])
+			case 12: //xml
+			case 51: //json
+				const buf = proto[1].toBuffer() as Buffer
+				elem = {
+					type: type === 12 ? "xml" : "json",
+					data: String(buf[0] > 0 ? unzipSync(buf.slice(1)) : buf.slice(1)),
+					id: proto[2]
+				} as T.XmlElem
+				brief = elem.type + "消息"
+				this.content = elem.data
+				break
+			case 3: //flash
+				elem = this.parseImgElem(proto, "flash") as T.FlashElem
+				brief = "闪照"
+				this.content = `{flash:${(elem.file as string).slice(0, 32).toUpperCase()}}`
+				break
+			case 0: //ptt
+				elem = {
+					type: "record",
+					file: "protobuf://" + proto.toBase64(),
+					url: "",
+					md5: proto[4].toHex(),
+					size: proto[6] || 0,
+					seconds: proto[19] || 0,
+				}
+				if (proto[20]) {
+					const url = String(proto[20])
+					elem.url = url.startsWith("http") ? url : "https://grouptalk.c2c.qq.com" + url
+				}
+				brief = "语音"
+				this.content = `{ptt:${elem.url}}`
+				break
+			case 19: //video
+				elem = {
+					type: "video",
+					file: "protobuf://" + proto.toBase64(),
+					name: proto[3]?.toString() || "",
+					fid: String(proto[1]),
+					md5: proto[2].toBase64(),
+					size: proto[6] || 0,
+					seconds: proto[5] || 0,
+				}
+				brief = "视频"
+				this.content = `{video:${elem.fid}}`
+				break
+			case 5: //transElem
+				const trans = pb.decode(proto[2].toBuffer().slice(3))[7][2]
+				elem = {
+					type: "file",
+					name: String(trans[4]),
+					fid: String(trans[2]).replace("/", ""),
+					md5: String(trans[8]),
+					size: trans[3],
+					duration: trans[5],
+				}
+				brief = "群文件"
+				this.content = `{file:${elem.fid}}`
+				break
+			case 37: //qlottie
+				if (!proto[3])
+					return;
+				elem = {
+					type: "lottie",
+					id: proto[2][3],
+					text: proto[2][7] ? String(proto[2][7]) : "超级表情",
+				};
+				brief = elem.text ? elem.text : "超级表情";
+				this.content = `{lottie:${elem.id}}`;
+				break;
+			case 126: //poke
+				if (!proto[3])
+					return
+				const pokeid = proto[3] === 126 ? proto[2][4] : proto[3]
+				elem = {
+					type: "poke",
+					id: pokeid,
+					text: pokemap[pokeid]
+				}
+				brief = pokemap[pokeid]
+				this.content = `{poke:${elem.id}}`
+				break
+			default:
 				return
-			const pokeid = proto[3] === 126 ? proto[2][4] : proto[3]
-			elem = {
-				type: "poke",
-				id: pokeid,
-				text: pokemap[pokeid]
-			}
-			brief = pokemap[pokeid]
-			this.content = `{poke:${elem.id}}`
-			break
-		default:
-			return
 		}
 		this.message = [elem]
 		this.brief = "[" + brief + "]"
@@ -136,110 +147,110 @@ export class Parser {
 		let brief = ""
 		let content = ""
 		switch (type) {
-		case 1: //text&at
-			brief = String(proto[1])
-			const buf = proto[3]?.toBuffer() as Buffer
-			if (buf && buf[1] === 1) {
-				elem = {
-					type: "at",
-					qq: 0,
-					text: brief
-				}
-				if (buf[6] === 1) {
-					elem.qq = "all"
-					this.atall = true
+			case 1: //text&at
+				brief = String(proto[1])
+				const buf = proto[3]?.toBuffer() as Buffer
+				if (buf && buf[1] === 1) {
+					elem = {
+						type: "at",
+						qq: 0,
+						text: brief
+					}
+					if (buf[6] === 1) {
+						elem.qq = "all"
+						this.atall = true
+					} else {
+						elem.qq = buf.readUInt32BE(7)
+						if (elem.qq === this.uin)
+							this.atme = true
+					}
+					brief = brief || ("@" + elem.qq)
+					content = `{at:${elem.qq}}`
+				} else if (proto[12] && !proto[12][1]) {
+					// 频道中的AT
+					elem = {
+						type: "at",
+						qq: 0,
+						text: brief
+					}
+					elem.id = proto[12][5] ? String(proto[12][5]) : "all"
+					brief = brief || ("@" + elem.qq)
+					content = `{at:${elem.qq}}`
 				} else {
-					elem.qq = buf.readUInt32BE(7)
-					if (elem.qq === this.uin)
-						this.atme = true
+					if (!brief)
+						return
+					content = brief
+					elem = {
+						type: "text",
+						text: brief
+					}
 				}
-				brief = brief || ("@" + elem.qq)
-				content = `{at:${elem.qq}}`
-			} else if (proto[12] && !proto[12][1]) {
-				// 频道中的AT
+				break
+			case 2: //face
 				elem = {
-					type: "at",
-					qq: 0,
-					text: brief
+					type: "face",
+					id: proto[1],
+					text: facemap[proto[1]] || "表情",
 				}
-				elem.id = proto[12][5] ? String(proto[12][5]) : "all"
-				brief = brief || ("@" + elem.qq)
-				content = `{at:${elem.qq}}`
-			} else {
-				if (!brief)
+				brief = `[${elem.text}]`
+				content = `{face:${elem.id}}`
+				break
+			case 33: //face(id>255)
+				elem = {
+					type: "face",
+					id: proto[1],
+					text: facemap[proto[1]],
+				}
+				if (!elem.text)
+					elem.text = proto[2] ? String(proto[2]) : ("/" + elem.id)
+				brief = `[${elem.text}]`
+				content = `{face:${elem.id}}`
+				break
+			case 6: //bface
+				brief = this.getNextText()
+				if (brief.includes("骰子") || brief.includes("猜拳")) {
+					elem = {
+						type: brief.includes("骰子") ? "dice" : "rps",
+						id: proto[12].toBuffer()[16] - 0x30 + 1
+					}
+					content = `{${elem.type}:${elem.id}}`
+				} else {
+					elem = {
+						type: "bface",
+						file: proto[4].toHex() + proto[7].toHex() + proto[5],
+						text: brief.replace(/[[\]]/g, "")
+					}
+					content = `{bface:${elem.text}}`
+				}
+				break
+			case 4:
+			case 8:
+				elem = this.parseImgElem(proto, "image") as T.ImageElem
+				brief = elem.asface ? "[动画表情]" : "[图片]"
+				content = `{image:${(elem.file as string).slice(0, 32).toUpperCase()}}`
+				break
+			case 34: //sface
+				brief = this.getNextText()
+				elem = {
+					type: "sface",
+					id: proto[1],
+					text: brief.replace(/[[\]]/g, ""),
+				}
+				content = `{sface:${elem.id}}`
+				break
+			case 31: //mirai
+				if (proto[3] === 103904510) {
+					brief = content = String(proto[2])
+					elem = {
+						type: "mirai",
+						data: brief,
+					}
+				} else {
 					return
-				content = brief
-				elem = {
-					type: "text",
-					text: brief
 				}
-			}
-			break
-		case 2: //face
-			elem = {
-				type: "face",
-				id: proto[1],
-				text: facemap[proto[1]] || "表情",
-			}
-			brief = `[${elem.text}]`
-			content = `{face:${elem.id}}`
-			break
-		case 33: //face(id>255)
-			elem = {
-				type: "face",
-				id: proto[1],
-				text: facemap[proto[1]],
-			}
-			if (!elem.text)
-				elem.text = proto[2] ? String(proto[2]) : ("/" + elem.id)
-			brief = `[${elem.text}]`
-			content = `{face:${elem.id}}`
-			break
-		case 6: //bface
-			brief = this.getNextText()
-			if (brief.includes("骰子") || brief.includes("猜拳")) {
-				elem = {
-					type: brief.includes("骰子") ? "dice" : "rps",
-					id: proto[12].toBuffer()[16] - 0x30 + 1
-				}
-				content = `{${elem.type}:${elem.id}}`
-			} else {
-				elem = {
-					type: "bface",
-					file: proto[4].toHex() + proto[7].toHex() + proto[5],
-					text: brief.replace(/[[\]]/g, "")
-				}
-				content = `{bface:${elem.text}}`
-			}
-			break
-		case 4:
-		case 8:
-			elem = this.parseImgElem(proto, "image") as T.ImageElem
-			brief = elem.asface ? "[动画表情]" : "[图片]"
-			content = `{image:${(elem.file as string).slice(0, 32).toUpperCase()}}`
-			break
-		case 34: //sface
-			brief = this.getNextText()
-			elem = {
-				type: "sface",
-				id: proto[1],
-				text: brief.replace(/[[\]]/g, ""),
-			}
-			content = `{sface:${elem.id}}`
-			break
-		case 31: //mirai
-			if (proto[3] === 103904510) {
-				brief = content = String(proto[2])
-				elem = {
-					type: "mirai",
-					data: brief,
-				}
-			} else {
+				break
+			default:
 				return
-			}
-			break
-		default:
-			return
 		}
 
 		// 删除回复中多余的AT元素
@@ -276,32 +287,34 @@ export class Parser {
 				this.quotation = proto
 			} else if (!this.exclusive) {
 				switch (type) {
-				case 1: //text
-				case 2: //face
-				case 4: //notOnlineImage
-				case 6: //bface
-				case 8: //customFace
-				case 31: //mirai
-				case 34: //sface
-					this.parsePartialElem(type, proto)
-					break
-				case 5: //transElem
-				case 12: //xml
-				case 19: //video
-				case 51: //json
-					this.parseExclusiveElem(type, proto)
-					break
-				case 53: //commonElem
-					if (proto[1] === 3) { //flash
-						this.parseExclusiveElem(3, proto[2][1] ? proto[2][1] : proto[2][2])
-					} else if (proto[1] === 33) { //face(id>255)
-						this.parsePartialElem(33, proto[2])
-					} else if (proto[1] === 2) { //poke
-						this.parseExclusiveElem(126, proto)
-					}
-					break
-				default:
-					break
+					case 1: //text
+					case 2: //face
+					case 4: //notOnlineImage
+					case 6: //bface
+					case 8: //customFace
+					case 31: //mirai
+					case 34: //sface
+						this.parsePartialElem(type, proto)
+						break
+					case 5: //transElem
+					case 12: //xml
+					case 19: //video
+					case 51: //json
+						this.parseExclusiveElem(type, proto)
+						break
+					case 53: //commonElem
+						if (proto[1] === 3) { //flash
+							this.parseExclusiveElem(3, proto[2][1] ? proto[2][1] : proto[2][2])
+						} else if (proto[1] === 33) { //face(id>255)
+							this.parsePartialElem(33, proto[2])
+						} else if (proto[1] === 2) { //poke
+							this.parseExclusiveElem(126, proto)
+						} else if (proto[1] === 37) { //qlottie
+							this.parseExclusiveElem(37, proto);
+						}
+						break
+					default:
+						break
 				}
 			}
 		}
