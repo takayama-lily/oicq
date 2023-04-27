@@ -1,8 +1,10 @@
 node_modules
 .vscode
+.idea
 data
 lib/**/*.d.ts
 lib/**/*.js
 !lib/**/protobuf.min.d.ts
 !lib/**/protobuf.min.js
 package-lock.json
+test.js
