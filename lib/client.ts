@@ -219,7 +219,7 @@ export class Client extends BaseClient {
      * @param password 可以为密码原文，或密码的md5值
      */
     async login(password?: string | Buffer) {
-        await requestQImei.call(this)
+        if (!this.device.qImei16 || !this.device.qImei36) await requestQImei.call(this)
         if (password && password.length > 0) {
             let md5pass
             if (typeof password === "string")
@@ -236,8 +236,13 @@ export class Client extends BaseClient {
         } catch {
             if (this.password_md5)
                 return this.passwordLogin(this.password_md5)
-            else
+            else {
+                if (this.apk.display != "Watch") {
+                    this.logger.error("当前协议不支持扫码登入，请配置密码重新登入")
+                    return
+                }
                 return this.sig.qrsig.length ? this.qrcodeLogin() : this.fetchQrcode()
+            }
         }
     }
 
