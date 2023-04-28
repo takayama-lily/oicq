@@ -61,14 +61,14 @@ export function generateFullDevice(d: ShortDevice | number) {
 	if (typeof d === "number")
 		d = generateShortDevice(d)
 	return {
-		display: `MIRAI.${randomString(6, "0123456789")}.001`,
+		display: d.android_id,
 		product: d.product,
 		device: d.device,
 		board: d.board,
 		brand: d.brand,
 		model: d.model,
 		bootloader: d.bootloader,
-		fingerprint: `${d.brand}/${d.product}/${d.device}:10/${d.android_id}/${d.incremental}`,
+		fingerprint: `${d.brand}/${d.product}/${d.device}:10/${d.android_id}/${d.incremental}:user/release-keys`,
 		boot_id: d.boot_id,
 		proc_version: d.proc_version,
 		baseband: "",

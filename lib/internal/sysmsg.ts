@@ -40,7 +40,7 @@ export function parseGroupRequestFlag(flag: string) {
 
 function parseFrdSysMsg(proto: pb.Proto): Omit<FriendRequestEvent, "approve"> {
 	let single: boolean
-	if ((proto[50][1] === 9 || proto[50][1] === 10) || 10 && String(proto[50][6]) === "")
+	if ((proto[50][1] === 9 || proto[50][1] === 10) && String(proto[50][6]) === "")
 		single = true
 	else if (proto[50][1] === 1)
 		single = false
