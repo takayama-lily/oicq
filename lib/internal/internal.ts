@@ -1,8 +1,8 @@
-import { pb, jce, Platform } from "../core"
-import { drop } from "../errors"
-import { timestamp, Gender, OnlineStatus, uuid, log } from "../common"
-import { Image } from "../message"
-import { CmdID, highwayUpload } from "./highway"
+import {pb, jce, Platform} from "../core"
+import {drop} from "../errors"
+import {timestamp, Gender, OnlineStatus, uuid, log} from "../common"
+import {Image} from "../message"
+import {CmdID, highwayUpload} from "./highway"
 
 type Client = import("../client").Client
 
@@ -28,7 +28,7 @@ export async function setStatus(this: Client, status: OnlineStatus) {
 		d.version.release, 1, 473, 0, null, 0, 0, "", 0, "",
 		"", "", null, 1, null, 0, null, 0, 0
 	])
-	const body = jce.encodeWrapper({ SvcReqRegister }, "PushService", "SvcReqRegister")
+	const body = jce.encodeWrapper({SvcReqRegister}, "PushService", "SvcReqRegister")
 	const payload = await this.sendUni("StatSvc.SetStatusFromClient", body)
 	const ret = !!jce.decodeWrapper(payload)[9]
 	if (ret)
@@ -43,7 +43,7 @@ export async function setSign(this: Client, sign: string) {
 		2: Date.now(),
 		3: {
 			1: 109,
-			2: { 6: 825110830 },
+			2: {6: 825110830},
 			3: this.apk.ver
 		},
 		5: {
@@ -137,7 +137,7 @@ export async function addClass(this: Client, name: string) {
 	const SetGroupReq = jce.encodeStruct([
 		0, this.uin, buf
 	])
-	const body = jce.encodeWrapper({ SetGroupReq }, "mqq.IMService.FriendListServiceServantObj", "SetGroupReq")
+	const body = jce.encodeWrapper({SetGroupReq}, "mqq.IMService.FriendListServiceServantObj", "SetGroupReq")
 	await this.sendUni("friendlist.SetGroupReq", body)
 }
 
@@ -145,7 +145,7 @@ export async function delClass(this: Client, id: number) {
 	const SetGroupReq = jce.encodeStruct([
 		2, this.uin, Buffer.from([Number(id)])
 	])
-	const body = jce.encodeWrapper({ SetGroupReq }, "mqq.IMService.FriendListServiceServantObj", "SetGroupReq")
+	const body = jce.encodeWrapper({SetGroupReq}, "mqq.IMService.FriendListServiceServantObj", "SetGroupReq")
 	await this.sendUni("friendlist.SetGroupReq", body)
 }
 
@@ -158,7 +158,7 @@ export async function renameClass(this: Client, id: number, name: string) {
 	const SetGroupReq = jce.encodeStruct([
 		1, this.uin, buf
 	])
-	const body = jce.encodeWrapper({ SetGroupReq }, "mqq.IMService.FriendListServiceServantObj", "SetGroupReq")
+	const body = jce.encodeWrapper({SetGroupReq}, "mqq.IMService.FriendListServiceServantObj", "SetGroupReq")
 	await this.sendUni("friendlist.SetGroupReq", body)
 }
 
@@ -173,7 +173,7 @@ export async function loadFL(this: Client) {
 			31, null, 0, 0, 0,
 			d50, null, [13580, 13581, 13582]
 		])
-		const body = jce.encodeWrapper({ FL }, "mqq.IMService.FriendListServiceServantObj", "GetFriendListReq")
+		const body = jce.encodeWrapper({FL}, "mqq.IMService.FriendListServiceServantObj", "GetFriendListReq")
 		const payload = await this.sendUni("friendlist.getFriendGroupList", body, 10)
 		const nested = jce.decodeWrapper(payload)
 		this.classes.clear()
@@ -188,7 +188,7 @@ export async function loadFL(this: Client) {
 				remark: v[3] || "",
 				class_id: v[1],
 			}
-			this.fl.set(uid, Object.assign(this.fl.get(uid) || { }, info))
+			this.fl.set(uid, Object.assign(this.fl.get(uid) || {}, info))
 			set.add(uid)
 		}
 		start += limit
@@ -230,7 +230,7 @@ export async function loadGL(this: Client) {
 	const GetTroopListReqV2Simplify = jce.encodeStruct([
 		this.uin, 0, null, [], 1, 8, 0, 1, 1
 	])
-	const body = jce.encodeWrapper({ GetTroopListReqV2Simplify }, "mqq.IMService.FriendListServiceServantObj", "GetTroopListReqV2Simplify")
+	const body = jce.encodeWrapper({GetTroopListReqV2Simplify}, "mqq.IMService.FriendListServiceServantObj", "GetTroopListReqV2Simplify")
 	const payload = await this.sendUni("friendlist.GetTroopListReqV2", body, 10)
 	const nested = jce.decodeWrapper(payload)
 	const set = new Set<number>()
@@ -248,7 +248,7 @@ export async function loadGL(this: Client) {
 			admin_flag: !!v[11],
 			update_time: 0,
 		}
-		this.gl.set(gid, Object.assign(this.gl.get(gid) || { }, info))
+		this.gl.set(gid, Object.assign(this.gl.get(gid) || {}, info))
 		set.add(gid)
 	}
 	for (const [gid, _] of this.gl) {
@@ -290,6 +290,7 @@ export class OcrResult {
 			y: number,
 		}>,
 	}> = []
+
 	constructor(proto: pb.Proto) {
 		this.language = proto[2]?.toString() || "unknown"
 		if (!Array.isArray(proto[1]))
@@ -298,10 +299,11 @@ export class OcrResult {
 			this.wordslist.push({
 				words: p[1]?.toString() || "",
 				confidence: Number(p[2]),
-				polygon: p[3][1].map((v: pb.Proto) => ({ x: Number(v[1]) || 0, y: Number(v[2]) || 0 })),
+				polygon: p[3][1].map((v: pb.Proto) => ({x: Number(v[1]) || 0, y: Number(v[2]) || 0})),
 			})
 		}
 	}
+
 	toString() {
 		let str = ""
 		for (const elem of this.wordslist)
@@ -312,6 +314,7 @@ export class OcrResult {
 
 export async function imageOcr(this: Client, img: Image) {
 	await img.task
+	// @ts-ignore
 	const url = String((await highwayUpload.call(this, img.readable!, {
 		cmdid: CmdID.Ocr,
 		md5: img.md5,

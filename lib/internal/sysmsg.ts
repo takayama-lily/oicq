@@ -1,5 +1,5 @@
-import { pb } from "../core"
-import { FriendRequestEvent, GroupRequestEvent, GroupInviteEvent } from "../events"
+import {pb} from "../core"
+import {FriendRequestEvent, GroupRequestEvent, GroupInviteEvent} from "../events"
 
 type Client = import("../client").Client
 
@@ -19,7 +19,7 @@ export function parseFriendRequestFlag(flag: string) {
 	}
 	const user_id = parseInt(flag.slice(0, 8), 16)
 	const seq = Number("0x" + flag.slice(8))
-	return { user_id, seq, single }
+	return {user_id, seq, single}
 }
 
 /** @cqhttp */
@@ -35,12 +35,12 @@ export function parseGroupRequestFlag(flag: string) {
 	const group_id = parseInt(flag.slice(8, 16), 16)
 	const invite = parseInt(flag.slice(16, 17))
 	const seq = Number("0x" + flag.slice(17))
-	return { user_id, group_id, seq, invite }
+	return {user_id, group_id, seq, invite}
 }
 
 function parseFrdSysMsg(proto: pb.Proto): Omit<FriendRequestEvent, "approve"> {
 	let single: boolean
-	if (proto[50][1] === 9 && String(proto[50][6]) === "")
+	if ((proto[50][1] === 9 || proto[50][1] === 10) && String(proto[50][6]) === "")
 		single = true
 	else if (proto[50][1] === 1)
 		single = false
@@ -50,7 +50,7 @@ function parseFrdSysMsg(proto: pb.Proto): Omit<FriendRequestEvent, "approve"> {
 	const user_id = proto[5]
 	const nickname = String(proto[50][51])
 	const seq = proto[3]
-	const flag = genFriendRequestFlag(user_id, proto[3], proto[50][1] === 9 ? true : false)
+	const flag = genFriendRequestFlag(user_id, proto[3], proto[50][1] === 9 || proto[50][1] === 10)
 	const source = String(proto[50][5])
 	const comment = String(proto[50][4] ? proto[50][4] : "")
 	const sex = proto[50][67] === 0 ? "male" : (proto[50][67] === 1 ? "female" : "unknown")
@@ -262,7 +262,8 @@ export async function getSysMsg(this: Client) {
 				if (dbl.has(e.user_id)) continue
 				dbl.add(e.user_id)
 				ret.push(e)
-			} catch { }
+			} catch {
+			}
 		}
 	})()
 
@@ -285,7 +286,8 @@ export async function getSysMsg(this: Client) {
 					return this.pickUser(e.user_id)[e.sub_type === "add" ? "setGroupReq" : "setGroupInvite"](e.group_id, e.seq, yes)
 				}
 				ret.push(e)
-			} catch { }
+			} catch {
+			}
 		}
 	})()
 

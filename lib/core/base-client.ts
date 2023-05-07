@@ -1,6 +1,6 @@
-import { EventEmitter } from "events"
-import { randomBytes } from "crypto"
-import { Readable } from "stream"
+import {EventEmitter} from "events"
+import {createHash, randomBytes} from "crypto"
+import {Readable} from "stream"
 import Network from "./network"
 import Ecdh from "./ecdh"
 import Writer from "./writer"
@@ -8,8 +8,8 @@ import * as tlv from "./tlv"
 import * as tea from "./tea"
 import * as pb from "./protobuf"
 import * as jce from "./jce"
-import { BUF0, BUF4, BUF16, NOOP, md5, timestamp, lock, hide, unzip, int32ip2str } from "./constants"
-import { ShortDevice, Device, generateFullDevice, Platform, Apk, getApkInfo } from "./device"
+import {BUF0, BUF4, BUF16, NOOP, md5, timestamp, lock, hide, unzip, int32ip2str} from "./constants"
+import {ShortDevice, Device, generateFullDevice, Platform, Apk, getApkInfo} from "./device"
 
 const FN_NEXT_SEQ = Symbol("FN_NEXT_SEQ")
 const FN_SEND = Symbol("FN_SEND")
@@ -43,28 +43,40 @@ export enum QrcodeResult {
 export interface BaseClient {
 	/** 收到二维码 */
 	on(name: "internal.qrcode", listener: (this: this, qrcode: Buffer) => void): this
+
 	/** 收到滑动验证码 */
 	on(name: "internal.slider", listener: (this: this, url: string) => void): this
+
 	/** 登录保护验证 */
 	on(name: "internal.verify", listener: (this: this, url: string, phone: string) => void): this
+
 	/** token过期(此时已掉线) */
 	on(name: "internal.error.token", listener: (this: this) => void): this
+
 	/** 网络错误 */
 	on(name: "internal.error.network", listener: (this: this, code: number, message: string) => void): this
+
 	/** 密码登录相关错误 */
 	on(name: "internal.error.login", listener: (this: this, code: number, message: string) => void): this
+
 	/** 扫码登录相关错误 */
 	on(name: "internal.error.qrcode", listener: (this: this, code: QrcodeResult, message: string) => void): this
+
 	/** 登录成功 */
 	on(name: "internal.online", listener: (this: this, token: Buffer, nickname: string, gender: number, age: number) => void): this
+
 	/** token更新 */
 	on(name: "internal.token", listener: (this: this, token: Buffer) => void): this
+
 	/** 服务器强制下线 */
 	on(name: "internal.kickoff", listener: (this: this, reason: string) => void): this
+
 	/** 业务包 */
 	on(name: "internal.sso", listener: (this: this, cmd: string, payload: Buffer, seq: number) => void): this
+
 	/** 日志信息 */
 	on(name: "internal.verbose", listener: (this: this, verbose: unknown, level: VerboseLevel) => void): this
+
 	on(name: string | symbol, listener: (this: this, ...args: any[]) => void): this
 }
 
@@ -86,10 +98,12 @@ export class BaseClient extends EventEmitter {
 		tgtgt: randomBytes(16),
 		tgt: BUF0,
 		skey: BUF0,
+		ksid: BUF0,
 		d2: BUF0,
 		d2key: BUF0,
 		t104: BUF0,
 		t174: BUF0,
+		t547: BUF0,
 		qrsig: BUF0,
 		/** 大数据上传通道 */
 		bigdata: {
@@ -113,7 +127,7 @@ export class BaseClient extends EventEmitter {
 		emp_time: 0,
 		time_diff: 0,
 	}
-	readonly pskey: {[domain: string]: Buffer} = { }
+	readonly pskey: { [domain: string]: Buffer } = {}
 	/** 心跳间隔(秒) */
 	protected interval = 30
 	/** 随心跳一起触发的函数，可以随意设定 */
@@ -197,22 +211,29 @@ export class BaseClient extends EventEmitter {
 
 	/** 使用接收到的token登录 */
 	tokenLogin(token: Buffer) {
-		if (![144, 152].includes(token.length))
+		if (![144, 152, 160].includes(token.length))
 			throw new Error("bad token")
 		this.sig.session = randomBytes(4)
 		this.sig.randkey = randomBytes(16)
 		this[ECDH] = new Ecdh
 		this.sig.d2key = token.slice(0, 16)
-		this.sig.d2 = token.slice(16, token.length - 72)
-		this.sig.tgt = token.slice(token.length - 72)
+		if (token.length === 160) {
+			this.sig.d2 = token.slice(16, token.length - 80)
+			this.sig.tgt = token.slice(token.length - 80)
+		} else {
+			this.sig.d2 = token.slice(16, token.length - 72)
+			this.sig.tgt = token.slice(token.length - 72)
+		}
 		this.sig.tgtgt = md5(this.sig.d2key)
 		const t = tlv.getPacker(this)
-		const body = new Writer()
+		let tlv_count = 18
+		const writer = new Writer()
 			.writeU16(11)
-			.writeU16(16)
+			.writeU16(tlv_count)
 			.writeBytes(t(0x100))
 			.writeBytes(t(0x10a))
 			.writeBytes(t(0x116))
+			.writeBytes(t(0x108))
 			.writeBytes(t(0x144))
 			.writeBytes(t(0x143))
 			.writeBytes(t(0x142))
@@ -224,11 +245,13 @@ export class BaseClient extends EventEmitter {
 			.writeBytes(t(0x177))
 			.writeBytes(t(0x187))
 			.writeBytes(t(0x188))
-			.writeBytes(t(0x202))
+			.writeBytes(t(0x194))
 			.writeBytes(t(0x511))
-			.read()
+			.writeBytes(t(0x202))
+		const body = writer.read()
 		this[FN_SEND_LOGIN]("wtlogin.exchange_emp", body)
 	}
+
 	/**
 	 * 使用密码登录
 	 * @param md5pass 密码的md5值
@@ -241,7 +264,7 @@ export class BaseClient extends EventEmitter {
 		const t = tlv.getPacker(this)
 		let body = new Writer()
 			.writeU16(9)
-			.writeU16(23)
+			.writeU16(25)
 			.writeBytes(t(0x18))
 			.writeBytes(t(0x1))
 			.writeBytes(t(0x106, md5pass))
@@ -265,6 +288,8 @@ export class BaseClient extends EventEmitter {
 			.writeBytes(t(0x516))
 			.writeBytes(t(0x521))
 			.writeBytes(t(0x525))
+			.writeBytes(t(0x544, 2, 9))
+			.writeBytes(t(0x545))
 			.read()
 		this[FN_SEND_LOGIN]("wtlogin.login", body)
 	}
@@ -273,15 +298,18 @@ export class BaseClient extends EventEmitter {
 	submitSlider(ticket: string) {
 		ticket = String(ticket).trim()
 		const t = tlv.getPacker(this)
+		let tlv_count = this.sig.t547.length ? 6 : 5
+		if (this.apk.ssover <= 12) tlv_count--
 		const body = new Writer()
 			.writeU16(2)
-			.writeU16(4)
+			.writeU16(tlv_count)
 			.writeBytes(t(0x193, ticket))
 			.writeBytes(t(0x8))
 			.writeBytes(t(0x104))
 			.writeBytes(t(0x116))
-			.read()
-		this[FN_SEND_LOGIN]("wtlogin.login", body)
+		if (this.sig.t547.length) body.writeBytes(t(0x547))
+		body.writeBytes(t(0x544, 0, 2))
+		this[FN_SEND_LOGIN]("wtlogin.login", body.read())
 	}
 
 	/** 收到设备锁验证请求后，用于发短信 */
@@ -306,9 +334,11 @@ export class BaseClient extends EventEmitter {
 		if (Buffer.byteLength(code) !== 6)
 			code = "123456"
 		const t = tlv.getPacker(this)
-		const body = new Writer()
+		let tlv_count = 8
+		if (this.apk.ssover <= 12) tlv_count--
+		const writer = new Writer()
 			.writeU16(7)
-			.writeU16(7)
+			.writeU16(tlv_count)
 			.writeBytes(t(0x8))
 			.writeBytes(t(0x104))
 			.writeBytes(t(0x116))
@@ -316,8 +346,9 @@ export class BaseClient extends EventEmitter {
 			.writeBytes(t(0x17c, code))
 			.writeBytes(t(0x401))
 			.writeBytes(t(0x198))
+			.writeBytes(t(0x544, 0, 7))
 			.read()
-		this[FN_SEND_LOGIN]("wtlogin.login", body)
+		this[FN_SEND_LOGIN]("wtlogin.login", writer)
 	}
 
 	/** 获取登录二维码(模拟手表协议扫码登录) */
@@ -340,7 +371,7 @@ export class BaseClient extends EventEmitter {
 		const pkt = buildCode2dPacket.call(this, 0x31, 0x11100, body)
 		this[FN_SEND](pkt).then(payload => {
 			payload = tea.decrypt(payload.slice(16, -1), this[ECDH].share_key)
-			const stream = Readable.from(payload, { objectMode: false })
+			const stream = Readable.from(payload, {objectMode: false})
 			stream.read(54)
 			const retcode = stream.read(1)[0]
 			const qrsig = stream.read(stream.read(2).readUInt16BE())
@@ -357,7 +388,7 @@ export class BaseClient extends EventEmitter {
 
 	/** 扫码后调用此方法登录 */
 	async qrcodeLogin() {
-		const { retcode, uin, t106, t16a, t318, tgtgt } = await this.queryQrcodeResult()
+		const {retcode, uin, t106, t16a, t318, tgtgt} = await this.queryQrcodeResult()
 		if (retcode < 0) {
 			this.emit("internal.error.network", -2, "server is busy")
 		} else if (retcode === 0 && t106 && t16a && t318 && tgtgt) {
@@ -403,21 +434,21 @@ export class BaseClient extends EventEmitter {
 		} else {
 			let message
 			switch (retcode) {
-			case QrcodeResult.Timeout:
-				message = "二维码超时，请重新获取"
-				break
-			case QrcodeResult.WaitingForScan:
-				message = "二维码尚未扫描"
-				break
-			case QrcodeResult.WaitingForConfirm:
-				message = "二维码尚未确认"
-				break
-			case QrcodeResult.Canceled:
-				message = "二维码被取消，请重新获取"
-				break
-			default:
-				message = "扫码遇到未知错误，请重新获取"
-				break
+				case QrcodeResult.Timeout:
+					message = "二维码超时，请重新获取"
+					break
+				case QrcodeResult.WaitingForScan:
+					message = "二维码尚未扫描"
+					break
+				case QrcodeResult.WaitingForConfirm:
+					message = "二维码尚未确认"
+					break
+				case QrcodeResult.Canceled:
+					message = "二维码被取消，请重新获取"
+					break
+				default:
+					message = "扫码遇到未知错误，请重新获取"
+					break
 			}
 			this.sig.qrsig = BUF0
 			this.emit("internal.error.qrcode", retcode, message)
@@ -428,7 +459,7 @@ export class BaseClient extends EventEmitter {
 	async queryQrcodeResult() {
 		let retcode = -1, uin, t106, t16a, t318, tgtgt
 		if (!this.sig.qrsig.length)
-			return { retcode, uin, t106, t16a, t318, tgtgt }
+			return {retcode, uin, t106, t16a, t318, tgtgt}
 		const body = new Writer()
 			.writeU16(5)
 			.writeU8(1)
@@ -444,7 +475,7 @@ export class BaseClient extends EventEmitter {
 		try {
 			let payload = await this[FN_SEND](pkt)
 			payload = tea.decrypt(payload.slice(16, -1), this[ECDH].share_key)
-			const stream = Readable.from(payload, { objectMode: false })
+			const stream = Readable.from(payload, {objectMode: false})
 			stream.read(48)
 			let len = stream.read(2).readUInt16BE()
 			if (len > 0) {
@@ -468,8 +499,9 @@ export class BaseClient extends EventEmitter {
 				t318 = t[0x65]
 				tgtgt = t[0x1e]
 			}
-		} catch { }
-		return { retcode, uin, t106, t16a, t318, tgtgt }
+		} catch {
+		}
+		return {retcode, uin, t106, t16a, t318, tgtgt}
 	}
 
 	private [FN_NEXT_SEQ]() {
@@ -477,6 +509,7 @@ export class BaseClient extends EventEmitter {
 			this.sig.seq = 1
 		return this.sig.seq
 	}
+
 	private [FN_SEND](pkt: Uint8Array, timeout = 5) {
 		this.statistics.sent_pkt_cnt++
 		const seq = this.sig.seq
@@ -497,6 +530,7 @@ export class BaseClient extends EventEmitter {
 			})
 		})
 	}
+
 	private async [FN_SEND_LOGIN](cmd: LoginCmd, body: Buffer) {
 		if (this[IS_ONLINE] || this[LOGIN_LOCK])
 			return
@@ -510,11 +544,13 @@ export class BaseClient extends EventEmitter {
 			this.emit("internal.verbose", e.message, VerboseLevel.Error)
 		}
 	}
+
 	/** 发送一个业务包不等待返回 */
 	writeUni(cmd: string, body: Uint8Array, seq = 0) {
 		this.statistics.sent_pkt_cnt++
 		this[NET].write(buildUniPkt.call(this, cmd, body, seq))
 	}
+
 	/** 发送一个业务包并等待返回 */
 	async sendUni(cmd: string, body: Uint8Array, timeout = 5) {
 		if (!this[IS_ONLINE])
@@ -556,20 +592,18 @@ const EVENT_KICKOFF = Symbol("EVENT_KICKOFF")
 
 function ssoListener(this: BaseClient, cmd: string, payload: Buffer, seq: number) {
 	switch (cmd) {
-	case "StatSvc.ReqMSFOffline":
-	case "MessageSvc.PushForceOffline":
-		{
+		case "StatSvc.ReqMSFOffline":
+		case "MessageSvc.PushForceOffline": {
 			const nested = jce.decodeWrapper(payload)
 			const msg = nested[4] ? `[${nested[4]}]${nested[3]}` : `[${nested[1]}]${nested[2]}`
 			this.emit(EVENT_KICKOFF, msg)
 		}
-		break
-	case "QualityTest.PushList":
-	case "OnlinePush.SidTicketExpired":
-		this.writeUni(cmd, BUF0, seq)
-		break
-	case "ConfigPushSvc.PushReq":
-		{
+			break
+		case "QualityTest.PushList":
+		case "OnlinePush.SidTicketExpired":
+			this.writeUni(cmd, BUF0, seq)
+			break
+		case "ConfigPushSvc.PushReq": {
 			if (payload[0] === 0)
 				payload = payload.slice(4)
 			const nested = jce.decodeWrapper(payload)
@@ -586,7 +620,7 @@ function ssoListener(this: BaseClient, cmd: string, payload: Buffer, seq: number
 				}
 			}
 		}
-		break
+			break
 	}
 }
 
@@ -646,18 +680,18 @@ async function packetListener(this: BaseClient, pkt: Buffer) {
 		const encrypted = pkt.slice(pkt.readUInt32BE(6) + 6)
 		let decrypted
 		switch (flag) {
-		case 0:
-			decrypted = encrypted
-			break
-		case 1:
-			decrypted = tea.decrypt(encrypted, this.sig.d2key)
-			break
-		case 2:
-			decrypted = tea.decrypt(encrypted, BUF16)
-			break
-		default:
-			this.emit("internal.error.token")
-			throw new Error("unknown flag:" + flag)
+			case 0:
+				decrypted = encrypted
+				break
+			case 1:
+				decrypted = tea.decrypt(encrypted, this.sig.d2key)
+				break
+			case 2:
+				decrypted = tea.decrypt(encrypted, BUF16)
+				break
+			default:
+				this.emit("internal.error.token")
+				throw new Error("unknown flag:" + flag)
 		}
 		const sso = await parseSso.call(this, decrypted)
 		this.emit("internal.verbose", `recv:${sso.cmd} seq:${sso.seq}`, VerboseLevel.Debug)
@@ -675,8 +709,8 @@ async function register(this: BaseClient, logout = false, reflush = false) {
 	clearInterval(this[HEARTBEAT])
 	const pb_buf = pb.encode({
 		1: [
-			{ 1: 46, 2: timestamp() },
-			{ 1: 283, 2: 0 }
+			{1: 46, 2: timestamp()},
+			{1: 283, 2: 0}
 		]
 	})
 	const d = this.device
@@ -691,7 +725,7 @@ async function register(this: BaseClient, logout = false, reflush = false) {
 		d.brand, "", pb_buf, 0, null,
 		0, null, 1000, 98
 	])
-	const body = jce.encodeWrapper({ SvcReqRegister }, "PushService", "SvcReqRegister")
+	const body = jce.encodeWrapper({SvcReqRegister}, "PushService", "SvcReqRegister")
 	const pkt = buildLoginPacket.call(this, "StatSvc.register", body, 1)
 	try {
 		const payload = await this[FN_SEND](pkt, 10)
@@ -726,7 +760,8 @@ function syncTimeDiff(this: BaseClient) {
 	this[FN_SEND](pkt).then(buf => {
 		try {
 			this.sig.time_diff = buf.readInt32BE() - timestamp()
-		} catch { }
+		} catch {
+		}
 	}).catch(NOOP)
 }
 
@@ -758,13 +793,13 @@ async function refreshToken(this: BaseClient) {
 	try {
 		let payload = await this[FN_SEND](pkt)
 		payload = tea.decrypt(payload.slice(16, payload.length - 1), this[ECDH].share_key)
-		const stream = Readable.from(payload, { objectMode: false })
+		const stream = Readable.from(payload, {objectMode: false})
 		stream.read(2)
 		const type = stream.read(1).readUInt8()
 		stream.read(2)
 		const t = readTlv(stream)
 		if (type === 0) {
-			const { token } = decodeT119.call(this, t[0x119])
+			const {token} = decodeT119.call(this, t[0x119])
 			await register.call(this, false, true)
 			if (this[IS_ONLINE])
 				this.emit("internal.token", token)
@@ -775,7 +810,7 @@ async function refreshToken(this: BaseClient) {
 }
 
 function readTlv(r: Readable) {
-	const t: {[tag: number]: Buffer} = { }
+	const t: { [tag: number]: Buffer } = {}
 	while (r.readableLength > 2) {
 		const k = r.read(2).readUInt16BE() as number
 		t[k] = r.read(r.read(2).readUInt16BE())
@@ -783,7 +818,12 @@ function readTlv(r: Readable) {
 	return t
 }
 
-type LoginCmd = "wtlogin.login" | "wtlogin.exchange_emp" | "wtlogin.trans_emp" | "StatSvc.register" | "Client.CorrectTime"
+type LoginCmd =
+	"wtlogin.login"
+	| "wtlogin.exchange_emp"
+	| "wtlogin.trans_emp"
+	| "StatSvc.register"
+	| "Client.CorrectTime"
 type LoginCmdType = 0 | 1 | 2
 
 function buildLoginPacket(this: BaseClient, cmd: LoginCmd, body: Buffer, type: LoginCmdType = 2): Buffer {
@@ -822,6 +862,7 @@ function buildLoginPacket(this: BaseClient, cmd: LoginCmd, body: Buffer, type: L
 			.writeU8(0x03)
 			.read()
 	}
+	const ksid = Buffer.from(`|${this.device.imei}|` + this.apk.name)
 	let sso = new Writer()
 		.writeWithLength(new Writer()
 			.writeU32(this.sig.seq)
@@ -833,8 +874,9 @@ function buildLoginPacket(this: BaseClient, cmd: LoginCmd, body: Buffer, type: L
 			.writeWithLength(this.sig.session)
 			.writeWithLength(this.device.imei)
 			.writeU32(4)
-			.writeU16(2)
-			.writeU32(4)
+			.writeU16(ksid.length + 2)
+			.writeBytes(ksid)
+			.writeWithLength(this.device.qImei16 || BUF0)
 			.read()
 		)
 		.writeWithLength(body)
@@ -878,18 +920,65 @@ function buildCode2dPacket(this: BaseClient, cmdid: number, head: number, body: 
 	return buildLoginPacket.call(this, "wtlogin.trans_emp", body)
 }
 
+function calcPoW(this: BaseClient, data: any) {
+	if (!data || data.length === 0) return Buffer.alloc(0);
+	const stream = Readable.from(data, {objectMode: false});
+	const a = stream.read(1).readUInt8();                    // a
+	const typ = stream.read(1).readUInt8();                  // typ
+	const c = stream.read(1).readUInt8();                    // c
+	let ok = stream.read(1).readUInt8() !== 0;               // ok
+	const e = stream.read(2).readUInt16BE();                 // e
+	const f = stream.read(2).readUInt16BE();                 // f
+	const src = stream.read(stream.read(2).readUInt16BE());  // scr
+	const tgt = stream.read(stream.read(2).readUInt16BE());  // tgt
+	const cpy = stream.read(stream.read(2).readUInt16BE());  // cpy
+
+	let dst = Buffer.alloc(0)
+	let elp = 0, cnt = 0
+	if (typ === 2 && tgt.length === 32) {
+		let tmp = BigInt("0x" + src.toString("hex"));
+		const start = Date.now()
+		let hash = createHash("sha256").update(Buffer.from(tmp.toString(16), "hex")).digest()
+		while (Buffer.compare(hash, tgt)) {
+			tmp++
+			hash = createHash("sha256").update(Buffer.from(tmp.toString(16), "hex")).digest()
+			cnt++
+		}
+		ok = true
+		dst = Buffer.from(tmp.toString(16), "hex")
+		elp = Date.now() - start
+	}
+	const writer = new Writer()
+		.writeU8(a)
+		.writeU8(typ)
+		.writeU8(c)
+		.writeU8(ok ? 1 : 0)
+		.writeU16(e)
+		.writeU16(f)
+		.writeTlv(src)
+		.writeTlv(tgt)
+		.writeTlv(cpy)
+	if (ok) {
+		writer.writeTlv(dst)
+			.writeU32(elp)
+			.writeU32(cnt)
+	}
+	return writer.read()
+}
+
 function decodeT119(this: BaseClient, t119: Buffer) {
-	const r = Readable.from(tea.decrypt(t119, this.sig.tgtgt), { objectMode: false })
+	const r = Readable.from(tea.decrypt(t119, this.sig.tgtgt), {objectMode: false})
 	r.read(2)
 	const t = readTlv(r)
-	this.sig.tgt = t[0x10a]
-	this.sig.skey = t[0x120]
-	this.sig.d2 = t[0x143]
-	this.sig.d2key = t[0x305]
+	this.sig.tgt = t[0x10a] || this.sig.tgt
+	this.sig.skey = t[0x120] || this.sig.skey
+	this.sig.d2 = t[0x143] ? t[0x143] : this.sig.d2
+	this.sig.d2key = t[0x305] || this.sig.d2key
 	this.sig.tgtgt = md5(this.sig.d2key)
+	this.sig.ksid = t[0x108] ? t[0x108] : this.sig.ksid
 	this.sig.emp_time = timestamp()
 	if (t[0x512]) {
-		const r = Readable.from(t[0x512], { objectMode: false })
+		const r = Readable.from(t[0x512], {objectMode: false})
 		let len = r.read(2).readUInt16BE()
 		while (len-- > 0) {
 			const domain = String(r.read(r.read(2).readUInt16BE()))
@@ -906,17 +995,17 @@ function decodeT119(this: BaseClient, t119: Buffer) {
 	const age = t[0x11a].slice(2, 3).readUInt8()
 	const gender = t[0x11a].slice(3, 4).readUInt8()
 	const nickname = String(t[0x11a].slice(5))
-	return { token, nickname, gender, age }
+	return {token, nickname, gender, age}
 }
 
 function decodeLoginResponse(this: BaseClient, payload: Buffer): any {
 	payload = tea.decrypt(payload.slice(16, payload.length - 1), this[ECDH].share_key)
-	const r = Readable.from(payload, { objectMode: false })
+	const r = Readable.from(payload, {objectMode: false})
 	r.read(2)
 	const type = r.read(1).readUInt8() as number
 	r.read(2)
 	const t = readTlv(r)
-
+	if (t[0x546]) this.sig.t547 = calcPoW.call(this, t[0x546])
 	if (type === 204) {
 		this.sig.t104 = t[0x104]
 		this.emit("internal.verbose", "unlocking...", VerboseLevel.Mark)
@@ -935,10 +1024,11 @@ function decodeLoginResponse(this: BaseClient, payload: Buffer): any {
 	if (type === 0) {
 		this.sig.t104 = BUF0
 		this.sig.t174 = BUF0
-		const { token, nickname, gender, age } = decodeT119.call(this, t[0x119])
+		const {token, nickname, gender, age} = decodeT119.call(this, t[0x119])
 		return register.call(this).then(() => {
-			if (this[IS_ONLINE])
+			if (this[IS_ONLINE]) {
 				this.emit("internal.online", token, nickname, gender, age)
+			}
 		})
 	}
 
@@ -953,7 +1043,7 @@ function decodeLoginResponse(this: BaseClient, payload: Buffer): any {
 		return this.emit("internal.error.login", type, "[登陆失败]未知格式的验证码")
 	}
 
-	if (type === 160) {
+	if (type === 160 || type === 162 || type === 239) {
 		if (!t[0x204] && !t[0x174])
 			return this.emit("internal.verbose", "已向密保手机发送短信验证码", VerboseLevel.Mark)
 		let phone = ""
@@ -966,7 +1056,7 @@ function decodeLoginResponse(this: BaseClient, payload: Buffer): any {
 	}
 
 	if (t[0x149]) {
-		const stream = Readable.from(t[0x149], { objectMode: false })
+		const stream = Readable.from(t[0x149], {objectMode: false})
 		stream.read(2)
 		const title = stream.read(stream.read(2).readUInt16BE()).toString()
 		const content = stream.read(stream.read(2).readUInt16BE()).toString()
@@ -974,7 +1064,7 @@ function decodeLoginResponse(this: BaseClient, payload: Buffer): any {
 	}
 
 	if (t[0x146]) {
-		const stream = Readable.from(t[0x146], { objectMode: false })
+		const stream = Readable.from(t[0x146], {objectMode: false})
 		const version = stream.read(4)
 		const title = stream.read(stream.read(2).readUInt16BE()).toString()
 		const content = stream.read(stream.read(2).readUInt16BE()).toString()
@@ -983,4 +1073,3 @@ function decodeLoginResponse(this: BaseClient, payload: Buffer): any {
 
 	this.emit("internal.error.login", type, `[登陆失败]未知错误`)
 }
-

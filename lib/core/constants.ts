@@ -1,5 +1,5 @@
-import { BinaryLike, createHash } from "crypto"
-import { promisify } from "util"
+import {BinaryLike, createHash} from "crypto"
+import {promisify} from "util"
 import * as zlib from "zlib"
 import * as stream from "stream"
 
@@ -13,7 +13,8 @@ export const BUF4 = Buffer.alloc(4)
 export const BUF16 = Buffer.alloc(16)
 
 /** no operation */
-export const NOOP = () => { }
+export const NOOP = () => {
+}
 
 /** promisified unzip */
 export const unzip = promisify(zlib.unzip)
@@ -62,4 +63,23 @@ export function hide(obj: any, prop: string) {
 		enumerable: false,
 		writable: true,
 	})
+}
+
+export const randomString = (n: number, template: string) => {
+	const len = template.length
+	return new Array(n).fill(false).map(() => template.charAt(Math.floor(Math.random() * len))).join('')
+}
+
+export function formatDateTime(t: Date, format: string) {
+	const year = t.getFullYear()
+	const month = t.getMonth() + 1
+	const date = t.getDate()
+	const hour = t.getHours()
+	const min = t.getMinutes()
+	const second = t.getSeconds()
+	format = format.replace(/[y]+/g, String(year)).replace(/[M]+/g, String(month).padStart(2, '0'))
+		.replace(/[d]+/g, String(date).padStart(2, '0')).replace(/[h]+/g, String(date).padStart(2, '0'))
+		.replace(/[h]+/g, String(hour).padStart(2, '0')).replace(/[m]+/g, String(min).padStart(2, '0'))
+		.replace(/[s]+/g, String(second).padStart(2, '0'))
+	return format
 }

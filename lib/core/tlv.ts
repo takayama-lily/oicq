@@ -2,8 +2,9 @@ import * as crypto from "crypto"
 import * as tea from "./tea"
 import * as pb from "./protobuf"
 import Writer from "./writer"
-import { md5, BUF0 } from "./constants"
-import { getApkInfo, Platform } from "./device"
+import {md5, BUF0} from "./constants"
+import {getApkInfo, Platform} from "./device"
+import {sign} from "../internal/encryption";
 
 type BaseClient = import("./base-client").BaseClient
 
@@ -18,14 +19,15 @@ function packTlv(this: BaseClient, tag: number, ...args: any[]) {
 	return t.read() as Buffer
 }
 
-const map: {[tag: number]: (this: BaseClient, ...args: any[]) => Writer} = {
+const map: { [tag: number]: (this: BaseClient, ...args: any[]) => Writer } = {
 	0x01: function () {
+		const ipB = Buffer.from(this.device.ip_address.split(".").map(a => Number(a)))
 		return new Writer()
 			.writeU16(1) // ip ver
 			.writeBytes(crypto.randomBytes(4))
 			.writeU32(this.uin)
 			.write32(Date.now() & 0xffffffff)
-			.writeBytes(Buffer.alloc(4)) //ip
+			.writeBytes(ipB) //ip
 			.writeU16(0)
 	},
 	0x08: function () {
@@ -90,14 +92,14 @@ const map: {[tag: number]: (this: BaseClient, ...args: any[]) => Writer} = {
 	0x35: function () {
 		return new Writer().writeU32(8)
 	},
-	0x100: function (emp = 0) {
+	0x100: function () {
 		return new Writer()
 			.writeU16(1) // db buf ver
-			.writeU32(7) // sso ver, dont over 7
+			.writeU32(this.apk.ssover) // sso ver, dont over 7
 			.writeU32(this.apk.appid)
-			.writeU32(emp ? 2 : this.apk.subid)
+			.writeU32(this.apk.subid)
 			.writeU32(0) // app client ver
-			.writeU32(this.apk.sigmap)
+			.writeU32(this.apk.main_sig_map)
 	},
 	0x104: function () {
 		return new Writer().writeBytes(this.sig.t104)
@@ -106,7 +108,7 @@ const map: {[tag: number]: (this: BaseClient, ...args: any[]) => Writer} = {
 		const body = new Writer()
 			.writeU16(4) // tgtgt ver
 			.writeBytes(crypto.randomBytes(4))
-			.writeU32(7) // sso ver
+			.writeU32(this.apk.ssover) // sso ver
 			.writeU32(this.apk.appid)
 			.writeU32(0) // app client ver
 			.writeU64(this.uin)
@@ -137,6 +139,9 @@ const map: {[tag: number]: (this: BaseClient, ...args: any[]) => Writer} = {
 			.writeU16(0)    // pic size
 			.writeU8(1)     // ret type
 	},
+	0x108: function () {
+		return new Writer().writeBytes(this.sig.ksid || Buffer.from(`|${this.device.imei}|${this.apk.name}`));
+	},
 	0x109: function () {
 		return new Writer().writeBytes(md5(this.device.imei))
 	},
@@ -147,7 +152,7 @@ const map: {[tag: number]: (this: BaseClient, ...args: any[]) => Writer} = {
 		return new Writer()
 			.writeU8(0)
 			.writeU32(this.apk.bitmap)
-			.writeU32(0x10400) // sub sigmap
+			.writeU32(this.apk.sub_sig_map) // sub sigmap
 			.writeU8(1) // size of app id list
 			.writeU32(1600000226) // app id list[0]
 	},
@@ -202,7 +207,7 @@ const map: {[tag: number]: (this: BaseClient, ...args: any[]) => Writer} = {
 	0x147: function () {
 		return new Writer()
 			.writeU32(this.apk.appid)
-			.writeTlv(this.apk.ver.slice(0, 5))
+			.writeTlv(this.apk.version)
 			.writeTlv(this.apk.sign)
 	},
 	0x154: function () {
@@ -326,6 +331,31 @@ const map: {[tag: number]: (this: BaseClient, ...args: any[]) => Writer} = {
 		})
 		return new Writer().writeBytes(buf)
 	},
+	0x544: function (v: number, subCmd: number) {
+		const salt = new Writer()
+		if (v === 2) {
+			salt.writeU32(0)
+			salt.writeTlv(this.device.guid)
+			salt.writeTlv(Buffer.from(this.apk.sdkver))
+			salt.writeU32(subCmd)
+			salt.writeU32(0)
+		} else {
+			salt.writeU64(this.uin)
+			salt.writeTlv(this.device.guid)
+			salt.writeTlv(Buffer.from(this.apk.sdkver))
+			salt.writeU32(subCmd)
+		}
+		return new Writer().writeBytes(sign((new Date()).getTime(), salt.read()))
+	},
+	0x545: function () {
+		const writer = new Writer()
+		if (this.device.qImei16) writer.writeBytes(Buffer.from(this.device.qImei16))
+		else writer.writeBytes(Buffer.from(this.device.imei))
+		return writer
+	},
+	0x547: function () {
+		return new Writer().writeBytes(this.sig.t547);
+	}
 }
 
 export function getPacker(c: BaseClient) {
