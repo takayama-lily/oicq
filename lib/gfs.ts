@@ -19,6 +19,7 @@ export interface GfsBaseStat {
 	name: string
 	user_id: number
 	create_time: number
+	modify_time: number
 	is_dir: boolean
 }
 
@@ -434,6 +435,7 @@ function genGfsDirStat(file: pb.Proto): GfsDirStat {
 		pid: String(file[2]),
 		name: String(file[3]),
 		create_time: file[4],
+		modify_time: file[5],
 		user_id: file[6],
 		file_count: file[8] || 0,
 		is_dir: true,
@@ -451,6 +453,7 @@ function genGfsFileStat(file: pb.Proto): GfsFileStat {
 		sha1: file[10].toHex(),
 		create_time: file[6],
 		duration: file[7],
+		modify_time: file[8],
 		user_id: file[15],
 		download_times: file[9],
 		is_dir: false,
