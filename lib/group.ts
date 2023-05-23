@@ -8,6 +8,7 @@ import { Sendable, GroupMessage, Image, ImageElem, buildMusic, MusicPlatform, An
 import { Gfs } from "./gfs"
 import { MessageRet } from "./events"
 import { GroupInfo, MemberInfo } from "./entities"
+import { buildShare, type ShareConfig, type ShareContent } from "./message/share"
 
 type Client = import("./client").Client
 
@@ -140,7 +141,7 @@ export class Group extends Discuss {
 
 	/** 获取群头像url (history=1,2,3...) */
 	getAvatarUrl(size: 0 | 40 | 100 | 140 = 0, history = 0) {
-		return `https://p.qlogo.cn/gh/${this.gid}/${this.gid}${history?"_"+history:""}/` + size
+		return `https://p.qlogo.cn/gh/${this.gid}/${this.gid}${history ? "_" + history : ""}/` + size
 	}
 
 	/** 强制刷新资料 */
@@ -178,7 +179,7 @@ export class Group extends Discuss {
 			active_member_count: proto[37],
 			update_time: timestamp(),
 		}
-		info = Object.assign(this.c.gl.get(this.gid) || this._info || { }, info)
+		info = Object.assign(this.c.gl.get(this.gid) || this._info || {}, info)
 		this.c.gl.set(this.gid, info)
 		this._info = info
 		weakmap.set(info, this)
@@ -218,7 +219,7 @@ export class Group extends Discuss {
 						update_time: 0,
 					}
 					const list = this.c.gml.get(this.gid)!
-					info = Object.assign(list.get(v[0]) || { }, info)
+					info = Object.assign(list.get(v[0]) || {}, info)
 					if (this.c.gl.get(this.gid)?.owner_id === v[0])
 						info.role = "owner"
 					list.set(v[0], info)
@@ -253,6 +254,13 @@ export class Group extends Discuss {
 	/** 发送音乐分享 */
 	async shareMusic(platform: MusicPlatform, id: string) {
 		const body = await buildMusic(this.gid, platform, id, 1)
+		await this.c.sendOidb("OidbSvc.0xb77_9", pb.encode(body))
+	}
+
+	/** 发送网址分享 */
+	async shareUrl(content: ShareContent, config: ShareConfig) {
+		const body = buildShare(this.gid, 1, content, config)
+		this.c.logger.trace('url share', body)
 		await this.c.sendOidb("OidbSvc.0xb77_9", pb.encode(body))
 	}
 
@@ -312,7 +320,7 @@ export class Group extends Discuss {
 		this.c.logger.info(`succeed to send: [Group(${this.gid})] ` + converter.brief)
 		{
 			const { seq, rand, time } = parseGroupMessageId(message_id)
-			return { seq, rand, time, message_id}
+			return { seq, rand, time, message_id }
 		}
 	}
 
@@ -413,7 +421,7 @@ export class Group extends Discuss {
 	announce(content: string) {
 		return this._setting({ 4: String(content) })
 	}
-	private async _setting(obj: {[tag: number]: any}) {
+	private async _setting(obj: { [tag: number]: any }) {
 		const body = pb.encode({
 			1: this.gid,
 			2: obj
