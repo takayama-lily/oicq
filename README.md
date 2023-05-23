@@ -142,8 +142,8 @@ client.on("system.login.qrcode", function (e) {
 | notice.friend.recall   | 好友撤回        |
 | notice.friend.poke     | 好友戳一戳       |
 | notice.friend          | 好友通知        |
-| notice.group.increase  | 群员增加        |
-| notice.group.decrease  | 群员减少        |
+| notice.group.increase  | 群增加        |
+| notice.group.decrease  | 群减少        |
 | notice.group.recall    | 群撤回         |
 | notice.group.poke      | 群戳一戳        |
 | notice.group.ban       | 群禁言         |
