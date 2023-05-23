@@ -1,9 +1,11 @@
 import { deflateSync } from "zlib"
 import { FACE_OLD_BUF, facemap } from "./face"
 import { Image } from "./image"
-import { AtElem, BfaceElem, Quotable, MessageElem, TextElem,
+import {
+	AtElem, BfaceElem, Quotable, MessageElem, TextElem,
 	FaceElem, FlashElem, ImageElem, JsonElem, LocationElem, MfaceElem, ReplyElem,
-	MiraiElem, PokeElem, PttElem, Sendable, ShareElem, VideoElem, XmlElem, FileElem } from "./elements"
+	MiraiElem, PokeElem, PttElem, Sendable, ShareElem, VideoElem, XmlElem, FileElem, LottieElem
+} from "./elements"
 import { pb } from "../core"
 import { escapeXml } from "../common"
 import { Anonymous, rand2uuid, parseDmMessageId, parseGroupMessageId } from "./message"
@@ -101,7 +103,7 @@ export class Converter {
 			// 频道中的AT
 			this.elems.push({
 				1: {
-					1: text || (id === "all" ? "@全体成员" : ("@"+id)),
+					1: text || (id === "all" ? "@全体成员" : ("@" + id)),
 					12: {
 						3: 2,
 						5: id === "all" ? 0 : BigInt(id)
@@ -130,6 +132,37 @@ export class Converter {
 		this._text(display, attr6)
 	}
 
+	private lottie(elem: LottieElem) {
+		let { id, text } = elem;
+		if (!text)
+			text = "超级表情" + id;
+		id = Number(id);
+		this.elems.push({
+			53: {
+				1: 37,
+				2: {
+					1: "1",
+					2: "19",
+					3: id,
+					4: 1,
+					5: 1,
+					6: "",
+					7: text,
+					8: "",
+					9: 1
+				},
+				3: 1
+			}
+		});
+		this.elems.push({
+			1: {
+				1: text,
+				12: {
+					1: "[" + text.replace("/", "") + "]你需要升级一下QQ啦~"
+				}
+			}
+		});
+	}
 	private face(elem: FaceElem) {
 		let { id, text } = elem
 		id = Number(id)
@@ -257,9 +290,11 @@ export class Converter {
 			throw new Error("非法的视频元素: " + file)
 		const buf = Buffer.from(file.replace("protobuf://", ""), "base64")
 		this.elems.push({ 19: buf })
-		this.elems.push({ 1: {
-			1: "你的QQ暂不支持查看视频短片，请期待后续版本。"
-		} })
+		this.elems.push({
+			1: {
+				1: "你的QQ暂不支持查看视频短片，请期待后续版本。"
+			}
+		})
 		this.brief += "[视频]"
 		this.is_chain = false
 	}
@@ -444,7 +479,7 @@ export class Converter {
 	quote(source: Quotable) {
 		const elems = new Converter(source.message || "", this.ext).elems
 		const tmp = this.brief
-		if(!this.ext?.dm){
+		if (!this.ext?.dm) {
 			this.at({ type: "at", qq: source.user_id })
 			this.elems.unshift(this.elems.pop()!)
 		}
