@@ -938,14 +938,14 @@ function calcPoW(this: BaseClient, data: any) {
 	if (typ === 2 && tgt.length === 32) {
 		let tmp = BigInt("0x" + src.toString("hex"));
 		const start = Date.now()
-		let hash = createHash("sha256").update(Buffer.from(tmp.toString(16), "hex")).digest()
+		let hash = createHash("sha256").update(Buffer.from(tmp.toString(16).padStart(256, "0"), "hex")).digest()
 		while (Buffer.compare(hash, tgt)) {
 			tmp++
-			hash = createHash("sha256").update(Buffer.from(tmp.toString(16), "hex")).digest()
+			hash = createHash("sha256").update(Buffer.from(tmp.toString(16).padStart(256, "0"), "hex")).digest()
 			cnt++
 		}
 		ok = true
-		dst = Buffer.from(tmp.toString(16), "hex")
+		dst = Buffer.from(tmp.toString(16).padStart(256, "0"), "hex")
 		elp = Date.now() - start
 	}
 	const writer = new Writer()
