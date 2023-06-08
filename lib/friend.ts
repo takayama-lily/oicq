@@ -151,7 +151,7 @@ export class User extends Contactable {
 	private _getRouting(file = false): pb.Encodable {
 		if (Reflect.has(this, "gid"))
 			return { 3: {
-				1: code2uin(Reflect.get(this, "gid")),
+				1: code2uin(Reflect.get(this, "gid")!),
 				2: this.uid,
 			} }
 		return file ? { 15: { 1: this.uid, 2: 4 } } : { 1: { 1: this.uid } }

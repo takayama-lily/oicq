@@ -88,7 +88,7 @@ export class Client extends BaseClient {
 	readonly classes = new Map<number, string>()
 
 	/** 勿手动修改这些属性 */
-	status: OnlineStatus = 0
+	status: OnlineStatus = OnlineStatus.Online
 	nickname = ""
 	sex: Gender = "unknown"
 	age = 0
