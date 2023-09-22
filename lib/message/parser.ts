@@ -322,7 +322,16 @@ export class Parser {
 			}
 			this.imgprefix = ""
 			return elem
-		}
+		} else if (proto[29] && proto[29][30] && String(proto[29][30]).startsWith("&rkey=") && this.imgprefix) {
+			// QQNT图片
+			elem = {
+				type,
+				file: buildImageFileParam(proto[7].toHex(), proto[2], proto[9], proto[8], proto[5]),
+				url: this.imgprefix + String(proto[29][30]) + "&spec=0",
+			}
+			this.imgprefix = ""
+			return elem
+		} 
 		if (proto[7]?.toHex) {
 			elem = {
 				type,
